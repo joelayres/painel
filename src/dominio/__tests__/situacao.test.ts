@@ -1,0 +1,38 @@
+import { describe, expect, it } from 'vitest'
+import { ETAPAS_PADRAO } from '../etapas'
+import { preverVaga, type Conclusao } from '../previsao'
+import { situacaoVaga } from '../situacao'
+
+const F = new Set(['2026-11-02', '2026-11-15', '2026-11-20'])
+const prever = (conclusoes: Conclusao[]) => preverVaga({ dataInicio: '2026-10-22', etapas: ETAPAS_PADRAO, conclusoes, feriados: F })
+const ate = (n: number, datas: string[]) => datas.slice(0, n).map((concluidaEm, i) => ({ ordem: i + 1, concluidaEm }))
+const DATAS = ['2026-10-22', '2026-10-28', '2026-10-29', '2026-10-30', '2026-11-03', '2026-11-04', '2026-11-05',
+  '2026-11-06', '2026-11-17', '2026-11-18', '2026-11-19', '2026-11-24', '2026-12-01']
+
+describe('situação da vaga', () => {
+  it('fica vermelha quando a etapa atual passou da data prevista', () => {
+    expect(situacaoVaga(prever(ate(1, DATAS)), '2026-12-31', '2026-10-29', F).cor).toBe('vermelho')
+  })
+
+  it('fica amarela quando a admissão estimada passa do fim da onda', () => {
+    expect(situacaoVaga(prever(ate(1, DATAS)), '2026-11-18', '2026-10-27', F).cor).toBe('amarelo')
+  })
+
+  it('o fim da onda é inclusivo', () => {
+    expect(situacaoVaga(prever(ate(1, DATAS)), '2026-11-19', '2026-10-27', F).cor).toBe('verde')
+  })
+
+  it('depois da admissão nunca fica amarela, mesmo com a onda vencida', () => {
+    const s = situacaoVaga(prever(ate(11, DATAS)), '2026-11-10', '2026-11-20', F)
+    expect(s).toMatchObject({ cor: 'verde', admitida: true, mobilizada: false })
+  })
+
+  it('vaga mobilizada não tem cor', () => {
+    expect(situacaoVaga(prever(ate(13, DATAS)), '2026-11-10', '2026-12-10', F)).toMatchObject({ cor: null, admitida: true, mobilizada: true })
+  })
+
+  it('conta os dias úteis na etapa atual', () => {
+    const p = prever([{ ordem: 1, concluidaEm: '2026-10-22' }, { ordem: 2, concluidaEm: '2026-10-30' }])
+    expect(situacaoVaga(p, '2026-12-31', '2026-11-05', F).diasNaEtapa).toBe(2)
+  })
+})
