@@ -23,6 +23,8 @@
   --st-finalizada-fundo: #dcf1e4;   --st-finalizada-texto: #1c6239;
   --st-reprovada-fundo: #fbe1df;    --st-reprovada-texto: #9a2620;
   --st-cancelada-fundo: #e7ebea;    --st-cancelada-texto: #4f5c59;
+  /* Prazo das vagas: cores fortes para leitura à distância (gestão à vista). */
+  --prazo-verde: #2f855a;  --prazo-amarelo: #c98a12;  --prazo-vermelho: #c53030;
 }
 
 .dark {
@@ -46,6 +48,7 @@
   --st-finalizada-fundo: #143823;   --st-finalizada-texto: #8ed9aa;
   --st-reprovada-fundo: #451a18;    --st-reprovada-texto: #f3a39d;
   --st-cancelada-fundo: #243230;    --st-cancelada-texto: #a7b5b1;
+  --prazo-verde: #48bb78;  --prazo-amarelo: #ecc94b;  --prazo-vermelho: #fc8181;
 }
 
 @theme inline {
