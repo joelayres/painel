@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --fundo: #edf2f0;
+  --superficie: #ffffff;
+  --superficie-2: #f5f8f7;
+  --texto: #14231f;
+  --texto-suave: #52625d;
+  --borda: #d3ddd9;
+  --primaria: #2b6157;
+  --primaria-forte: #1f4a42;
+  --primaria-texto: #ffffff;
+  --primaria-suave: #dcebe6;
+  --faixa: #2b6157;
+  --faixa-texto: #ffffff;
+  --foco: #e0a12b;
+
+  --st-pendente-fundo: #fdf0d2;     --st-pendente-texto: #7a4f00;
+  --st-conferencia-fundo: #e1ecfb;  --st-conferencia-texto: #1c4a8a;
+  --st-reaprovacao-fundo: #ece4fb;  --st-reaprovacao-texto: #55309a;
+  --st-finalizada-fundo: #dcf1e4;   --st-finalizada-texto: #1c6239;
+  --st-reprovada-fundo: #fbe1df;    --st-reprovada-texto: #9a2620;
+  --st-cancelada-fundo: #e7ebea;    --st-cancelada-texto: #4f5c59;
+}
+
+.dark {
+  --fundo: #0e1a17;
+  --superficie: #152420;
+  --superficie-2: #1a2d28;
+  --texto: #e6efec;
+  --texto-suave: #9db0aa;
+  --borda: #29403a;
+  --primaria: #6fbfa9;
+  --primaria-forte: #8fd3c0;
+  --primaria-texto: #0e1a17;
+  --primaria-suave: #1d3a33;
+  --faixa: #173a33;
+  --faixa-texto: #e6efec;
+  --foco: #f0b84a;
+
+  --st-pendente-fundo: #3a2d0f;     --st-pendente-texto: #f2c766;
+  --st-conferencia-fundo: #15294a;  --st-conferencia-texto: #9cc0f5;
+  --st-reaprovacao-fundo: #2c1f48;  --st-reaprovacao-texto: #c6aef5;
+  --st-finalizada-fundo: #143823;   --st-finalizada-texto: #8ed9aa;
+  --st-reprovada-fundo: #451a18;    --st-reprovada-texto: #f3a39d;
+  --st-cancelada-fundo: #243230;    --st-cancelada-texto: #a7b5b1;
+}
+
+@theme inline {
+  --color-fundo: var(--fundo);
+  --color-superficie: var(--superficie);
+  --color-superficie-2: var(--superficie-2);
+  --color-texto: var(--texto);
+  --color-texto-suave: var(--texto-suave);
+  --color-borda: var(--borda);
+  --color-primaria: var(--primaria);
+  --color-primaria-forte: var(--primaria-forte);
+  --color-primaria-texto: var(--primaria-texto);
+  --color-primaria-suave: var(--primaria-suave);
+  --color-faixa: var(--faixa);
+  --color-faixa-texto: var(--faixa-texto);
+  --color-foco: var(--foco);
+  --font-sans: var(--font-barlow);
+  --font-titulo: var(--font-barlow-condensed);
+}
+
+html {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: var(--font-barlow), system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Números de horas: condensados e com largura fixa, como num painel de leitura. */
+.numeros {
+  font-family: var(--font-barlow-condensed), system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
