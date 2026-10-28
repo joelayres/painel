@@ -13,11 +13,16 @@ export const campoData = (msg: string) => z.string({ error: msg }).refine(dataVa
 const data = campoData
 const opcional = z.string().nullish().transform((v) => (v?.trim() ? v.trim() : null))
 
+// Disciplina e área são opcionais; vazias viram ''. A regra "onda ou meta" fica no banco.
+const opcionalVazio = z.string().nullish().transform((v) => v?.trim() ?? '')
+
 export const esquemaVaga = z.object({
   funcao: texto('Informe a função.'),
-  disciplina: texto('Informe a disciplina.'),
-  area: texto('Informe a área.'),
-  ondaId: z.uuid('Escolha a onda.'),
+  disciplina: opcionalVazio,
+  area: opcionalVazio,
+  ondaId: z.string().nullish().transform((v) => (v ? v : null)).pipe(z.uuid('Escolha a onda.').nullable()),
+  meta: z.string().nullish().transform((v) => (v ? v : null)).pipe(campoData('Informe a meta.').nullable()),
+  projetoId: z.uuid('Projeto inválido.'),
   gestorId: z.string().nullish().transform((v) => (v ? v : null)).pipe(z.uuid('Gestor inválido.').nullable()),
   candidato: opcional,
   dataInicio: data('Informe a data de início.'),

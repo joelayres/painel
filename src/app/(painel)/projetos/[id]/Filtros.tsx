@@ -3,7 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
-type Opcoes = { ondas: number[]; funcoes: string[]; areas: string[]; gestores: { id: string; nome: string }[] }
+type Opcoes = { ondas: { id: string; nome: string }[]; funcoes: string[]; areas: string[]; gestores: { id: string; nome: string }[] }
 
 const classe = 'min-h-11 rounded-lg border border-borda bg-superficie px-3'
 
@@ -39,7 +39,7 @@ export function Filtros({ opcoes }: { opcoes: Opcoes }) {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {selecao('Onda', 'onda', opcoes.ondas.map((n) => ({ valor: String(n), rotulo: `${n}ª Onda` })))}
+      {opcoes.ondas.length > 0 && selecao('Onda', 'onda', opcoes.ondas.map((o) => ({ valor: o.id, rotulo: o.nome })))}
       {selecao('Função', 'funcao', opcoes.funcoes.map((f) => ({ valor: f, rotulo: f })))}
       {selecao('Área', 'area', opcoes.areas.map((a) => ({ valor: a, rotulo: a })))}
       {selecao('Gestor', 'gestor', opcoes.gestores.map((g) => ({ valor: g.id, rotulo: g.nome })))}

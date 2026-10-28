@@ -15,3 +15,8 @@ test('sem nada em atenção mostra que está tudo no prazo', () => {
   render(<Atencao vagas={[vagaExemplo('a', { cor: 'verde', etapaAtual: 5 })]} />)
   expect(screen.getByText('Nenhuma vaga atrasada ou em risco.')).toBeInTheDocument()
 })
+
+test('mostra a meta da vaga junto da admissão prevista', () => {
+  render(<Atencao vagas={[{ ...vagaExemplo('v', { cor: 'vermelho', etapaAtual: 3 }), meta: '2026-11-18' }]} />)
+  expect(screen.getByRole('listitem')).toHaveTextContent('(meta 18/11)')
+})

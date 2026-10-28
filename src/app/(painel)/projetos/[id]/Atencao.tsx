@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { vagasEmAtencao, type VagaPainel } from '@/dominio/painel'
 import { ddmm } from '@/lib/formato/datas'
-import { COR_PRAZO, ROTULO_PRAZO } from './cores'
+import { COR_PRAZO, ROTULO_PRAZO } from '../../cores'
 
 const dias = (n: number) => `${n} ${n === 1 ? 'dia' : 'dias'}`
 
@@ -24,7 +24,7 @@ export function Atencao({ vagas }: { vagas: VagaPainel[] }) {
                   <span className="font-medium">{v.funcao} · {v.disciplina}</span>
                   <span className="text-texto-suave"> · {v.gestor?.nome ?? 'Sem gestor'}{v.candidato ? ` · ${v.candidato}` : ''}</span>
                   <span className="block text-sm text-texto-suave">
-                    parada em {etapa?.nome} há {dias(v.situacao.diasNaEtapa)} · admissão prevista {ddmm(v.previsao.admissaoEstimada)} (onda até {ddmm(v.onda.fim)})
+                    parada em {etapa?.nome} há {dias(v.situacao.diasNaEtapa)} · admissão prevista {ddmm(v.previsao.admissaoEstimada)} (meta {ddmm(v.meta)})
                   </span>
                 </Link>
               </li>

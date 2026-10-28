@@ -171,7 +171,7 @@ export async function carregarPainel(sb: SupabaseClient<Database>, hoje: string,
     projeto: info,
     vagas: montarPainel(linhas, hoje),
     etapas,
-    ondas: ondas.map(({ id, nome, inicio, fim }) => ({ id, nome, inicio, fim })),
+    ondas: lerOndas(ondas).map(({ id, nome, inicio, fim }) => ({ id, nome, inicio, fim })),
     gestores,
   }
 }

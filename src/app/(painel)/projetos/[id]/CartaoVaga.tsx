@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import type { VagaPainel } from '@/dominio/painel'
 import { ddmm } from '@/lib/formato/datas'
-import { COR_PRAZO, ROTULO_PRAZO } from './cores'
+import { COR_PRAZO, ROTULO_PRAZO } from '../../cores'
 
 export function CartaoVaga({ vaga }: { vaga: VagaPainel }) {
   const cor = vaga.situacao.cor ?? 'verde'

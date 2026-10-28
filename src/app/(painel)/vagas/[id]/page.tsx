@@ -4,7 +4,7 @@ import { FormVaga } from '@/components/rh/FormVaga'
 import { hojeSP } from '@/dominio/tempo'
 import { exigirSessao } from '@/lib/auth/perfil'
 import { dataBR, ddmm } from '@/lib/formato/datas'
-import { carregarPainel } from '@/lib/painel/dados'
+import { carregarVaga } from '@/lib/painel/dados'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
 import { COR_PRAZO, ROTULO_PRAZO } from '../../cores'
 import { Acoes } from './Acoes'
@@ -14,11 +14,12 @@ export default async function DetalheVaga({ params }: { params: Promise<{ id: st
   const sessao = await exigirSessao()
   const sb = await criarClienteServidor()
   const hoje = hojeSP()
-  const { vagas, ondas, gestores } = await carregarPainel(sb, hoje)
-  const vaga = vagas.find((v) => v.id === id)
-  if (!vaga) notFound()
+  const carregada = await carregarVaga(sb, hoje, id)
+  if (!carregada) notFound()
+  const { painel: { projeto, ondas, gestores }, vaga } = carregada
+  const podeEditar = sessao.perfil === 'rh' && !projeto.encerrado
   const [{ data: bruta }, { data: historico }] = await Promise.all([
-    sb.from('vagas').select('onda_id, gestor_id, data_inicio').eq('id', id).single(),
+    sb.from('vagas').select('onda_id, meta, gestor_id, data_inicio').eq('id', id).single(),
     sb.from('historico').select('id, nome_usuario, acao, em').eq('vaga_id', id).order('em', { ascending: false }),
   ])
   const p = vaga.previsao
@@ -28,27 +29,29 @@ export default async function DetalheVaga({ params }: { params: Promise<{ id: st
 
   return (
     <div className="flex flex-col gap-5">
-      <Link href="/" className="text-sm font-medium text-primaria hover:underline">← Voltar ao painel</Link>
+      <Link href={`/projetos/${vaga.projetoId}`} className="text-sm font-medium text-primaria hover:underline">← Voltar ao painel</Link>
       <div className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-borda bg-superficie p-4">
         <div>
           <h2 className="font-titulo text-3xl font-semibold">{vaga.funcao}</h2>
-          <p className="text-texto-suave">{vaga.disciplina} · {vaga.area} · {vaga.onda.numero}ª Onda (até {ddmm(vaga.onda.fim)})</p>
+          <p className="text-texto-suave">{[vaga.disciplina, vaga.area].filter(Boolean).join(' · ')}{vaga.disciplina || vaga.area ? ' · ' : ''}{vaga.onda ? `${vaga.onda.nome} (meta ${ddmm(vaga.meta)})` : `Meta ${ddmm(vaga.meta)}`}</p>
           <p className="mt-1">Gestor: {vaga.gestor?.nome ?? 'Sem gestor'} · Candidato: {vaga.candidato ?? 'ainda não definido'}</p>
           <p className="mt-2 text-sm">
             {cor && <span className="mr-2 font-semibold" style={{ color: COR_PRAZO[cor] }}>{ROTULO_PRAZO[cor]}</span>}
             Admissão prevista {dataBR(p.admissaoEstimada)} · Conclusão prevista {dataBR(p.conclusaoEstimada)}
           </p>
         </div>
-        {sessao.perfil === 'rh' && bruta && (
+        {podeEditar && bruta && (
           <FormVaga
             rotuloBotao="Editar vaga"
-            vaga={{ id, funcao: vaga.funcao, disciplina: vaga.disciplina, area: vaga.area, ondaId: bruta.onda_id, gestorId: bruta.gestor_id, candidato: vaga.candidato, dataInicio: bruta.data_inicio }}
+            vaga={{ id, funcao: vaga.funcao, disciplina: vaga.disciplina, area: vaga.area, ondaId: bruta.onda_id, meta: bruta.meta, gestorId: bruta.gestor_id, candidato: vaga.candidato, dataInicio: bruta.data_inicio }}
             opcoes={{ ondas, gestores }}
+            organizacao={projeto.organizacao}
+            projetoId={projeto.id}
           />
         )}
       </div>
 
-      <Acoes vagaId={id} perfil={sessao.perfil} etapaAtual={atual ? { ordem: atual.ordem, nome: atual.nome } : null} ultimaConcluida={ultima} admitida={vaga.situacao.admitida} hoje={hoje} />
+      {podeEditar && <Acoes vagaId={id} perfil="rh" etapaAtual={atual ? { ordem: atual.ordem, nome: atual.nome } : null} ultimaConcluida={ultima} admitida={vaga.situacao.admitida} hoje={hoje} />}
 
       <div className="overflow-x-auto rounded-xl border border-borda bg-superficie">
         <table className="w-full text-left text-[15px]">

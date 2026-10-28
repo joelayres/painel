@@ -8,6 +8,9 @@ vi.mock('@/lib/supabase/servidor', () => ({
 }))
 vi.mock('@/lib/auth/perfil', () => ({ exigirRh: async () => ({ usuarioId: 'u', perfil: 'rh', nome: 'RH' }) }))
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
+const vagaRecarregada = vi.fn()
+vi.mock('@/lib/painel/dados', () => ({ carregarVaga: (...a: unknown[]) => vagaRecarregada(...a) }))
+vi.mock('@/dominio/tempo', () => ({ hojeSP: () => '2026-10-28' }))
 const { cancelarVaga, candidatoDesistiu, concluirEtapa, salvarVaga } = await import('../acoesVaga')
 
 beforeEach(() => vi.clearAllMocks())
@@ -30,20 +33,50 @@ test('concluir chama a função do banco com a etapa esperada', async () => {
   expect(rpc).toHaveBeenCalledWith('concluir_etapa', { p_vaga: 'v1', p_ordem_esperada: 3, p_data: '2026-10-27' })
 })
 
+const ONDA = '11111111-1111-4111-8111-111111111111'
+const PROJETO = '22222222-2222-4222-8222-222222222222'
+const base = { funcao: 'Técnico', disciplina: 'NR-13', area: 'Caldeiraria', gestorId: '', candidato: '', dataInicio: '2026-10-22', projetoId: PROJETO }
+
 test('salvar vaga valida os campos obrigatórios', async () => {
-  const r = await salvarVaga(null, { funcao: '', disciplina: 'NR-13', area: 'Caldeiraria', ondaId: 'x', dataInicio: '2026-10-22' })
+  const r = await salvarVaga(null, { ...base, funcao: '', ondaId: 'x' })
   expect(r.ok).toBe(false)
   if (!r.ok) expect(r.erros).toMatchObject({ funcao: 'Informe a função.', ondaId: 'Escolha a onda.' })
   expect(insert).not.toHaveBeenCalled()
 })
 
-test('salvar vaga grava pela função que registra o histórico', async () => {
+test('salvar vaga grava pela função que registra o histórico e devolve o aviso da meta', async () => {
   rpc.mockResolvedValue({ data: 'v9', error: null })
-  const onda = '11111111-1111-4111-8111-111111111111'
-  const r = await salvarVaga(null, { funcao: 'Técnico', disciplina: 'NR-13', area: 'Caldeiraria', ondaId: onda, gestorId: '', candidato: '', dataInicio: '2026-10-22' })
-  expect(r).toEqual({ ok: true, id: 'v9' })
-  expect(rpc).toHaveBeenCalledWith('salvar_vaga', { p_id: null, p: { funcao: 'Técnico', disciplina: 'NR-13', area: 'Caldeiraria', onda_id: onda, gestor_id: null, candidato: null, data_inicio: '2026-10-22' } })
+  vagaRecarregada.mockResolvedValue(null)
+  const r = await salvarVaga(null, { ...base, ondaId: ONDA, meta: '' })
+  expect(r).toEqual({ ok: true, id: 'v9', aviso: null })
+  expect(rpc).toHaveBeenCalledWith('salvar_vaga', { p_id: null, p: { funcao: 'Técnico', disciplina: 'NR-13', area: 'Caldeiraria', onda_id: ONDA, gestor_id: null, candidato: null, data_inicio: '2026-10-22', meta: null, projeto_id: PROJETO } })
   expect(insert).not.toHaveBeenCalled()
+})
+
+test('disciplina e área são opcionais', async () => {
+  rpc.mockResolvedValue({ data: 'v9', error: null })
+  const r = await salvarVaga(null, { ...base, disciplina: '', area: undefined, ondaId: null, meta: '2026-11-18' })
+  expect(r.ok).toBe(true)
+  expect(rpc).toHaveBeenCalledWith('salvar_vaga', { p_id: null, p: expect.objectContaining({ disciplina: '', area: '', onda_id: null, meta: '2026-11-18' }) })
+})
+
+test('o aviso vem da vaga recarregada', async () => {
+  rpc.mockResolvedValue({ data: 'v9', error: null })
+  vagaRecarregada.mockResolvedValue({ vaga: { meta: '2026-11-18', previsao: { etapas: [], admissaoEstimada: '2026-11-25' } } })
+  const r = await salvarVaga(null, { ...base, ondaId: null, meta: '2026-11-18' })
+  expect(r).toEqual({ ok: true, id: 'v9', aviso: 'Pelas etapas, a admissão sai em 25/11 e a meta é 18/11.' })
+})
+
+test('onda e meta obrigatórias viram erro no campo', async () => {
+  rpc.mockResolvedValue({ data: null, error: { message: 'onda obrigatória' } })
+  expect(await salvarVaga(null, { ...base, ondaId: null, meta: null })).toEqual({ ok: false, erros: { ondaId: 'Escolha a onda.' } })
+  rpc.mockResolvedValue({ data: null, error: { message: 'meta obrigatória' } })
+  expect(await salvarVaga(null, { ...base, ondaId: null, meta: null })).toEqual({ ok: false, erros: { meta: 'Informe a meta.' } })
+})
+
+test('projeto encerrado vira mensagem clara', async () => {
+  rpc.mockResolvedValue({ error: { message: 'projeto encerrado' } })
+  expect(await concluirEtapa('v1', 3, '2026-10-27')).toEqual({ ok: false, erro: 'Este projeto está encerrado. Reabra para alterar.' })
 })
 
 test('cancelar vaga usa a função que registra o histórico', async () => {

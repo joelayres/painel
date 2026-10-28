@@ -87,6 +87,7 @@ describe('montarProjetos', () => {
 describe('carregarPainel', () => {
   it('devolve null quando o projeto não é visível', async () => {
     const consulta: Record<string, unknown> = {}
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const q: any = new Proxy(consulta, {
       get: (_, k) => (k === 'then' ? (f: (r: unknown) => unknown) => Promise.resolve(f({ data: [], error: null })) : () => q),
     })
