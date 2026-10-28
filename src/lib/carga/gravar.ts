@@ -9,5 +9,7 @@ export async function gravarCarga(admin: SupabaseClient, vagas: VagaCarga[], nom
   const onda = /falta onda (\d)/.exec(error.message)
   if (onda) return { ok: false, erro: `Cadastre a ${onda[1]}ª Onda antes de fazer a carga.` }
   if (error.message.includes('painel não está vazio')) return { ok: false, erro: 'A carga só pode ser feita com o painel vazio. Já existem vagas cadastradas.' }
-  return { ok: false, erro: 'Não foi possível gravar a carga. Nada foi importado; tente de novo.' }
+  // A tela é só do RH: mostrar o motivo ajuda a corrigir (chave errada, banco fora do ar…).
+  console.error('importar_carga falhou', error)
+  return { ok: false, erro: `Não foi possível gravar a carga (${error.message}). Nada foi importado.` }
 }
