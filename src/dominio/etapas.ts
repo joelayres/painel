@@ -20,3 +20,8 @@ export const ETAPAS_PADRAO: EtapaDef[] = [
 // O prazo da onda é a admissão; a captura é para onde a vaga volta quando o candidato desiste.
 export const ETAPA_ADMISSAO = 11
 export const ETAPA_CAPTURA = 2
+
+// Durações efetivas de um projeto: a do projeto vale mais que a do cliente, que vale mais que a padrão.
+export function etapasDoProjeto(base: EtapaDef[], doCliente: ReadonlyMap<number, number>, doProjeto: ReadonlyMap<number, number>): EtapaDef[] {
+  return base.map((e) => ({ ...e, duracao: doProjeto.get(e.ordem) ?? doCliente.get(e.ordem) ?? e.duracao }))
+}

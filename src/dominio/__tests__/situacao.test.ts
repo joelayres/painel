@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { ETAPAS_PADRAO } from '../etapas'
 import { preverVaga, type Conclusao } from '../previsao'
-import { situacaoVaga } from '../situacao'
+import { avisoMeta, situacaoVaga } from '../situacao'
 
 const F = new Set(['2026-11-02', '2026-11-15', '2026-11-20'])
 const prever = (conclusoes: Conclusao[]) => preverVaga({ dataInicio: '2026-10-22', etapas: ETAPAS_PADRAO, conclusoes, feriados: F })
@@ -14,15 +14,15 @@ describe('situação da vaga', () => {
     expect(situacaoVaga(prever(ate(1, DATAS)), '2026-12-31', '2026-10-29', F).cor).toBe('vermelho')
   })
 
-  it('fica amarela quando a admissão estimada passa do fim da onda', () => {
+  it('fica amarela quando a admissão estimada passa da meta', () => {
     expect(situacaoVaga(prever(ate(1, DATAS)), '2026-11-18', '2026-10-27', F).cor).toBe('amarelo')
   })
 
-  it('o fim da onda é inclusivo', () => {
+  it('a meta é inclusiva', () => {
     expect(situacaoVaga(prever(ate(1, DATAS)), '2026-11-19', '2026-10-27', F).cor).toBe('verde')
   })
 
-  it('depois da admissão nunca fica amarela, mesmo com a onda vencida', () => {
+  it('depois da admissão nunca fica amarela, mesmo com a meta vencida', () => {
     const s = situacaoVaga(prever(ate(11, DATAS)), '2026-11-10', '2026-11-20', F)
     expect(s).toMatchObject({ cor: 'verde', admitida: true, mobilizada: false })
   })
@@ -34,5 +34,19 @@ describe('situação da vaga', () => {
   it('conta os dias úteis na etapa atual', () => {
     const p = prever([{ ordem: 1, concluidaEm: '2026-10-22' }, { ordem: 2, concluidaEm: '2026-10-30' }])
     expect(situacaoVaga(p, '2026-12-31', '2026-11-05', F).diasNaEtapa).toBe(2)
+  })
+})
+
+describe('aviso de meta', () => {
+  it('avisa quando a admissão estimada passa da meta', () => {
+    expect(avisoMeta(prever(ate(1, DATAS)), '2026-11-18')).toBe('Pelas etapas, a admissão sai em 19/11 e a meta é 18/11.')
+  })
+
+  it('não avisa quando a admissão cabe na meta', () => {
+    expect(avisoMeta(prever(ate(1, DATAS)), '2026-11-19')).toBeNull()
+  })
+
+  it('não avisa depois da admissão', () => {
+    expect(avisoMeta(prever(ate(11, DATAS)), '2026-11-10')).toBeNull()
   })
 })
