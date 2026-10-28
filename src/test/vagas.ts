@@ -21,6 +21,7 @@ export function vagaExemplo(id: string, c: { cor: Cor | null; etapaAtual: number
       etapas: ETAPAS_PADRAO.map((e) => ({
         ordem: e.ordem,
         nome: e.nome,
+        fixa: e.fixa,
         inicio: '2026-10-22',
         fim: e.ordem === c.etapaAtual ? (c.fimAtual ?? '2026-11-01') : '2026-10-22',
         concluidaEm: c.etapaAtual === null || e.ordem < c.etapaAtual ? '2026-10-22' : null,

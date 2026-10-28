@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ETAPAS_PADRAO } from '../etapas'
+import { ETAPAS_PADRAO, type EtapaDef } from '../etapas'
 import { preverVaga, type Conclusao } from '../previsao'
 import { avisoMeta, situacaoVaga } from '../situacao'
 
@@ -48,5 +48,17 @@ describe('aviso de meta', () => {
 
   it('não avisa depois da admissão', () => {
     expect(avisoMeta(prever(ate(11, DATAS)), '2026-11-10')).toBeNull()
+  })
+})
+
+describe('admissão em outra posição', () => {
+  const nova: EtapaDef = { id: 'n', ordem: 11, nome: 'Cadastro em sistema', duracao: 1, fixa: null }
+  const etapas = [...ETAPAS_PADRAO.slice(0, 10), nova, ...ETAPAS_PADRAO.slice(10).map((e) => ({ ...e, ordem: e.ordem + 1 }))]
+  const prev = (n: number) => preverVaga({ dataInicio: '2026-10-22', etapas, conclusoes: DATAS.slice(0, n).map((concluidaEm, i) => ({ ordem: i + 1, concluidaEm })), feriados: F })
+
+  it('só é admitida quando a posição 12 foi concluída', () => {
+    expect(situacaoVaga(prev(11), '2026-11-10', '2026-11-20', F).admitida).toBe(false)
+    expect(situacaoVaga(prev(12), '2026-11-10', '2026-11-20', F).admitida).toBe(true)
+    expect(avisoMeta(prev(12), '2026-11-10')).toBeNull()
   })
 })

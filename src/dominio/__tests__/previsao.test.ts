@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ETAPAS_PADRAO } from '../etapas'
+import { ETAPAS_PADRAO, type EtapaDef } from '../etapas'
 import { preverVaga, type Conclusao } from '../previsao'
 
 const F = new Set(['2026-11-02', '2026-11-15', '2026-11-20'])
@@ -57,5 +57,19 @@ describe('previsão das etapas', () => {
     const p = prever('2026-10-22', [{ ordem: 1, concluidaEm: '2026-10-22' }], '2026-11-04')
     expect(p.etapas[1]).toMatchObject({ inicio: '2026-11-04', fim: '2026-11-09' })
     expect(p.inicioEtapaAtual).toBe('2026-11-04')
+  })
+
+  it('previsão com etapa incluída antes da admissão', () => {
+    const nova: EtapaDef = { id: 'n', ordem: 11, nome: 'Cadastro em sistema', duracao: 1, fixa: null }
+    const etapas = [...ETAPAS_PADRAO.slice(0, 10), nova, ...ETAPAS_PADRAO.slice(10).map((e) => ({ ...e, ordem: e.ordem + 1 }))]
+    const p = preverVaga({ dataInicio: '2026-10-22', etapas, conclusoes: [], feriados: F })
+    expect(p.etapas[9].fim).toBe('2026-11-18')
+    expect(p.etapas[10]).toMatchObject({ inicio: '2026-11-19', fim: '2026-11-19' })
+    expect(p.admissaoEstimada).toBe('2026-11-23')
+  })
+
+  it('lista sem Treinamento termina na CTPS', () => {
+    const p = preverVaga({ dataInicio: '2026-10-22', etapas: ETAPAS_PADRAO.slice(0, 12), conclusoes: [], feriados: F })
+    expect(p.conclusaoEstimada).toBe('2026-11-24')
   })
 })
