@@ -3,13 +3,13 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-// As abas do projeto; a ativa vem do endereço.
+// As abas do projeto; a ativa vem do endereço. O Resumo vem primeiro: é por onde se entra no projeto.
 export function AbasProjeto({ projetoId, rh }: { projetoId: string; rh: boolean }) {
   const caminho = usePathname()
   const base = `/projetos/${projetoId}`
   const abas = [
-    { href: base, rotulo: 'Painel' },
     { href: `${base}/resumo`, rotulo: 'Resumo' },
+    { href: base, rotulo: 'Painel' },
     ...(rh ? [{ href: `${base}/configurar`, rotulo: 'Configurar' }] : []),
   ]
   return (

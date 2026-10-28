@@ -11,7 +11,7 @@ export function CartaoProjeto({ projeto }: { projeto: Projeto }) {
   const linha = [projeto.area, ondas, vagas].filter(Boolean).join(' · ')
   return (
     <Link
-      href={`/projetos/${projeto.id}`}
+      href={`/projetos/${projeto.id}/resumo`}
       aria-label={`Projeto ${projeto.nome}`}
       className="block rounded-xl border border-borda bg-superficie p-4 transition-colors hover:border-primaria focus-visible:outline-2 focus-visible:outline-foco"
     >

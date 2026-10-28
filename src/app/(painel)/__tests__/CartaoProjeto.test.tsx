@@ -12,7 +12,7 @@ const base: Projeto = {
 test('projeto com ondas mostra link, área, ondas, vagas, admitidos e cores', () => {
   render(<CartaoProjeto projeto={base} />)
   const c = screen.getByRole('link', { name: 'Projeto Parada 2027' })
-  expect(c).toHaveAttribute('href', '/projetos/p1')
+  expect(c).toHaveAttribute('href', '/projetos/p1/resumo')
   expect(c).toHaveTextContent('Manutenção · 4 ondas · 50 vagas')
   expect(c).toHaveTextContent('12 admitidos de 50')
   expect(c).toHaveTextContent('30 no prazo · 5 em risco · 3 atrasadas')

@@ -13,7 +13,7 @@ export default async function Projetos() {
   const todos = await carregarProjetos(sb, hojeSP())
   const projetos = todos.filter((p) => !p.encerrado)
   const rh = sessao.perfil === 'rh'
-  if (!rh && projetos.length === 1) redirect(`/projetos/${projetos[0].id}`)
+  if (!rh && projetos.length === 1) redirect(`/projetos/${projetos[0].id}/resumo`)
   // Quem não é RH não tem a página Encerrados: sem projeto ativo, vê aqui os encerrados liberados.
   const encerrados = !rh && projetos.length === 0 ? todos.filter((p) => p.encerrado) : []
   const clientes = rh ? ((await sb.from('clientes').select('id, nome').order('nome')).data ?? []) : []

@@ -43,6 +43,6 @@ test('gestor só com projeto encerrado vê o projeto em Encerrados', () => {
   render(<ListaProjetos projetos={[]} encerrados={[encerrado]} perfil="gestor" clientes={[]} />)
   expect(screen.queryByText('Ainda não há projetos liberados para você. Fale com o RH.')).toBeNull()
   const secao = screen.getByRole('region', { name: 'Encerrados' })
-  expect(within(secao).getByRole('link', { name: 'Projeto Parada Z' })).toHaveAttribute('href', '/projetos/9')
+  expect(within(secao).getByRole('link', { name: 'Projeto Parada Z' })).toHaveAttribute('href', '/projetos/9/resumo')
   expect(secao).toHaveTextContent('Encerrado')
 })
