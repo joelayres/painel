@@ -1,7 +1,7 @@
 // @vitest-environment node
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { expect, test, vi } from 'vitest'
-import { alterarUsuario, cadastrarUsuario } from '../usuarios'
+import { alterarUsuario, cadastrarUsuario, esquemaUsuario, ROTULO_PERFIL } from '../usuarios'
 
 function admin(opcoes: { existente?: boolean; banFalha?: boolean; emailNoAuth?: string }) {
   const inserts: unknown[] = []
@@ -26,15 +26,27 @@ function admin(opcoes: { existente?: boolean; banFalha?: boolean; emailNoAuth?: 
 
 test('e-mail que ainda existe no login (pessoa removida antes) é reaproveitado', async () => {
   const a = admin({ emailNoAuth: 'cliente@braskem.com.br' })
-  expect(await cadastrarUsuario(a.cliente, { nome: 'Cliente', email: 'cliente@braskem.com.br', perfil: 'visualizador' })).toEqual({ ok: true })
-  expect(a.inserts).toEqual([{ usuario_id: 'antigo', nome: 'Cliente', email: 'cliente@braskem.com.br', perfil: 'visualizador' }])
+  expect(await cadastrarUsuario(a.cliente, { nome: 'Cliente', email: 'cliente@braskem.com.br', perfil: 'gestor' })).toEqual({ ok: true })
+  expect(a.inserts).toEqual([{ usuario_id: 'antigo', nome: 'Cliente', email: 'cliente@braskem.com.br', perfil: 'gestor', cliente_id: null }])
   expect(a.updateUserById).toHaveBeenCalledWith('antigo', { ban_duration: 'none' })
 })
 
 test('falha no bloqueio do login é avisada', async () => {
   const a = admin({ banFalha: true })
-  expect(await alterarUsuario(a.cliente, 'u1', { nome: 'X', perfil: 'visualizador', ativo: false })).toEqual({
+  expect(await alterarUsuario(a.cliente, 'u1', { nome: 'X', perfil: 'gestor', clienteId: null, ativo: false })).toEqual({
     ok: false,
     erros: { _: 'A situação foi gravada, mas o bloqueio do acesso falhou. Tente de novo.' },
   })
+})
+
+test('esquema exige cliente para o perfil cliente', () => {
+  const r = esquemaUsuario.safeParse({ nome: 'A', email: 'a@b.com', perfil: 'cliente' })
+  expect(r.success).toBe(false)
+  if (!r.success) expect(r.error.issues[0]).toMatchObject({ message: 'Escolha o cliente.', path: ['clienteId'] })
+})
+
+test('esquema aceita gestor sem cliente e ignora cliente de outros perfis', () => {
+  const r = esquemaUsuario.safeParse({ nome: 'A', email: 'a@b.com', perfil: 'gestor', clienteId: 'c1' })
+  expect(r.success && r.data.clienteId).toBeNull()
+  expect(ROTULO_PERFIL.gestor).toBe('Gestor Timenow')
 })

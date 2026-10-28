@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 const PUBLICAS = ['/entrar', '/icon', '/apple-icon']
 
 // Renova a sessão do Supabase e manda quem não entrou para /entrar.
-// O perfil (rh ou visualizador) é conferido nas páginas e ações (exigirSessao, exigirRh).
+// O perfil (rh, gestor ou cliente) é conferido nas páginas e ações (exigirSessao, exigirRh).
 export async function middleware(request: NextRequest) {
   let resposta = NextResponse.next({ request })
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
