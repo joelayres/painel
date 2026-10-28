@@ -156,6 +156,9 @@ isOneToOne: false
             "alterar_duracao":
 { Args: { "p_dias": number,"p_ordem": number }; Returns: undefined
                            },
+"cancelar_vaga":
+{ Args: { "p_id": string }; Returns: undefined
+                           },
 "candidato_desistiu":
 { Args: { "p_vaga": string }; Returns: undefined
                            },
@@ -174,11 +177,20 @@ isOneToOne: false
 "hoje_sp":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"importar_carga":
+{ Args: { "p_nome": string,"p_vagas": Json }; Returns: number
+                           },
 "meu_nome":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
 "meu_perfil":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"salvar_onda":
+{ Args: { "p_fim": string,"p_id": string,"p_inicio": string,"p_numero": number }; Returns: string
+                           },
+"salvar_vaga":
+{ Args: { "p": Json,"p_id": string }; Returns: string
                            },
 "travar_vaga_rh":
 { Args: { "p_vaga": string }; Returns: undefined

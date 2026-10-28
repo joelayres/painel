@@ -30,7 +30,7 @@ export async function salvarOnda(id: string | null, entrada: Dados): Promise<Res
   const r = validar(esquemaOnda, entrada)
   if (!r.ok) return r
   const sb = await criarClienteServidor()
-  const { error } = id ? await sb.from('ondas').update(r.dados).eq('id', id) : await sb.from('ondas').insert(r.dados)
+  const { error } = await sb.rpc('salvar_onda', { p_id: id as string, p_numero: r.dados.numero, p_inicio: r.dados.inicio, p_fim: r.dados.fim })
   if (error?.code === '23505') return { ok: false, erros: { numero: 'Esta onda já está cadastrada.' } }
   return error ? FALHA : pronto()
 }

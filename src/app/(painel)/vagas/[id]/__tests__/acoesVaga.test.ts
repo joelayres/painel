@@ -8,7 +8,7 @@ vi.mock('@/lib/supabase/servidor', () => ({
 }))
 vi.mock('@/lib/auth/perfil', () => ({ exigirRh: async () => ({ usuarioId: 'u', perfil: 'rh', nome: 'RH' }) }))
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
-const { concluirEtapa, salvarVaga } = await import('../acoesVaga')
+const { cancelarVaga, concluirEtapa, salvarVaga } = await import('../acoesVaga')
 
 beforeEach(() => vi.clearAllMocks())
 
@@ -35,4 +35,19 @@ test('salvar vaga valida os campos obrigatórios', async () => {
   expect(r.ok).toBe(false)
   if (!r.ok) expect(r.erros).toMatchObject({ funcao: 'Informe a função.', ondaId: 'Escolha a onda.' })
   expect(insert).not.toHaveBeenCalled()
+})
+
+test('salvar vaga grava pela função que registra o histórico', async () => {
+  rpc.mockResolvedValue({ data: 'v9', error: null })
+  const onda = '11111111-1111-4111-8111-111111111111'
+  const r = await salvarVaga(null, { funcao: 'Técnico', disciplina: 'NR-13', area: 'Caldeiraria', ondaId: onda, gestorId: '', candidato: '', dataInicio: '2026-10-22' })
+  expect(r).toEqual({ ok: true, id: 'v9' })
+  expect(rpc).toHaveBeenCalledWith('salvar_vaga', { p_id: null, p: { funcao: 'Técnico', disciplina: 'NR-13', area: 'Caldeiraria', onda_id: onda, gestor_id: null, candidato: null, data_inicio: '2026-10-22' } })
+  expect(insert).not.toHaveBeenCalled()
+})
+
+test('cancelar vaga usa a função que registra o histórico', async () => {
+  rpc.mockResolvedValue({ error: null })
+  expect(await cancelarVaga('v1')).toEqual({ ok: true })
+  expect(rpc).toHaveBeenCalledWith('cancelar_vaga', { p_id: 'v1' })
 })

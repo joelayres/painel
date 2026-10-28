@@ -76,6 +76,20 @@ describe('leitura da planilha de mobilização', () => {
     expect(r.ok && r.vagas[0].concluidas.map((c) => c.ordem)).toEqual([1, 2])
   })
 
+  it('aponta etapa fora de ordem', async () => {
+    const linhas = etapas(0)
+    ;[linhas[1], linhas[2]] = [linhas[2], linhas[1]]
+    const r = await lerPlanilhaMobilizacao(await planilha([vaga('X', 'Y', 'Z', '1º Onda', null), ...linhas]))
+    expect(r).toEqual({ ok: false, erros: [{ linha: 4, mensagem: 'etapa fora de ordem: Triagem de Candidatos' }] })
+  })
+
+  it('aponta etapa repetida', async () => {
+    const linhas = etapas(0)
+    linhas.splice(2, 0, linhas[1])
+    const r = await lerPlanilhaMobilizacao(await planilha([vaga('X', 'Y', 'Z', '1º Onda', null), ...linhas]))
+    expect(r).toEqual({ ok: false, erros: [{ linha: 5, mensagem: 'etapa fora de ordem: Captura de Mercado' }] })
+  })
+
   it('aponta etapa desconhecida', async () => {
     const r = await lerPlanilhaMobilizacao(await planilha([vaga('X', 'Y', 'Z', '1º Onda', null), ['      Etapa inventada', null, null, '1 dia', 'Qui 22/10/26', 'Qui 22/10/26', 0]]))
     expect(r).toEqual({ ok: false, erros: [{ linha: 3, mensagem: 'etapa desconhecida: Etapa inventada' }] })

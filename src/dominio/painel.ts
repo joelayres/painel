@@ -41,10 +41,13 @@ export function filtrarVagas(vagas: VagaPainel[], f: Filtro): VagaPainel[] {
   )
 }
 
-export function resumirOndas(vagas: VagaPainel[]): ResumoOnda[] {
-  const ondas = new Map<number, ResumoOnda>()
+const zerado = (o: OndaVaga): ResumoOnda => ({ numero: o.numero, inicio: o.inicio, fim: o.fim, total: 0, admitidas: 0, mobilizadas: 0, verde: 0, amarelo: 0, vermelho: 0 })
+
+// `cadastradas`: todas as ondas aparecem, mesmo sem vagas no filtro (o painel mostra as 4).
+export function resumirOndas(vagas: VagaPainel[], cadastradas: OndaVaga[] = []): ResumoOnda[] {
+  const ondas = new Map<number, ResumoOnda>(cadastradas.map((o) => [o.numero, zerado(o)]))
   for (const v of vagas) {
-    const r = ondas.get(v.onda.numero) ?? { numero: v.onda.numero, inicio: v.onda.inicio, fim: v.onda.fim, total: 0, admitidas: 0, mobilizadas: 0, verde: 0, amarelo: 0, vermelho: 0 }
+    const r = ondas.get(v.onda.numero) ?? zerado(v.onda)
     r.total++
     if (v.situacao.admitida) r.admitidas++
     if (v.situacao.mobilizada) r.mobilizadas++

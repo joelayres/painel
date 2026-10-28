@@ -105,6 +105,11 @@ export async function lerPlanilhaMobilizacao(arquivo: ArrayBuffer): Promise<Resu
     const vaga: VagaLida = atual
     const ordem = ORDEM_POR_NOME.get(normalizar(nome))
     if (!ordem) return void erros.push({ linha: n, mensagem: `etapa desconhecida: ${nome}` })
+    // As etapas precisam vir 1, 2, 3… uma vez cada: o banco conta a etapa atual como "maior concluída + 1".
+    if (ordem !== (vaga.etapas.at(-1)?.ordem ?? 0) + 1) {
+      pulandoEtapas = true
+      return void erros.push({ linha: n, mensagem: `etapa fora de ordem: ${nome}` })
+    }
     vaga.etapas.push({ linha: n, ordem, progresso: Number(valor(row.getCell(7).value) ?? 0) || 0, fim: lerData(row.getCell(6).value) })
   })
 

@@ -40,7 +40,7 @@ export default async function Painel({ searchParams }: { searchParams: Promise<B
         <Filtros opcoes={{ ondas: ondas.map((o) => o.numero), funcoes: unicos(vagas.map((v) => v.funcao)), areas: unicos(vagas.map((v) => v.area)), gestores }} />
         <span className="text-sm text-texto-suave">Atualizado em {dataBR(hoje)}</span>
       </div>
-      <CartoesOnda resumos={resumirOndas(semOnda)} hrefDe={hrefDe} ativa={onda} />
+      <CartoesOnda resumos={resumirOndas(semOnda, ondas)} hrefDe={hrefDe} ativa={onda} />
       <Atencao vagas={filtradas} />
       <Quadro vagas={filtradas} etapas={etapas} />
     </div>

@@ -39,6 +39,12 @@ describe('painel', () => {
     expect(resumirOndas(vagas).map((r) => r.numero)).toEqual([1, 2])
   })
 
+  it('mostra todas as ondas cadastradas, mesmo sem vagas no filtro', () => {
+    const r = resumirOndas([vaga('a', { cor: 'verde', etapaAtual: 1 })], [ONDA1, ONDA2])
+    expect(r.map((o) => [o.numero, o.total])).toEqual([[1, 1], [2, 0]])
+    expect(r[1]).toMatchObject({ inicio: '2026-11-01', fim: '2026-12-18', verde: 0, admitidas: 0 })
+  })
+
   it('filtra por candidato sem diferenciar maiúsculas nem acentos', () => {
     const vagas = [vaga('a', { cor: 'verde', etapaAtual: 5, candidato: 'João Silva' }), vaga('b', { cor: 'verde', etapaAtual: 1 })]
     expect(filtrarVagas(vagas, { candidato: 'joao' }).map((v) => v.id)).toEqual(['a'])

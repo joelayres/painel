@@ -50,19 +50,20 @@ export async function salvarVaga(id: string | null, entrada: unknown): Promise<{
   const r = validar(esquemaVaga, entrada)
   if (!r.ok) return r
   const d = r.dados
-  const linha = { funcao: d.funcao, disciplina: d.disciplina, area: d.area, onda_id: d.ondaId, gestor_id: d.gestorId, candidato: d.candidato, data_inicio: d.dataInicio }
   const sb = await criarClienteServidor()
-  const { data, error } = id
-    ? await sb.from('vagas').update(linha).eq('id', id).select('id').single()
-    : await sb.from('vagas').insert(linha).select('id').single()
+  // A função do banco grava e registra o histórico (quem mudou, antes e depois).
+  const { data, error } = await sb.rpc('salvar_vaga', {
+    p_id: id as string,
+    p: { funcao: d.funcao, disciplina: d.disciplina, area: d.area, onda_id: d.ondaId, gestor_id: d.gestorId, candidato: d.candidato, data_inicio: d.dataInicio },
+  })
   if (error || !data) return { ok: false, erros: { _: 'Não foi possível salvar a vaga. Tente de novo.' } }
   revalidatePath('/', 'layout')
-  return { ok: true, id: data.id }
+  return { ok: true, id: data as string }
 }
 
 export async function cancelarVaga(id: string): Promise<Resposta> {
   await exigirRh()
   const sb = await criarClienteServidor()
-  const { error } = await sb.from('vagas').update({ cancelada_em: new Date().toISOString() }).eq('id', id)
+  const { error } = await sb.rpc('cancelar_vaga', { p_id: id })
   return resposta(error)
 }
