@@ -6,8 +6,9 @@ import { COR_PRAZO } from './cores'
 export function CartaoProjeto({ projeto }: { projeto: Projeto }) {
   const { resumo: r } = projeto
   const pct = r.total ? Math.round((r.admitidas / r.total) * 100) : 0
-  const ondas = projeto.ondas > 0 ? `${projeto.ondas} ondas` : 'sem ondas'
-  const linha = [projeto.area, ondas, `${r.total} vagas`].filter(Boolean).join(' · ')
+  const ondas = projeto.ondas === 0 ? 'sem ondas' : projeto.ondas === 1 ? '1 onda' : `${projeto.ondas} ondas`
+  const vagas = r.total === 1 ? '1 vaga' : `${r.total} vagas`
+  const linha = [projeto.area, ondas, vagas].filter(Boolean).join(' · ')
   return (
     <Link
       href={`/projetos/${projeto.id}`}

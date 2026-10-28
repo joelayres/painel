@@ -15,9 +15,9 @@ export function CartoesEtapa({ cartoes, hrefFuncao }: { cartoes: CartaoEtapa[]; 
             <p className="mt-3 text-sm text-texto-suave">nenhuma vaga</p>
           ) : (
             <ul className="mt-3 flex flex-col gap-1">
-              {c.funcoes.map((f) => (
-                <li key={f.funcao}>
-                  <Link href={hrefFuncao(f.funcao)} className="flex flex-wrap items-baseline justify-between gap-x-2 rounded-md px-1 py-1 text-sm hover:bg-superficie-2 focus-visible:outline-2 focus-visible:outline-foco">
+              {c.funcoes.map((f) => {
+                const linha = (
+                  <>
                     <span>{f.funcao}</span>
                     <span className="font-semibold">{f.total}</span>
                     {(f.vermelho > 0 || f.amarelo > 0) && (
@@ -27,9 +27,22 @@ export function CartoesEtapa({ cartoes, hrefFuncao }: { cartoes: CartaoEtapa[]; 
                         {f.amarelo > 0 && <span style={{ color: COR_PRAZO.amarelo }} className="font-semibold">{f.amarelo} em risco</span>}
                       </span>
                     )}
-                  </Link>
-                </li>
-              ))}
+                  </>
+                )
+                const classe = 'flex flex-wrap items-baseline justify-between gap-x-2 rounded-md px-1 py-1 text-sm'
+                // O painel esconde as vagas mobilizadas: no cartão delas a função é só texto.
+                return (
+                  <li key={f.funcao}>
+                    {c.ordem === null ? (
+                      <div className={classe}>{linha}</div>
+                    ) : (
+                      <Link href={hrefFuncao(f.funcao)} className={`${classe} hover:bg-superficie-2 focus-visible:outline-2 focus-visible:outline-foco`}>
+                        {linha}
+                      </Link>
+                    )}
+                  </li>
+                )
+              })}
             </ul>
           )}
         </section>

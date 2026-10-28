@@ -6,7 +6,7 @@ Acompanhamento de projetos de mobilização: cada cliente tem seus projetos, e c
 - Projeto encerrado não aceita alteração até ser reaberto.
 - Importação: em cada projeto o RH baixa o modelo Excel, preenche as vagas (e as etapas já concluídas) e envia a planilha; o painel mostra a prévia com os erros por linha e só grava se estiver tudo certo.
 - O banco guarda só fatos (cadastros e datas reais de conclusão). Previsões e cores são calculadas em `src/dominio` a cada leitura.
-- Desenho: `docs/superpowers/specs/2026-10-27-painel-mobilizacao-design.md`. Plano: `docs/superpowers/plans/2026-10-27-plano-1-painel-mobilizacao.md`.
+- Desenho: `docs/superpowers/specs/2026-10-27-painel-mobilizacao-design.md` e, para os projetos de mobilização, `docs/superpowers/specs/2026-10-28-projetos-de-mobilizacao-design.md`. Plano: `docs/superpowers/plans/2026-10-27-plano-1-painel-mobilizacao.md` e `docs/superpowers/plans/2026-10-28-plano-2-projetos-de-mobilizacao.md`.
 
 ## Rodar
 

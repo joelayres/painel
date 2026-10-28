@@ -106,7 +106,7 @@ export function montarProjetos(l: LinhasPainel, hoje: string): CartaoProjeto[] {
         organizacao: p.organizacao,
         encerrado: p.encerrado_em !== null,
         cliente: { id: cliente.id, nome: cliente.nome },
-        ondas: l.ondas.filter((o) => o.projeto_id === p.id).length,
+        ondas: p.organizacao === 'ondas' ? l.ondas.filter((o) => o.projeto_id === p.id).length : 0,
         resumo: resumirProjeto(vagas.filter((v) => v.projetoId === p.id)),
       }
     })

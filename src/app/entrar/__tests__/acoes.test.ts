@@ -38,7 +38,7 @@ test('código errado', async () => {
 
 test('código certo leva ao painel', async () => {
   auth.verifyOtp.mockResolvedValue({ error: null })
-  rpc.mockResolvedValue({ data: 'visualizador', error: null })
+  rpc.mockResolvedValue({ data: 'gestor', error: null })
   expect(await verificarCodigo('a@b.com', '123456')).toEqual({ ok: true, destino: '/' })
   expect(auth.verifyOtp).toHaveBeenCalledWith({ email: 'a@b.com', token: '123456', type: 'email' })
 })

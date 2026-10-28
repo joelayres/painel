@@ -37,3 +37,12 @@ test('gestor sem projetos vê a mensagem', () => {
   render(<ListaProjetos projetos={[]} perfil="gestor" clientes={[]} />)
   expect(screen.getByText('Ainda não há projetos liberados para você. Fale com o RH.')).toBeTruthy()
 })
+
+test('gestor só com projeto encerrado vê o projeto em Encerrados', () => {
+  const encerrado = { ...proj('9', 'Parada Z', 'Braskem'), encerrado: true }
+  render(<ListaProjetos projetos={[]} encerrados={[encerrado]} perfil="gestor" clientes={[]} />)
+  expect(screen.queryByText('Ainda não há projetos liberados para você. Fale com o RH.')).toBeNull()
+  const secao = screen.getByRole('region', { name: 'Encerrados' })
+  expect(within(secao).getByRole('link', { name: 'Projeto Parada Z' })).toHaveAttribute('href', '/projetos/9')
+  expect(secao).toHaveTextContent('Encerrado')
+})

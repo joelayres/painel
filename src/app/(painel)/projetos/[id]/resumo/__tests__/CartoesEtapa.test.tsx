@@ -50,3 +50,11 @@ test('o cartão Mobilizadas vem por último, sem número', () => {
   const titulos = screen.getAllByRole('heading').map((h) => h.textContent)
   expect(titulos.at(-1)).toBe('Mobilizadas')
 })
+
+test('as funções do cartão Mobilizadas não são links: o painel esconde as mobilizadas', () => {
+  const comMobilizadas: CartaoEtapa[] = [{ ordem: null, nome: 'Mobilizadas', total: 2, funcoes: [{ funcao: 'Soldador', total: 2, vermelho: 0, amarelo: 0 }] }]
+  render(<CartoesEtapa cartoes={comMobilizadas} hrefFuncao={href} />)
+  expect(screen.queryByRole('link')).not.toBeInTheDocument()
+  expect(screen.getByRole('listitem')).toHaveTextContent('Soldador')
+  expect(screen.getByRole('listitem')).toHaveTextContent('2')
+})

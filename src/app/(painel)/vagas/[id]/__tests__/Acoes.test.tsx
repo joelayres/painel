@@ -18,8 +18,8 @@ beforeEach(() => {
   candidatoDesistiu.mockResolvedValue({ ok: true })
 })
 
-test('visualizador não vê as ações', () => {
-  const { container } = render(<Acoes {...base} perfil="visualizador" />)
+test('gestor não vê as ações', () => {
+  const { container } = render(<Acoes {...base} perfil="gestor" />)
   expect(container).toBeEmptyDOMElement()
   expect(screen.queryByRole('button', { name: /Concluir/ })).toBeNull()
 })

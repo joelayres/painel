@@ -82,6 +82,12 @@ describe('montarProjetos', () => {
     expect(c.find((p) => p.id === 'pB')).toMatchObject({ ondas: 2, area: 'Cloro' })
     expect(c.find((p) => p.id === 'pM')).toMatchObject({ encerrado: true, organizacao: 'meta', ondas: 0 })
   })
+
+  it('projeto por meta não conta ondas, mesmo se sobrou alguma ligada a ele', () => {
+    const sobra = { id: 'o9', nome: 'Onda 9', inicio: '2026-10-22', fim: '2026-11-18', projeto_id: 'pM' }
+    const c = montarProjetos({ ...linhas, ondas: [...linhas.ondas, sobra] }, '2026-10-27')
+    expect(c.find((p) => p.id === 'pM')!.ondas).toBe(0)
+  })
 })
 
 describe('carregarPainel', () => {

@@ -6,8 +6,12 @@ type Periodo = { inicio: string; fim: string }
 // Complemento legível do detalhe gravado pelas funções do banco (durações e ondas).
 function complemento(d: unknown): string {
   if (!d || typeof d !== 'object') return ''
-  const { antes, depois } = d as { antes?: unknown; depois?: unknown }
-  if (typeof antes === 'number' && typeof depois === 'number') return `: de ${antes} para ${depois} dias`
+  const { antes, depois, cliente, projeto } = d as { antes?: unknown; depois?: unknown; cliente?: unknown; projeto?: unknown }
+  if (typeof antes === 'number' && typeof depois === 'number') {
+    // A duração é do cliente ou de um projeto: o nome vai junto.
+    const dono = typeof cliente === 'string' ? ` (cliente ${cliente})` : typeof projeto === 'string' ? ` (projeto ${projeto})` : ''
+    return `${dono}: de ${antes} para ${depois} dias`
+  }
   if (antes && depois && typeof antes === 'object' && typeof depois === 'object') {
     const a = antes as Periodo
     const b = depois as Periodo

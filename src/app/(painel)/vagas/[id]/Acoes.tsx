@@ -4,11 +4,12 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState, useTransition } from 'react'
 import { Botao } from '@/components/ui/Botao'
 import { hojeSP } from '@/dominio/tempo'
+import type { Perfil } from '@/lib/auth/perfil'
 import { candidatoDesistiu, concluirEtapa, desfazerEtapa } from './acoesVaga'
 
 type Props = {
   vagaId: string
-  perfil: 'rh' | 'visualizador'
+  perfil: Perfil
   etapaAtual: { ordem: number; nome: string } | null
   ultimaConcluida: number | null
   admitida?: boolean

@@ -10,9 +10,12 @@ export const metadata = { title: 'Projetos · Painel de Mobilização' }
 export default async function Projetos() {
   const sessao = await exigirSessao()
   const sb = await criarClienteServidor()
-  const projetos = (await carregarProjetos(sb, hojeSP())).filter((p) => !p.encerrado)
-  if (sessao.perfil !== 'rh' && projetos.length === 1) redirect(`/projetos/${projetos[0].id}`)
-  const clientes =
-    sessao.perfil === 'rh' ? ((await sb.from('clientes').select('id, nome').order('nome')).data ?? []) : []
-  return <ListaProjetos projetos={projetos} perfil={sessao.perfil} clientes={clientes} />
+  const todos = await carregarProjetos(sb, hojeSP())
+  const projetos = todos.filter((p) => !p.encerrado)
+  const rh = sessao.perfil === 'rh'
+  if (!rh && projetos.length === 1) redirect(`/projetos/${projetos[0].id}`)
+  // Quem não é RH não tem a página Encerrados: sem projeto ativo, vê aqui os encerrados liberados.
+  const encerrados = !rh && projetos.length === 0 ? todos.filter((p) => p.encerrado) : []
+  const clientes = rh ? ((await sb.from('clientes').select('id, nome').order('nome')).data ?? []) : []
+  return <ListaProjetos projetos={projetos} encerrados={encerrados} perfil={sessao.perfil} clientes={clientes} />
 }

@@ -80,7 +80,7 @@ export default async function Configurar({ params, searchParams }: { params: Pro
         <p role="status" className="rounded-lg px-3 py-2 font-medium" style={{ background: 'var(--st-reprovada-fundo)', color: 'var(--st-reprovada-texto)' }}>Projeto encerrado. Reabra para alterar.</p>
       )}
       <Bloco titulo="Dados">
-        <DadosProjeto projeto={{ id: projeto.id, clienteId: projeto.cliente.id, clienteNome: projeto.cliente.nome, nome: projeto.nome, area: projeto.area, organizacao: projeto.organizacao }} />
+        <DadosProjeto projeto={{ id: projeto.id, clienteId: projeto.cliente.id, clienteNome: projeto.cliente.nome, nome: projeto.nome, area: projeto.area, organizacao: projeto.organizacao }} somenteLeitura={somenteLeitura} />
       </Bloco>
       {porOndas && (
         <Bloco titulo="Ondas">

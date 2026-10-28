@@ -10,6 +10,20 @@ test('mostra quem mudou a duração, quando e de quanto para quanto', () => {
   expect(item).toHaveTextContent('27/10/2026')
 })
 
+test('diz de qual cliente ou projeto é a duração', () => {
+  render(
+    <RegistroGeral
+      itens={[
+        { id: 'h3', acao: 'Alterou a duração de Treinamento', nome: 'Joel', em: '2026-10-27T18:30:00Z', detalhe: { cliente: 'Braskem', antes: 5, depois: 6 } },
+        { id: 'h4', acao: 'Alterou a duração de Treinamento', nome: 'Joel', em: '2026-10-27T18:30:00Z', detalhe: { projeto: 'Mobilização Braskem 2027', antes: 6, depois: 3 } },
+      ]}
+    />,
+  )
+  const [cliente, projeto] = screen.getAllByRole('listitem')
+  expect(cliente).toHaveTextContent('Alterou a duração de Treinamento (cliente Braskem): de 5 para 6 dias')
+  expect(projeto).toHaveTextContent('Alterou a duração de Treinamento (projeto Mobilização Braskem 2027): de 6 para 3 dias')
+})
+
 test('mostra a mudança de prazo de uma onda', () => {
   render(<RegistroGeral itens={[{ id: 'h2', acao: 'Alterou a 1ª Onda', nome: 'Joel', em: '2026-10-27T18:30:00Z', detalhe: { antes: { inicio: '2026-10-22', fim: '2026-11-26' }, depois: { inicio: '2026-10-22', fim: '2026-11-30' } } }]} />)
   expect(screen.getByRole('listitem')).toHaveTextContent('Alterou a 1ª Onda: fim de 26/11/2026 para 30/11/2026')

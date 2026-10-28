@@ -33,3 +33,8 @@ test('sem área, não mostra a área; encerrado mostra o texto', () => {
   expect(c.textContent).not.toContain('·  ·')
   expect(c).toHaveTextContent('Encerrado')
 })
+
+test('uma onda e uma vaga ficam no singular', () => {
+  render(<CartaoProjeto projeto={{ ...base, ondas: 1, resumo: { ...base.resumo, total: 1, admitidas: 0 } }} />)
+  expect(screen.getByText('Manutenção · 1 onda · 1 vaga')).toBeInTheDocument()
+})

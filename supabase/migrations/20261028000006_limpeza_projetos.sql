@@ -1,7 +1,23 @@
 -- Limpeza do modelo de uma mobilização só. Só vai ao ar depois que o código novo estiver publicado:
 -- o código antigo ainda usa ondas.numero, o perfil visualizador e as funções que saem aqui.
 
--- Todo dado agora pertence a um projeto.
+-- O que o código antigo criou entre a 005 e a publicação do código novo entra na Braskem 2027,
+-- como a 005 fez com os dados de antes dela.
+do $$
+declare v_cliente uuid; v_projeto uuid;
+begin
+  select id into v_cliente from clientes where nome = 'Braskem';
+  select id into v_projeto from projetos where cliente_id = v_cliente and nome = 'Mobilização Braskem 2027';
+  update ondas set projeto_id = coalesce(projeto_id, v_projeto), nome = coalesce(nome, numero || 'ª Onda')
+    where projeto_id is null or nome is null;
+  update vagas v set projeto_id = o.projeto_id from ondas o where o.id = v.onda_id and v.projeto_id is null;
+  with convertidos as (update usuarios set perfil = 'gestor' where perfil = 'visualizador' returning id)
+  insert into projeto_acessos (projeto_id, usuario_id) select v_projeto, id from convertidos on conflict do nothing;
+  update gestores set cliente_id = v_cliente where cliente_id is null;
+end $$;
+
+-- Todo dado agora pertence a um projeto, e todo gestor a um cliente.
+alter table gestores alter column cliente_id set not null;
 alter table ondas alter column projeto_id set not null, alter column nome set not null;
 alter table vagas alter column projeto_id set not null;
 
