@@ -1,8 +1,9 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { Botao } from '@/components/ui/Botao'
+import { hojeSP } from '@/dominio/tempo'
 import { candidatoDesistiu, concluirEtapa, desfazerEtapa } from './acoesVaga'
 
 type Props = {
@@ -10,15 +11,25 @@ type Props = {
   perfil: 'rh' | 'visualizador'
   etapaAtual: { ordem: number; nome: string } | null
   ultimaConcluida: number | null
+  admitida?: boolean
   hoje: string
 }
 
-export function Acoes({ vagaId, perfil, etapaAtual, ultimaConcluida, hoje }: Props) {
+export function Acoes({ vagaId, perfil, etapaAtual, ultimaConcluida, admitida = false, hoje }: Props) {
   const router = useRouter()
   const [data, setData] = useState(hoje)
   const [erro, setErro] = useState<string | null>(null)
   const [confirmando, setConfirmando] = useState(false)
   const [pendente, iniciar] = useTransition()
+  const [alterouData, setAlterouData] = useState(false)
+
+  // Aba aberta de um dia para o outro: enquanto a pessoa não escolheu outra data, o padrão segue o dia de hoje.
+  useEffect(() => {
+    const aoVoltar = () => { if (!alterouData) setData(hojeSP()) }
+    window.addEventListener('focus', aoVoltar)
+    return () => window.removeEventListener('focus', aoVoltar)
+  }, [alterouData])
+
   if (perfil !== 'rh') return null
 
   const executar = (acao: () => Promise<{ ok: true } | { ok: false; erro: string }>) =>
@@ -41,7 +52,7 @@ export function Acoes({ vagaId, perfil, etapaAtual, ultimaConcluida, hoje }: Pro
           </Botao>
           <label className="flex flex-col text-sm text-texto-suave">
             Concluída em
-            <input type="date" value={data} max={hoje} onChange={(e) => setData(e.target.value)} className="min-h-11 rounded-lg border border-borda bg-superficie px-3 text-texto" />
+            <input type="date" value={data} max={hojeSP()} onChange={(e) => { setData(e.target.value); setAlterouData(true) }} className="min-h-11 rounded-lg border border-borda bg-superficie px-3 text-texto" />
           </label>
         </div>
       )}
@@ -51,7 +62,7 @@ export function Acoes({ vagaId, perfil, etapaAtual, ultimaConcluida, hoje }: Pro
             Desfazer último avanço
           </Botao>
         )}
-        {etapaAtual &&
+        {etapaAtual && !admitida &&
           (confirmando ? (
             <>
               <Botao variante="perigo" disabled={pendente} onClick={() => executar(() => candidatoDesistiu(vagaId))}>

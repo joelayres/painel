@@ -8,12 +8,12 @@ import { gravarCarga } from '@/lib/carga/gravar'
 import { lerPlanilhaMobilizacao, type VagaCarga } from '@/lib/carga/ler'
 import { criarClienteAdmin } from '@/lib/supabase/admin'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
-import { validar } from '@/lib/validacao/vaga'
+import { campoData, validar } from '@/lib/validacao/vaga'
 
 export type RespostaAcao = { ok: true } | { ok: false; erros: Record<string, string> }
 type Dados = Record<string, unknown>
 
-const data = (msg: string) => z.string({ error: msg }).regex(/^\d{4}-\d{2}-\d{2}$/, msg)
+const data = campoData
 const FALHA = { ok: false as const, erros: { _: 'Não foi possível salvar. Tente de novo.' } }
 
 function pronto(): RespostaAcao {

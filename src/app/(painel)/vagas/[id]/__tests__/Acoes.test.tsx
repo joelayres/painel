@@ -50,3 +50,18 @@ test('candidato desistiu pede confirmação antes de chamar', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Confirmar desistência' }))
   expect(candidatoDesistiu).toHaveBeenCalledWith('v1')
 })
+
+test('depois da admissão não oferece "Candidato desistiu"', () => {
+  render(<Acoes {...base} etapaAtual={{ ordem: 12, nome: 'Atualização da CTPS' }} ultimaConcluida={11} admitida perfil="rh" />)
+  expect(screen.queryByRole('button', { name: 'Candidato desistiu' })).toBeNull()
+  expect(screen.getByRole('button', { name: 'Concluir Atualização da CTPS' })).toBeInTheDocument()
+})
+
+test('a data padrão acompanha o dia quando a aba volta ao foco', async () => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date('2026-10-28T13:00:00Z'))
+  render(<Acoes {...base} perfil="rh" />)
+  window.dispatchEvent(new Event('focus'))
+  expect(await screen.findByDisplayValue('2026-10-28')).toBeInTheDocument()
+  vi.useRealTimers()
+})

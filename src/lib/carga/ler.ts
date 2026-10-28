@@ -2,6 +2,8 @@
 // Linha de vaga: nome com até 3 espaços à esquerda; linhas de etapa (6+ espaços) vêm logo abaixo.
 import ExcelJS from 'exceljs'
 import { ETAPAS_PADRAO } from '@/dominio/etapas'
+import { hojeSP } from '@/dominio/tempo'
+import { dataValida } from '@/lib/validacao/vaga'
 
 export type VagaCarga = {
   linha: number
@@ -37,7 +39,8 @@ function lerData(c: ExcelJS.CellValue): string | null {
   const m = /(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})/.exec(texto(v))
   if (!m) return null
   const ano = m[3].length === 2 ? 2000 + Number(m[3]) : Number(m[3])
-  return `${ano}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`
+  const iso = `${ano}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`
+  return dataValida(iso) ? iso : null
 }
 
 // "1º Onda", "1ª Onda" ou "Onda 1".
@@ -47,7 +50,8 @@ function lerOnda(c: ExcelJS.CellValue): number | null {
   return n >= 1 && n <= 4 ? n : null
 }
 
-export async function lerPlanilhaMobilizacao(arquivo: ArrayBuffer): Promise<ResultadoCarga> {
+// `hoje`: uma etapa marcada como feita com data futura (a data planejada) passa a valer hoje.
+export async function lerPlanilhaMobilizacao(arquivo: ArrayBuffer, hoje: string = hojeSP()): Promise<ResultadoCarga> {
   const wb = new ExcelJS.Workbook()
   try {
     await wb.xlsx.load(arquivo)
@@ -113,14 +117,14 @@ export async function lerPlanilhaMobilizacao(arquivo: ArrayBuffer): Promise<Resu
     vaga.etapas.push({ linha: n, ordem, progresso: Number(valor(row.getCell(7).value) ?? 0) || 0, fim: lerData(row.getCell(6).value) })
   })
 
-  for (const v of vagas as VagaLida[]) erros.push(...resolverConclusoes(v))
+  for (const v of vagas as VagaLida[]) erros.push(...resolverConclusoes(v, hoje))
   if (erros.length) return { ok: false, erros: erros.sort((a, b) => a.linha - b.linha) }
   return { ok: true, vagas: (vagas as VagaLida[]).map(({ etapas, ...v }) => (void etapas, v)), erros: [] }
 }
 
 // Concluídas = todas até a última etapa com 100%. Uma parcial (ex.: 99%) antes dela conta como
 // concluída; uma com 0% antes dela é erro (a planilha diz que pulou uma etapa).
-function resolverConclusoes(v: VagaCarga & { etapas: { linha: number; ordem: number; progresso: number; fim: string | null }[] }): Erro[] {
+function resolverConclusoes(v: VagaCarga & { etapas: { linha: number; ordem: number; progresso: number; fim: string | null }[] }, hoje: string): Erro[] {
   const ultima = v.etapas.findLastIndex((e) => e.progresso >= 1)
   const erros: Erro[] = []
   for (let i = 0; i <= ultima; i++) {
@@ -134,7 +138,7 @@ function resolverConclusoes(v: VagaCarga & { etapas: { linha: number; ordem: num
       erros.push({ linha: e.linha, mensagem: 'data de fim inválida' })
       break
     }
-    v.concluidas.push({ ordem: e.ordem, concluidaEm: e.fim })
+    v.concluidas.push({ ordem: e.ordem, concluidaEm: e.fim > hoje ? hoje : e.fim })
   }
   return erros
 }

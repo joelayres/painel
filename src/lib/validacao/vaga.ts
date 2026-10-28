@@ -1,7 +1,16 @@
 import { z } from 'zod'
 
 const texto = (msg: string) => z.string({ error: msg }).trim().min(1, msg)
-const data = (msg: string) => z.string({ error: msg }).regex(/^\d{4}-\d{2}-\d{2}$/, msg)
+// AAAA-MM-DD que existe no calendário (recusa 2026-02-31).
+export function dataValida(texto: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(texto)) return false
+  const [a, m, d] = texto.split('-').map(Number)
+  const dia = new Date(Date.UTC(a, m - 1, d))
+  return dia.getUTCFullYear() === a && dia.getUTCMonth() === m - 1 && dia.getUTCDate() === d
+}
+
+export const campoData = (msg: string) => z.string({ error: msg }).refine(dataValida, msg)
+const data = campoData
 const opcional = z.string().nullish().transform((v) => (v?.trim() ? v.trim() : null))
 
 export const esquemaVaga = z.object({

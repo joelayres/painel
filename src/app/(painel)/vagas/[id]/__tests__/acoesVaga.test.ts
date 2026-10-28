@@ -8,7 +8,7 @@ vi.mock('@/lib/supabase/servidor', () => ({
 }))
 vi.mock('@/lib/auth/perfil', () => ({ exigirRh: async () => ({ usuarioId: 'u', perfil: 'rh', nome: 'RH' }) }))
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
-const { cancelarVaga, concluirEtapa, salvarVaga } = await import('../acoesVaga')
+const { cancelarVaga, candidatoDesistiu, concluirEtapa, salvarVaga } = await import('../acoesVaga')
 
 beforeEach(() => vi.clearAllMocks())
 
@@ -50,4 +50,13 @@ test('cancelar vaga usa a função que registra o histórico', async () => {
   rpc.mockResolvedValue({ error: null })
   expect(await cancelarVaga('v1')).toEqual({ ok: true })
   expect(rpc).toHaveBeenCalledWith('cancelar_vaga', { p_id: 'v1' })
+})
+
+test('novos limites de data e desistência após admissão viram mensagens claras', async () => {
+  rpc.mockResolvedValue({ error: { message: 'data antes do início da vaga' } })
+  expect(await concluirEtapa('v1', 1, '2026-10-01')).toEqual({ ok: false, erro: 'A data não pode ser antes do início do processo da vaga.' })
+  rpc.mockResolvedValue({ error: { message: 'data antes da retomada' } })
+  expect(await concluirEtapa('v1', 2, '2026-10-01')).toEqual({ ok: false, erro: 'A data não pode ser antes da desistência do candidato anterior.' })
+  rpc.mockResolvedValue({ error: { message: 'vaga já admitida' } })
+  expect(await candidatoDesistiu('v1')).toEqual({ ok: false, erro: 'A vaga já passou da admissão; não volta para a captura.' })
 })

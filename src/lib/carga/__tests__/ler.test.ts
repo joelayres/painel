@@ -27,7 +27,7 @@ describe('leitura da planilha de mobilização', () => {
       vaga('Engenheiro de Campo', 'NR-13', 'Caldeiraria', '1º Onda', null), ...etapas(4),
       ['   Treinamento - Braskem'],
       vaga('Técnico de Planejamento', 'NR-13', 'Planejamento', '2ª Onda', 'Lucas Santos'), ...etapas(0),
-    ]))
+    ]), '2026-12-31')
     expect(r.ok).toBe(true)
     if (!r.ok) return
     expect(r.vagas).toHaveLength(2)
@@ -88,6 +88,18 @@ describe('leitura da planilha de mobilização', () => {
     linhas.splice(2, 0, linhas[1])
     const r = await lerPlanilhaMobilizacao(await planilha([vaga('X', 'Y', 'Z', '1º Onda', null), ...linhas]))
     expect(r).toEqual({ ok: false, erros: [{ linha: 5, mensagem: 'etapa fora de ordem: Captura de Mercado' }] })
+  })
+
+  it('data impossível na planilha é apontada', async () => {
+    const linha = vaga('X', 'Y', 'Z', '1º Onda', null)
+    linha[4] = 'Qui 31/02/26'
+    const r = await lerPlanilhaMobilizacao(await planilha([linha, ...etapas(0)]))
+    expect(r).toEqual({ ok: false, erros: [{ linha: 2, mensagem: 'data de início inválida' }] })
+  })
+
+  it('etapa concluída com data futura usa a data de hoje', async () => {
+    const r = await lerPlanilhaMobilizacao(await planilha([vaga('X', 'Y', 'Z', '1º Onda', null), ...etapas(4)]), '2026-10-27')
+    expect(r.ok && r.vagas[0].concluidas.map((c) => c.concluidaEm)).toEqual(['2026-10-22', '2026-10-27', '2026-10-27', '2026-10-27'])
   })
 
   it('aponta etapa desconhecida', async () => {

@@ -15,19 +15,23 @@ export function CadastroVagas({ vagas, opcoes }: { vagas: Vaga[]; opcoes: Opcoes
   const router = useRouter()
   const [confirmando, setConfirmando] = useState<string | null>(null)
   const [pendente, iniciar] = useTransition()
+  const [erro, setErro] = useState<string | null>(null)
   const ativas = vagas.filter((v) => !v.canceladaEm)
   const canceladas = vagas.filter((v) => v.canceladaEm)
 
   const cancelar = (id: string) =>
     iniciar(async () => {
-      await cancelarVaga(id)
+      const r = await cancelarVaga(id)
       setConfirmando(null)
+      if (!r.ok) return setErro(r.erro)
+      setErro(null)
       router.refresh()
     })
 
   return (
     <div className="flex flex-col gap-4">
       <div><FormVaga vaga={null} opcoes={opcoes} rotuloBotao="Nova vaga" /></div>
+      {erro && <p role="alert" className="rounded-lg px-3 py-2 font-medium" style={{ background: 'var(--st-reprovada-fundo)', color: 'var(--st-reprovada-texto)' }}>{erro}</p>}
       <div className="overflow-x-auto rounded-xl border border-borda bg-superficie">
         <table className="w-full text-left text-[15px]">
           <thead>

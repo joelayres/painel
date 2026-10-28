@@ -19,19 +19,31 @@ export async function cadastrarUsuario(admin: SupabaseClient, entrada: unknown):
   const { data: existente } = await admin.from('usuarios').select('id').eq('email', d.email).maybeSingle()
   if (existente) return { ok: false, erros: { email: 'E-mail já cadastrado.' } }
   const { data: criado, error } = await admin.auth.admin.createUser({ email: d.email, email_confirm: true })
-  if (error || !criado.user) return { ok: false, erros: { email: 'Não foi possível criar o acesso deste e-mail.' } }
-  const { error: e2 } = await admin.from('usuarios').insert({ usuario_id: criado.user.id, nome: d.nome, email: d.email, perfil: d.perfil })
+  // Pessoa removida antes continua no login: reaproveita o acesso e tira o bloqueio.
+  const reaproveitado = error?.code === 'email_exists' ? await usuarioDoLogin(admin, d.email) : null
+  const usuarioId = criado.user?.id ?? reaproveitado
+  if (!usuarioId) return { ok: false, erros: { email: 'Não foi possível criar o acesso deste e-mail.' } }
+  const { error: e2 } = await admin.from('usuarios').insert({ usuario_id: usuarioId, nome: d.nome, email: d.email, perfil: d.perfil })
   if (e2) {
-    await admin.auth.admin.deleteUser(criado.user.id)
+    if (!reaproveitado) await admin.auth.admin.deleteUser(usuarioId)
     return { ok: false, erros: { _: 'Não foi possível salvar. Tente de novo.' } }
   }
+  if (reaproveitado) await admin.auth.admin.updateUserById(reaproveitado, { ban_duration: 'none' })
   return { ok: true }
+}
+
+async function usuarioDoLogin(admin: SupabaseClient, email: string): Promise<string | null> {
+  const { data } = await admin.auth.admin.listUsers({ perPage: 1000 })
+  return data?.users.find((u) => u.email?.toLowerCase() === email)?.id ?? null
 }
 
 export async function alterarUsuario(admin: SupabaseClient, id: string, entrada: { nome: string; perfil: 'rh' | 'visualizador'; ativo: boolean }): Promise<{ ok: true } | { ok: false; erros: Record<string, string> }> {
   const { data: atual } = await admin.from('usuarios').select('usuario_id').eq('id', id).single()
   const { error } = await admin.from('usuarios').update({ nome: entrada.nome.trim(), perfil: entrada.perfil, ativo: entrada.ativo }).eq('id', id)
   if (error) return { ok: false, erros: { _: 'Não foi possível salvar. Tente de novo.' } }
-  if (atual?.usuario_id) await admin.auth.admin.updateUserById(atual.usuario_id, { ban_duration: entrada.ativo ? 'none' : BLOQUEIO })
+  if (atual?.usuario_id) {
+    const { error: e2 } = await admin.auth.admin.updateUserById(atual.usuario_id, { ban_duration: entrada.ativo ? 'none' : BLOQUEIO })
+    if (e2) return { ok: false, erros: { _: 'A situação foi gravada, mas o bloqueio do acesso falhou. Tente de novo.' } }
+  }
   return { ok: true }
 }

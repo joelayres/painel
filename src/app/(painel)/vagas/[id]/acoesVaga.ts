@@ -13,6 +13,9 @@ const MENSAGENS: [string, string][] = [
   ['data antes da etapa anterior', 'A data não pode ser antes da conclusão da etapa anterior.'],
   ['data no futuro', 'A data não pode ser no futuro.'],
   ['vaga cancelada', 'Esta vaga foi cancelada.'],
+  ['data antes do início da vaga', 'A data não pode ser antes do início do processo da vaga.'],
+  ['data antes da retomada', 'A data não pode ser antes da desistência do candidato anterior.'],
+  ['vaga já admitida', 'A vaga já passou da admissão; não volta para a captura.'],
 ]
 
 function resposta(error: { message: string } | null): Resposta {
