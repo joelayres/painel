@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { conexao, comoUsuario, emTransacao, novaVaga } from './apoio'
+import type { Client } from 'pg'
+import { conexao, comoUsuario, emTransacao, novaVaga, novoCliente, novoProjeto } from './apoio'
 
 const erro = async (p: Promise<unknown>) => {
   try {
@@ -10,10 +11,16 @@ const erro = async (p: Promise<unknown>) => {
   }
 }
 
+// Vaga de teste num projeto por ondas novo, de um cliente novo.
+async function vagaDeTeste(c: Client, dataInicio: string): Promise<string> {
+  const { projetoId, ondaId } = await novoProjeto(c, { clienteId: await novoCliente(c), organizacao: 'ondas' })
+  return novaVaga(c, { projetoId, ondaId, dataInicio })
+}
+
 describe('limites das datas de conclusão', () => {
   it('etapa 1 não pode ser concluída antes do início da vaga', () =>
     emTransacao(async (c) => {
-      const vaga = await novaVaga(c, '2026-10-22')
+      const vaga = await vagaDeTeste(c, '2026-10-22')
       await comoUsuario(c, 'rh')
       await c.query('savepoint s')
       expect(await erro(c.query('select concluir_etapa($1, 1::smallint, $2::date)', [vaga, '2026-10-21']))).toContain('data antes do início da vaga')
@@ -23,7 +30,7 @@ describe('limites das datas de conclusão', () => {
 
   it('depois da desistência, a captura não pode ser concluída antes da retomada', () =>
     emTransacao(async (c) => {
-      const vaga = await novaVaga(c, '2026-10-01')
+      const vaga = await vagaDeTeste(c, '2026-10-01')
       await comoUsuario(c, 'rh')
       await c.query('select concluir_etapa($1, 1::smallint, $2::date)', [vaga, '2026-10-01'])
       await c.query('select candidato_desistiu($1)', [vaga])
@@ -35,7 +42,7 @@ describe('limites das datas de conclusão', () => {
 describe('desistência do candidato', () => {
   it('guarda no histórico as datas apagadas', () =>
     emTransacao(async (c) => {
-      const vaga = await novaVaga(c, '2026-10-01')
+      const vaga = await vagaDeTeste(c, '2026-10-01')
       await comoUsuario(c, 'rh')
       for (const [ordem, dia] of [[1, '2026-10-01'], [2, '2026-10-07'], [3, '2026-10-08']] as const) {
         await c.query('select concluir_etapa($1, $2::smallint, $3::date)', [vaga, ordem, dia])
@@ -47,7 +54,7 @@ describe('desistência do candidato', () => {
 
   it('não vale depois da admissão', () =>
     emTransacao(async (c) => {
-      const vaga = await novaVaga(c, '2026-10-01')
+      const vaga = await vagaDeTeste(c, '2026-10-01')
       for (let ordem = 1; ordem <= 11; ordem++) {
         await c.query('insert into vaga_conclusoes (vaga_id, ordem, concluida_em) values ($1, $2, $3)', [vaga, ordem, '2026-10-15'])
       }

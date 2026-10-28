@@ -24,11 +24,13 @@ export async function aplicarPendentes(c: Client): Promise<void> {
   }
 }
 
-export async function emTransacao(fn: (c: Client) => Promise<void>): Promise<void> {
+// `antes` roda na transação antes das migrações pendentes: serve para guardar o estado de antes da migração.
+export async function emTransacao(fn: (c: Client) => Promise<void>, antes?: (c: Client) => Promise<void>): Promise<void> {
   const c = conexao()
   await c.connect()
   try {
     await c.query('begin')
+    if (antes) await antes(c)
     await aplicarPendentes(c)
     await fn(c)
   } finally {
@@ -38,20 +40,57 @@ export async function emTransacao(fn: (c: Client) => Promise<void>): Promise<voi
 }
 
 // Cria (dentro da transação) um usuário com o perfil e passa a agir como ele, como o PostgREST faz.
-export async function comoUsuario(c: Client, perfil: 'rh' | 'visualizador'): Promise<string> {
+// Devolve o id do auth (authId) e o id do registro em usuarios (usuarioId).
+export async function comoUsuario(
+  c: Client,
+  perfil: 'rh' | 'gestor' | 'cliente',
+  clienteId?: string,
+): Promise<{ authId: string; usuarioId: string }> {
   const id = randomUUID()
-  await c.query('insert into auth.users (id, email) values ($1, $2)', [id, `teste-sql-${id}@exemplo.test`])
-  await c.query("insert into usuarios (usuario_id, nome, email, perfil) values ($1, 'teste-sql RH', $2, $3)", [id, `teste-sql-${id}@exemplo.test`, perfil])
+  const email = `teste-sql-${id}@exemplo.test`
+  await c.query('insert into auth.users (id, email) values ($1, $2)', [id, email])
+  // Sem cliente, a coluna cliente_id nem aparece: o teste dos dois cliques roda no banco sem a 005.
+  const { rows } = clienteId
+    ? await c.query('insert into usuarios (usuario_id, nome, email, perfil, cliente_id) values ($1, $2, $3, $4, $5) returning id', [id, `teste-sql ${perfil}`, email, perfil, clienteId])
+    : await c.query('insert into usuarios (usuario_id, nome, email, perfil) values ($1, $2, $3, $4) returning id', [id, `teste-sql ${perfil}`, email, perfil])
   await c.query("select set_config('request.jwt.claims', json_build_object('sub', $1::text, 'role', 'authenticated')::text, true)", [id])
   await c.query('set local role authenticated')
-  return id
+  return { authId: id, usuarioId: rows[0].id }
 }
 
-// Vaga de teste numa onda já cadastrada (criada com o papel do banco, antes de virar o usuário).
-export async function novaVaga(c: Client, dataInicio = '2026-10-22'): Promise<string> {
+// Os ajudantes abaixo agem com o papel do banco: chame-os antes de comoUsuario.
+
+// Cliente de teste com as durações copiadas das etapas, como salvar_cliente faz.
+export async function novoCliente(c: Client, nome = `teste-sql Cliente ${randomUUID()}`): Promise<string> {
+  const { rows } = await c.query('insert into clientes (nome) values ($1) returning id', [nome])
+  await c.query('insert into cliente_duracoes (cliente_id, ordem, duracao) select $1, ordem, duracao from etapas', [rows[0].id])
+  return rows[0].id
+}
+
+// Projeto de teste. Por ondas, já vem com uma onda de 22/10 a 31/12/2026.
+export async function novoProjeto(
+  c: Client,
+  p: { clienteId: string; organizacao: 'ondas' | 'meta'; nome?: string },
+): Promise<{ projetoId: string; ondaId: string | null }> {
+  const { rows } = await c.query('insert into projetos (cliente_id, nome, organizacao) values ($1, $2, $3) returning id', [
+    p.clienteId,
+    p.nome ?? `teste-sql Projeto ${randomUUID()}`,
+    p.organizacao,
+  ])
+  const projetoId = rows[0].id
+  if (p.organizacao === 'meta') return { projetoId, ondaId: null }
+  const onda = await c.query("insert into ondas (projeto_id, nome, inicio, fim) values ($1, '1ª Onda', '2026-10-22', '2026-12-31') returning id", [projetoId])
+  return { projetoId, ondaId: onda.rows[0].id }
+}
+
+// Vaga de teste num projeto (com a onda ou a meta que o projeto pede).
+export async function novaVaga(
+  c: Client,
+  p: { projetoId: string; ondaId?: string | null; meta?: string | null; dataInicio?: string },
+): Promise<string> {
   const { rows } = await c.query(
-    "insert into vagas (funcao, disciplina, area, onda_id, data_inicio) select 'teste-sql Vaga', 'x', 'x', id, $1 from ondas order by numero limit 1 returning id",
-    [dataInicio],
+    "insert into vagas (funcao, disciplina, area, projeto_id, onda_id, meta, data_inicio) values ('teste-sql Vaga', 'x', 'x', $1, $2, $3, $4) returning id",
+    [p.projetoId, p.ondaId ?? null, p.meta ?? null, p.dataInicio ?? '2026-10-22'],
   )
   return rows[0].id
 }
