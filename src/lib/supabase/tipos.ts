@@ -5,7 +5,47 @@ export type Database = {
   
   "public": {
           Tables: {
-            "etapas": {
+            "cliente_duracoes": {
+                  Row: {
+                    "cliente_id": string,"duracao": number,"ordem": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "cliente_id": string,"duracao": number,"ordem": number
+                  }
+                  Update: {
+                    "cliente_id"?: string,"duracao"?: number,"ordem"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "cliente_duracoes_cliente_id_fkey"
+      columns: ["cliente_id"]
+isOneToOne: false
+      referencedRelation: "clientes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "cliente_duracoes_ordem_fkey"
+      columns: ["ordem"]
+isOneToOne: false
+      referencedRelation: "etapas"
+      referencedColumns: ["ordem"]
+    }
+                  ]
+                },"clientes": {
+                  Row: {
+                    "criado_em": string,"id": string,"nome": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "criado_em"?: string,"id"?: string,"nome": string
+                  }
+                  Update: {
+                    "criado_em"?: string,"id"?: string,"nome"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"etapas": {
                   Row: {
                     "duracao": number,"nome": string,"ordem": number
                   }
@@ -35,17 +75,23 @@ export type Database = {
                   ]
                 },"gestores": {
                   Row: {
-                    "criado_em": string,"email": string | null,"id": string,"nome": string
+                    "cliente_id": string | null,"criado_em": string,"email": string | null,"id": string,"nome": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "criado_em"?: string,"email"?: string | null,"id"?: string,"nome": string
+                    "cliente_id"?: string | null,"criado_em"?: string,"email"?: string | null,"id"?: string,"nome": string
                   }
                   Update: {
-                    "criado_em"?: string,"email"?: string | null,"id"?: string,"nome"?: string
+                    "cliente_id"?: string | null,"criado_em"?: string,"email"?: string | null,"id"?: string,"nome"?: string
                   }
                   Relationships: [
-                    
+                    {
+      foreignKeyName: "gestores_cliente_id_fkey"
+      columns: ["cliente_id"]
+isOneToOne: false
+      referencedRelation: "clientes"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"historico": {
                   Row: {
@@ -69,31 +115,115 @@ isOneToOne: false
                   ]
                 },"ondas": {
                   Row: {
-                    "fim": string,"id": string,"inicio": string,"numero": number
+                    "fim": string,"id": string,"inicio": string,"nome": string | null,"numero": number | null,"projeto_id": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "fim": string,"id"?: string,"inicio": string,"numero": number
+                    "fim": string,"id"?: string,"inicio": string,"nome"?: string | null,"numero"?: number | null,"projeto_id"?: string | null
                   }
                   Update: {
-                    "fim"?: string,"id"?: string,"inicio"?: string,"numero"?: number
+                    "fim"?: string,"id"?: string,"inicio"?: string,"nome"?: string | null,"numero"?: number | null,"projeto_id"?: string | null
                   }
                   Relationships: [
-                    
+                    {
+      foreignKeyName: "ondas_projeto_id_fkey"
+      columns: ["projeto_id"]
+isOneToOne: false
+      referencedRelation: "projetos"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"projeto_acessos": {
+                  Row: {
+                    "projeto_id": string,"usuario_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "projeto_id": string,"usuario_id": string
+                  }
+                  Update: {
+                    "projeto_id"?: string,"usuario_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "projeto_acessos_projeto_id_fkey"
+      columns: ["projeto_id"]
+isOneToOne: false
+      referencedRelation: "projetos"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "projeto_acessos_usuario_id_fkey"
+      columns: ["usuario_id"]
+isOneToOne: false
+      referencedRelation: "usuarios"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"projeto_duracoes": {
+                  Row: {
+                    "duracao": number,"ordem": number,"projeto_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "duracao": number,"ordem": number,"projeto_id": string
+                  }
+                  Update: {
+                    "duracao"?: number,"ordem"?: number,"projeto_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "projeto_duracoes_ordem_fkey"
+      columns: ["ordem"]
+isOneToOne: false
+      referencedRelation: "etapas"
+      referencedColumns: ["ordem"]
+    },{
+      foreignKeyName: "projeto_duracoes_projeto_id_fkey"
+      columns: ["projeto_id"]
+isOneToOne: false
+      referencedRelation: "projetos"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"projetos": {
+                  Row: {
+                    "area": string | null,"cliente_id": string,"criado_em": string,"encerrado_em": string | null,"id": string,"nome": string,"organizacao": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "area"?: string | null,"cliente_id": string,"criado_em"?: string,"encerrado_em"?: string | null,"id"?: string,"nome": string,"organizacao": string
+                  }
+                  Update: {
+                    "area"?: string | null,"cliente_id"?: string,"criado_em"?: string,"encerrado_em"?: string | null,"id"?: string,"nome"?: string,"organizacao"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "projetos_cliente_id_fkey"
+      columns: ["cliente_id"]
+isOneToOne: false
+      referencedRelation: "clientes"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"usuarios": {
                   Row: {
-                    "ativo": boolean,"criado_em": string,"email": string,"id": string,"nome": string,"perfil": string,"usuario_id": string | null
+                    "ativo": boolean,"cliente_id": string | null,"criado_em": string,"email": string,"id": string,"nome": string,"perfil": string,"usuario_id": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "ativo"?: boolean,"criado_em"?: string,"email": string,"id"?: string,"nome": string,"perfil": string,"usuario_id"?: string | null
+                    "ativo"?: boolean,"cliente_id"?: string | null,"criado_em"?: string,"email": string,"id"?: string,"nome": string,"perfil": string,"usuario_id"?: string | null
                   }
                   Update: {
-                    "ativo"?: boolean,"criado_em"?: string,"email"?: string,"id"?: string,"nome"?: string,"perfil"?: string,"usuario_id"?: string | null
+                    "ativo"?: boolean,"cliente_id"?: string | null,"criado_em"?: string,"email"?: string,"id"?: string,"nome"?: string,"perfil"?: string,"usuario_id"?: string | null
                   }
                   Relationships: [
-                    
+                    {
+      foreignKeyName: "usuarios_cliente_id_fkey"
+      columns: ["cliente_id"]
+isOneToOne: false
+      referencedRelation: "clientes"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"vaga_conclusoes": {
                   Row: {
@@ -123,14 +253,14 @@ isOneToOne: false
                   ]
                 },"vagas": {
                   Row: {
-                    "area": string,"cancelada_em": string | null,"candidato": string | null,"criado_em": string,"data_inicio": string,"disciplina": string,"funcao": string,"gestor_id": string | null,"id": string,"onda_id": string,"retomada_em": string | null
+                    "area": string,"cancelada_em": string | null,"candidato": string | null,"criado_em": string,"data_inicio": string,"disciplina": string,"funcao": string,"gestor_id": string | null,"id": string,"meta": string | null,"onda_id": string | null,"projeto_id": string | null,"retomada_em": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "area": string,"cancelada_em"?: string | null,"candidato"?: string | null,"criado_em"?: string,"data_inicio": string,"disciplina": string,"funcao": string,"gestor_id"?: string | null,"id"?: string,"onda_id": string,"retomada_em"?: string | null
+                    "area": string,"cancelada_em"?: string | null,"candidato"?: string | null,"criado_em"?: string,"data_inicio": string,"disciplina": string,"funcao": string,"gestor_id"?: string | null,"id"?: string,"meta"?: string | null,"onda_id"?: string | null,"projeto_id"?: string | null,"retomada_em"?: string | null
                   }
                   Update: {
-                    "area"?: string,"cancelada_em"?: string | null,"candidato"?: string | null,"criado_em"?: string,"data_inicio"?: string,"disciplina"?: string,"funcao"?: string,"gestor_id"?: string | null,"id"?: string,"onda_id"?: string,"retomada_em"?: string | null
+                    "area"?: string,"cancelada_em"?: string | null,"candidato"?: string | null,"criado_em"?: string,"data_inicio"?: string,"disciplina"?: string,"funcao"?: string,"gestor_id"?: string | null,"id"?: string,"meta"?: string | null,"onda_id"?: string | null,"projeto_id"?: string | null,"retomada_em"?: string | null
                   }
                   Relationships: [
                     {
@@ -145,6 +275,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "ondas"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "vagas_projeto_id_fkey"
+      columns: ["projeto_id"]
+isOneToOne: false
+      referencedRelation: "projetos"
+      referencedColumns: ["id"]
     }
                   ]
                 }
@@ -155,6 +291,12 @@ isOneToOne: false
           Functions: {
             "alterar_duracao":
 { Args: { "p_dias": number,"p_ordem": number }; Returns: undefined
+                           },
+"alterar_duracao_cliente":
+{ Args: { "p_cliente": string,"p_dias": number,"p_ordem": number }; Returns: undefined
+                           },
+"alterar_duracao_projeto":
+{ Args: { "p_dias": number,"p_ordem": number,"p_projeto": string }; Returns: undefined
                            },
 "cancelar_vaga":
 { Args: { "p_id": string }; Returns: undefined
@@ -171,6 +313,9 @@ isOneToOne: false
 "eh_rh":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
+"encerrar_projeto":
+{ Args: { "p_id": string }; Returns: undefined
+                           },
 "etapa_atual":
 { Args: { "p_vaga": string }; Returns: number
                            },
@@ -180,14 +325,32 @@ isOneToOne: false
 "importar_carga":
 { Args: { "p_nome": string,"p_vagas": Json }; Returns: number
                            },
+"importar_vagas":
+{ Args: { "p_projeto": string,"p_vagas": Json }; Returns: number
+                           },
 "meu_nome":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
 "meu_perfil":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"pode_ver_projeto":
+{ Args: { "p": string }; Returns: boolean
+                           },
+"reabrir_projeto":
+{ Args: { "p_id": string }; Returns: undefined
+                           },
+"salvar_cliente":
+{ Args: { "p_id": string,"p_nome": string }; Returns: string
+                           },
 "salvar_onda":
 { Args: { "p_fim": string,"p_id": string,"p_inicio": string,"p_numero": number }; Returns: string
+                           },
+"salvar_onda_projeto":
+{ Args: { "p_fim": string,"p_id": string,"p_inicio": string,"p_nome": string,"p_projeto": string }; Returns: string
+                           },
+"salvar_projeto":
+{ Args: { "p": Json,"p_id": string }; Returns: string
                            },
 "salvar_vaga":
 { Args: { "p": Json,"p_id": string }; Returns: string
