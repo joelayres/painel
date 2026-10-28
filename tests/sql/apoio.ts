@@ -94,3 +94,23 @@ export async function novaVaga(
   )
   return rows[0].id
 }
+
+// A lista de etapas do projeto, na ordem.
+export async function etapasDoProjeto(
+  c: Client,
+  projetoId: string,
+): Promise<{ id: string; posicao: number; nome: string; fixa: string | null }[]> {
+  const { rows } = await c.query('select id, posicao, nome, fixa from projeto_etapas where projeto_id = $1 order by posicao', [projetoId])
+  return rows
+}
+
+// Conclui direto (como o banco, sem as regras das funções) as etapas da posição 1 até `posicao`
+// da lista do projeto da vaga, todas na mesma data. As já concluídas ficam como estão.
+export async function concluirAte(c: Client, vagaId: string, posicao: number, data: string): Promise<void> {
+  await c.query(
+    `insert into vaga_conclusoes (vaga_id, etapa_id, ordem, concluida_em)
+     select v.id, e.id, e.padrao, $3 from vagas v join projeto_etapas e on e.projeto_id = v.projeto_id
+     where v.id = $1 and e.posicao <= $2 on conflict do nothing`,
+    [vagaId, posicao, data],
+  )
+}
