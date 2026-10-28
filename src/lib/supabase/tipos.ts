@@ -75,14 +75,14 @@ isOneToOne: false
                   ]
                 },"gestores": {
                   Row: {
-                    "cliente_id": string | null,"criado_em": string,"email": string | null,"id": string,"nome": string
+                    "cliente_id": string,"criado_em": string,"email": string | null,"id": string,"nome": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "cliente_id"?: string | null,"criado_em"?: string,"email"?: string | null,"id"?: string,"nome": string
+                    "cliente_id": string,"criado_em"?: string,"email"?: string | null,"id"?: string,"nome": string
                   }
                   Update: {
-                    "cliente_id"?: string | null,"criado_em"?: string,"email"?: string | null,"id"?: string,"nome"?: string
+                    "cliente_id"?: string,"criado_em"?: string,"email"?: string | null,"id"?: string,"nome"?: string
                   }
                   Relationships: [
                     {
@@ -115,14 +115,14 @@ isOneToOne: false
                   ]
                 },"ondas": {
                   Row: {
-                    "fim": string,"id": string,"inicio": string,"nome": string | null,"numero": number | null,"projeto_id": string | null
+                    "fim": string,"id": string,"inicio": string,"nome": string,"projeto_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "fim": string,"id"?: string,"inicio": string,"nome"?: string | null,"numero"?: number | null,"projeto_id"?: string | null
+                    "fim": string,"id"?: string,"inicio": string,"nome": string,"projeto_id": string
                   }
                   Update: {
-                    "fim"?: string,"id"?: string,"inicio"?: string,"nome"?: string | null,"numero"?: number | null,"projeto_id"?: string | null
+                    "fim"?: string,"id"?: string,"inicio"?: string,"nome"?: string,"projeto_id"?: string
                   }
                   Relationships: [
                     {
@@ -253,14 +253,14 @@ isOneToOne: false
                   ]
                 },"vagas": {
                   Row: {
-                    "area": string,"cancelada_em": string | null,"candidato": string | null,"criado_em": string,"data_inicio": string,"disciplina": string,"funcao": string,"gestor_id": string | null,"id": string,"meta": string | null,"onda_id": string | null,"projeto_id": string | null,"retomada_em": string | null
+                    "area": string,"cancelada_em": string | null,"candidato": string | null,"criado_em": string,"data_inicio": string,"disciplina": string,"funcao": string,"gestor_id": string | null,"id": string,"meta": string | null,"onda_id": string | null,"projeto_id": string,"retomada_em": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "area": string,"cancelada_em"?: string | null,"candidato"?: string | null,"criado_em"?: string,"data_inicio": string,"disciplina": string,"funcao": string,"gestor_id"?: string | null,"id"?: string,"meta"?: string | null,"onda_id"?: string | null,"projeto_id"?: string | null,"retomada_em"?: string | null
+                    "area": string,"cancelada_em"?: string | null,"candidato"?: string | null,"criado_em"?: string,"data_inicio": string,"disciplina": string,"funcao": string,"gestor_id"?: string | null,"id"?: string,"meta"?: string | null,"onda_id"?: string | null,"projeto_id": string,"retomada_em"?: string | null
                   }
                   Update: {
-                    "area"?: string,"cancelada_em"?: string | null,"candidato"?: string | null,"criado_em"?: string,"data_inicio"?: string,"disciplina"?: string,"funcao"?: string,"gestor_id"?: string | null,"id"?: string,"meta"?: string | null,"onda_id"?: string | null,"projeto_id"?: string | null,"retomada_em"?: string | null
+                    "area"?: string,"cancelada_em"?: string | null,"candidato"?: string | null,"criado_em"?: string,"data_inicio"?: string,"disciplina"?: string,"funcao"?: string,"gestor_id"?: string | null,"id"?: string,"meta"?: string | null,"onda_id"?: string | null,"projeto_id"?: string,"retomada_em"?: string | null
                   }
                   Relationships: [
                     {
@@ -289,10 +289,7 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "alterar_duracao":
-{ Args: { "p_dias": number,"p_ordem": number }; Returns: undefined
-                           },
-"alterar_duracao_cliente":
+            "alterar_duracao_cliente":
 { Args: { "p_cliente": string,"p_dias": number,"p_ordem": number }; Returns: undefined
                            },
 "alterar_duracao_projeto":
@@ -322,9 +319,6 @@ isOneToOne: false
 "hoje_sp":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
-"importar_carga":
-{ Args: { "p_nome": string,"p_vagas": Json }; Returns: number
-                           },
 "importar_vagas":
 { Args: { "p_projeto": string,"p_vagas": Json }; Returns: number
                            },
@@ -342,9 +336,6 @@ isOneToOne: false
                            },
 "salvar_cliente":
 { Args: { "p_id": string,"p_nome": string }; Returns: string
-                           },
-"salvar_onda":
-{ Args: { "p_fim": string,"p_id": string,"p_inicio": string,"p_numero": number }; Returns: string
                            },
 "salvar_onda_projeto":
 { Args: { "p_fim": string,"p_id": string,"p_inicio": string,"p_nome": string,"p_projeto": string }; Returns: string
