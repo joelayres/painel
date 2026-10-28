@@ -3,12 +3,13 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { exigirRh } from '@/lib/auth/perfil'
+import { liberarAcesso, removerAcesso } from '@/lib/cadastros/acessos'
 import { alterarUsuario, cadastrarUsuario } from '@/lib/cadastros/usuarios'
 import { gravarCarga } from '@/lib/carga/gravar'
 import { lerPlanilhaMobilizacao, type VagaCarga } from '@/lib/carga/ler'
 import { criarClienteAdmin } from '@/lib/supabase/admin'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
-import { campoData, validar } from '@/lib/validacao/vaga'
+import { campoData, ehUuid, validar } from '@/lib/validacao/vaga'
 
 export type RespostaAcao = { ok: true } | { ok: false; erros: Record<string, string> }
 type Dados = Record<string, unknown>
@@ -21,17 +22,24 @@ function pronto(): RespostaAcao {
   return { ok: true }
 }
 
-const esquemaOnda = z
-  .object({ numero: z.coerce.number().int().min(1, 'Onda de 1 a 4.').max(4, 'Onda de 1 a 4.'), inicio: data('Informe o início.'), fim: data('Informe o fim.') })
-  .refine((o) => o.fim >= o.inicio, { path: ['fim'], message: 'O fim precisa ser no mesmo dia ou depois do início.' })
-
-export async function salvarOnda(id: string | null, entrada: Dados): Promise<RespostaAcao> {
+export async function salvarCliente(id: string | null, entrada: unknown): Promise<RespostaAcao> {
   await exigirRh()
-  const r = validar(esquemaOnda, entrada)
+  if (id !== null && !ehUuid(id)) return FALHA
+  const r = validar(z.object({ nome: z.string({ error: 'Informe o nome.' }).trim().min(1, 'Informe o nome.') }), entrada)
   if (!r.ok) return r
   const sb = await criarClienteServidor()
-  const { error } = await sb.rpc('salvar_onda', { p_id: id as string, p_numero: r.dados.numero, p_inicio: r.dados.inicio, p_fim: r.dados.fim })
-  if (error?.code === '23505') return { ok: false, erros: { numero: 'Esta onda já está cadastrada.' } }
+  const { error } = await sb.rpc('salvar_cliente', { p_id: id as string, p_nome: r.dados.nome })
+  if (error?.code === '23505') return { ok: false, erros: { nome: 'Já existe um cliente com este nome.' } }
+  return error ? FALHA : pronto()
+}
+
+export async function alterarDuracaoCliente(clienteId: string, ordem: number, entrada: { duracao: string }): Promise<RespostaAcao> {
+  await exigirRh()
+  if (!ehUuid(clienteId)) return FALHA
+  const r = validar(z.object({ duracao: z.coerce.number({ error: 'Informe os dias.' }).int('Só dias inteiros.').min(0, 'Não pode ser negativo.').max(60, 'Máximo de 60 dias.') }), entrada)
+  if (!r.ok) return r
+  const sb = await criarClienteServidor()
+  const { error } = await sb.rpc('alterar_duracao_cliente', { p_cliente: clienteId, p_ordem: ordem, p_dias: r.dados.duracao })
   return error ? FALHA : pronto()
 }
 
@@ -40,21 +48,13 @@ const esquemaGestor = z.object({
   email: z.string().trim().toLowerCase().transform((v) => v || null).pipe(z.email('E-mail inválido.').nullable()),
 })
 
-export async function salvarGestor(id: string | null, entrada: Dados): Promise<RespostaAcao> {
+export async function salvarGestor(clienteId: string, id: string | null, entrada: Dados): Promise<RespostaAcao> {
   await exigirRh()
+  if (!ehUuid(clienteId)) return FALHA
   const r = validar(esquemaGestor, entrada)
   if (!r.ok) return r
   const sb = await criarClienteServidor()
-  const { error } = id ? await sb.from('gestores').update(r.dados).eq('id', id) : await sb.from('gestores').insert(r.dados)
-  return error ? FALHA : pronto()
-}
-
-export async function alterarDuracao(ordem: number, entrada: Dados): Promise<RespostaAcao> {
-  await exigirRh()
-  const r = validar(z.object({ duracao: z.coerce.number({ error: 'Informe os dias.' }).int('Só dias inteiros.').min(0, 'Não pode ser negativo.').max(60, 'Máximo de 60 dias.') }), entrada)
-  if (!r.ok) return r
-  const sb = await criarClienteServidor()
-  const { error } = await sb.rpc('alterar_duracao', { p_ordem: ordem, p_dias: r.dados.duracao })
+  const { error } = id ? await sb.from('gestores').update(r.dados).eq('id', id).eq('cliente_id', clienteId) : await sb.from('gestores').insert({ ...r.dados, cliente_id: clienteId })
   return error ? FALHA : pronto()
 }
 
@@ -81,14 +81,34 @@ export async function salvarUsuario(id: string | null, entrada: Dados): Promise<
     const r = await cadastrarUsuario(admin, entrada)
     return r.ok ? pronto() : r
   }
-  const v = validar(z.object({ nome: z.string().trim().min(1, 'Informe o nome.'), perfil: z.enum(['rh', 'visualizador']), ativo: z.string().optional() }), entrada)
+  const v = validar(z.object({ nome: z.string().trim().min(1, 'Informe o nome.'), perfil: z.enum(['rh', 'gestor', 'cliente']), clienteId: z.string().optional(), ativo: z.string().optional() }), entrada)
   if (!v.ok) return v
+  if (v.dados.perfil === 'cliente' && !v.dados.clienteId) return { ok: false, erros: { clienteId: 'Escolha o cliente.' } }
   const ativo = v.dados.ativo === 'on'
   const { data: alvo } = await admin.from('usuarios').select('usuario_id').eq('id', id).single()
   // Ninguém tira o próprio acesso de RH por engano.
   if (alvo?.usuario_id === rh.usuarioId && (!ativo || v.dados.perfil !== 'rh')) return { ok: false, erros: { _: 'Você não pode tirar o seu próprio acesso de RH.' } }
-  const r = await alterarUsuario(admin, id, { nome: v.dados.nome, perfil: v.dados.perfil, ativo })
+  const r = await alterarUsuario(admin, id, { nome: v.dados.nome, perfil: v.dados.perfil, clienteId: v.dados.perfil === 'cliente' ? v.dados.clienteId || null : null, ativo })
   return r.ok ? pronto() : r
+}
+
+type Resultado = { ok: true } | { ok: false; erro: string }
+const FALHA_ACESSO = { ok: false as const, erro: 'Não foi possível salvar. Tente de novo.' }
+
+export async function liberarAcessoUsuario(projetoId: string, usuarioId: string): Promise<Resultado> {
+  await exigirRh()
+  if (!ehUuid(projetoId) || !ehUuid(usuarioId)) return FALHA_ACESSO
+  const r = await liberarAcesso(await criarClienteServidor(), projetoId, usuarioId)
+  if (r.ok) revalidatePath('/', 'layout')
+  return r
+}
+
+export async function removerAcessoUsuario(projetoId: string, usuarioId: string): Promise<Resultado> {
+  await exigirRh()
+  if (!ehUuid(projetoId) || !ehUuid(usuarioId)) return FALHA_ACESSO
+  const r = await removerAcesso(await criarClienteServidor(), projetoId, usuarioId)
+  if (r.ok) revalidatePath('/', 'layout')
+  return r
 }
 
 export async function previaCarga(form: FormData): Promise<{ ok: true; vagas: VagaCarga[] } | { ok: false; erros: { linha: number; mensagem: string }[] }> {

@@ -6,13 +6,13 @@ import { TabelaCadastro } from '@/components/rh/TabelaCadastro'
 import { useEnvio } from '@/components/rh/useEnvio'
 import { Botao } from '@/components/ui/Botao'
 import { Campo } from '@/components/ui/Campo'
-import { salvarGestor } from '../acoesCadastros'
+import { salvarGestor } from '../../acoesCadastros'
 
-type Gestor = { id: string; nome: string; email: string | null; vagas: number }
+type Gestor = { id: string; nome: string; email: string | null }
 
-function Form({ gestor, fechar }: { gestor: Gestor | null; fechar: () => void }) {
+function Form({ clienteId, gestor, fechar }: { clienteId: string; gestor: Gestor | null; fechar: () => void }) {
   const router = useRouter()
-  const { erros, pendente, enviar } = useEnvio((d) => salvarGestor(gestor?.id ?? null, d), () => { fechar(); router.refresh() })
+  const { erros, pendente, enviar } = useEnvio((d) => salvarGestor(clienteId, gestor?.id ?? null, d), () => { fechar(); router.refresh() })
   return (
     <form onSubmit={enviar} className="flex flex-col gap-4">
       <Campo rotulo="Nome" name="nome" defaultValue={gestor?.nome} erro={erros.nome} required />
@@ -23,19 +23,19 @@ function Form({ gestor, fechar }: { gestor: Gestor | null; fechar: () => void })
   )
 }
 
-export function CadastroGestores({ gestores }: { gestores: Gestor[] }) {
+// Gestores do cliente (responsáveis pelas vagas), com nome e e-mail.
+export function Gestores({ clienteId, gestores }: { clienteId: string; gestores: Gestor[] }) {
   return (
     <TabelaCadastro
       linhas={gestores}
       colunas={[
         { titulo: 'Nome', valor: (g) => g.nome },
         { titulo: 'E-mail', valor: (g) => g.email ?? '—' },
-        { titulo: 'Vagas', valor: (g) => g.vagas },
       ]}
       textoBusca={(g) => `${g.nome} ${g.email ?? ''}`}
       rotuloNovo="Novo gestor"
       tituloPainel={(g) => (g ? g.nome : 'Novo gestor')}
-      formulario={(g, fechar) => <Form gestor={g} fechar={fechar} />}
+      formulario={(g, fechar) => <Form clienteId={clienteId} gestor={g} fechar={fechar} />}
       vazio="Nenhum gestor cadastrado."
     />
   )
