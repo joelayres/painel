@@ -299,6 +299,26 @@ describe('vagas e organização do projeto', () => {
       )
     }))
 
+  it('update direto na tabela também não troca o cliente nem a organização com vagas', () =>
+    emTransacao(async (c) => {
+      const cli = await novoCliente(c)
+      const outro = await novoCliente(c)
+      const { projetoId, ondaId } = await novoProjeto(c, { clienteId: cli, organizacao: 'ondas' })
+      const vaga = await novaVaga(c, { projetoId, ondaId })
+      const { projetoId: vazio } = await novoProjeto(c, { clienteId: cli, organizacao: 'ondas' })
+      await comoUsuario(c, 'rh')
+      expect(await erroSalvo(c, () => c.query('update projetos set cliente_id = $2 where id = $1', [projetoId, outro]))).toContain('cliente não muda')
+      expect(await erroSalvo(c, () => c.query("update projetos set organizacao = 'meta' where id = $1", [projetoId]))).toContain('projeto tem vagas')
+      // Sem vagas (ou só com vagas canceladas), a organização pode mudar.
+      await c.query("update projetos set organizacao = 'meta' where id = $1", [vazio])
+      await c.query('select cancelar_vaga($1)', [vaga])
+      await c.query("update projetos set organizacao = 'meta' where id = $1", [projetoId])
+      expect((await c.query('select organizacao from projetos where id in ($1, $2)', [projetoId, vazio])).rows).toEqual([
+        { organizacao: 'meta' },
+        { organizacao: 'meta' },
+      ])
+    }))
+
   it('importar_vagas acrescenta vagas com as conclusões', () =>
     emTransacao(async (c) => {
       const { projetoId, ondaId } = await novoProjeto(c, { clienteId: await novoCliente(c), organizacao: 'ondas' })

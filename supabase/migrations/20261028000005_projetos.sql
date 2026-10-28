@@ -117,6 +117,21 @@ create trigger projeto_aberto before insert or update or delete on ondas for eac
 create trigger projeto_aberto before insert or update or delete on vaga_conclusoes for each row execute function projeto_aberto();
 create trigger projeto_aberto before insert or update or delete on projeto_duracoes for each row execute function projeto_aberto();
 
+-- O cliente de um projeto não muda (senão um usuário cliente com acesso passaria a ver projeto de
+-- outro cliente), e a organização só muda sem vagas. Vale também para o update direto na tabela.
+create function public.conferir_projeto() returns trigger
+language plpgsql security definer set search_path = public, pg_temp as $$
+begin
+  if new.cliente_id is distinct from old.cliente_id then raise exception 'cliente não muda'; end if;
+  if new.organizacao is distinct from old.organizacao
+     and exists (select 1 from vagas where projeto_id = new.id and cancelada_em is null) then
+    raise exception 'projeto tem vagas';
+  end if;
+  return new;
+end $$;
+
+create trigger conferir_projeto before update on projetos for each row execute function conferir_projeto();
+
 -- O RH já vê tudo; o usuário cliente só recebe projetos do próprio cliente.
 create function public.conferir_acesso() returns trigger
 language plpgsql security definer set search_path = public, pg_temp as $$
@@ -145,7 +160,7 @@ end $$;
 
 create trigger acessos_do_usuario after update of perfil, cliente_id on usuarios for each row execute function acessos_do_usuario();
 
-revoke execute on function public.conferir_vaga, public.projeto_aberto, public.conferir_acesso, public.acessos_do_usuario from public, anon, authenticated;
+revoke execute on function public.conferir_vaga, public.conferir_projeto, public.projeto_aberto, public.conferir_acesso, public.acessos_do_usuario from public, anon, authenticated;
 
 -- Leitura (RLS) ----------------------------------------------------------------------------------
 -- O RH vê tudo. O gestor e o cliente veem só os projetos liberados em projeto_acessos e o que é
@@ -254,7 +269,8 @@ begin
     jsonb_build_object('projeto', v_projeto, 'antes', v_antes, 'depois', coalesce(p_dias, v_cliente_dias)));
 end $$;
 
--- p: cliente_id, nome, area, organizacao. O cliente não muda, e a organização só muda sem vagas.
+-- p: cliente_id, nome, area, organizacao. O cliente não muda, e a organização só muda sem vagas
+-- (regras do gatilho conferir_projeto).
 create function public.salvar_projeto(p_id uuid, p jsonb) returns uuid
 language plpgsql security definer set search_path = public, pg_temp as $$
 declare v_id uuid; v_antes projetos;
@@ -269,12 +285,9 @@ begin
   end if;
   select * into v_antes from projetos where id = p_id for update;
   if not found then raise exception 'projeto não encontrado'; end if;
-  if (p->>'cliente_id')::uuid is distinct from v_antes.cliente_id then raise exception 'cliente não muda'; end if;
-  if p->>'organizacao' is distinct from v_antes.organizacao
-     and exists (select 1 from vagas where projeto_id = p_id and cancelada_em is null) then
-    raise exception 'projeto tem vagas';
-  end if;
-  update projetos set nome = p->>'nome', area = nullif(p->>'area', ''), organizacao = p->>'organizacao' where id = p_id;
+  -- O gatilho conferir_projeto recusa trocar o cliente ou a organização.
+  update projetos set cliente_id = (p->>'cliente_id')::uuid, nome = p->>'nome', area = nullif(p->>'area', ''), organizacao = p->>'organizacao'
+  where id = p_id;
   insert into historico (vaga_id, nome_usuario, acao, detalhe)
   values (null, meu_nome(), 'Alterou o projeto ' || (p->>'nome'), jsonb_build_object(
     'antes', jsonb_build_object('nome', v_antes.nome, 'area', v_antes.area, 'organizacao', v_antes.organizacao),
