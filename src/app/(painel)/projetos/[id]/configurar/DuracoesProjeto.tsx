@@ -40,11 +40,11 @@ function Linha({ projetoId, etapa, somenteLeitura }: { projetoId: string; etapa:
               aria-label={`Duração de ${etapa.nome} neste projeto`}
               className="min-h-11 w-20 rounded-lg border border-borda bg-superficie px-3 text-texto"
             />
-            <Botao type="submit" variante="secundario" disabled={pendente}>Salvar</Botao>
+            <Botao type="submit" variante="secundario" disabled={pendente}>Salvar{' '}<span className="sr-only">{etapa.nome}</span></Botao>
             {ajustado && (
               <>
                 <span className="text-sm font-medium text-texto-suave">ajustado</span>
-                <Botao type="button" variante="fantasma" disabled={pendente} onClick={() => enviar('')}>Voltar ao padrão</Botao>
+                <Botao type="button" variante="fantasma" disabled={pendente} onClick={() => enviar('')}>Voltar ao padrão{' '}<span className="sr-only">{etapa.nome}</span></Botao>
               </>
             )}
             {erro && <span role="alert" className="w-full text-sm text-[var(--st-reprovada-texto)]">{erro}</span>}

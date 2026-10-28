@@ -19,7 +19,7 @@ test('lista quem vê o projeto com o rótulo do perfil e remove', async () => {
   render(<AcessosProjeto projetoId="p1" cliente="Acme" pessoas={pessoas} liberaveis={liberaveis} />)
   expect(screen.getByText('Gestor Timenow')).toBeInTheDocument()
   expect(screen.getByText('Cliente')).toBeInTheDocument()
-  await userEvent.click(screen.getAllByRole('button', { name: 'remover' })[1])
+  await userEvent.click(screen.getByRole('button', { name: 'remover Bia' }))
   expect(remover).toHaveBeenCalledWith('p1', 'u2')
 })
 

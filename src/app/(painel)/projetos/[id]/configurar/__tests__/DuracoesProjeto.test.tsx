@@ -22,7 +22,7 @@ test('a etapa ajustada mostra "ajustado" e volta ao padrão do cliente', async (
   expect(within(linhas[2]).getByText('ajustado')).toBeInTheDocument()
   expect(screen.getByLabelText('Duração de Exames neste projeto')).toHaveValue(null)
   expect(screen.getByLabelText('Duração de Admissão neste projeto')).toHaveValue(5)
-  await userEvent.click(within(linhas[2]).getByRole('button', { name: /Voltar ao padrão/ }))
+  await userEvent.click(within(linhas[2]).getByRole('button', { name: 'Voltar ao padrão Admissão' }))
   expect(alterarDuracaoProjeto).toHaveBeenCalledWith('p1', 9, { duracao: '' })
 })
 
@@ -30,7 +30,7 @@ test('salvar um ajuste envia os dias digitados', async () => {
   alterarDuracaoProjeto.mockResolvedValue({ ok: true })
   render(<DuracoesProjeto projetoId="p1" cliente="Acme" etapas={etapas} somenteLeitura={false} />)
   await userEvent.type(screen.getByLabelText('Duração de Exames neste projeto'), '4')
-  await userEvent.click(screen.getAllByRole('button', { name: 'Salvar' })[0])
+  await userEvent.click(screen.getByRole('button', { name: 'Salvar Exames' }))
   expect(alterarDuracaoProjeto).toHaveBeenCalledWith('p1', 8, { duracao: '4' })
 })
 

@@ -43,7 +43,7 @@ export function AcessosProjeto({ projetoId, cliente, pessoas, liberaveis }: { pr
                 <td className="px-4 py-2.5 font-medium">{p.nome}</td>
                 <td className="px-4 py-2.5">{ROTULO_PERFIL[p.perfil]}</td>
                 <td className="px-4 py-2.5 text-right">
-                  <Botao variante="fantasma" disabled={pendente} onClick={() => executar(() => remover(projetoId, p.id))}>remover</Botao>
+                  <Botao variante="fantasma" disabled={pendente} onClick={() => executar(() => remover(projetoId, p.id))}>remover{' '}<span className="sr-only">{p.nome}</span></Botao>
                 </td>
               </tr>
             ))}
