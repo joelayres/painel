@@ -1,14 +1,14 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { exigirSessao } from '@/lib/auth/perfil'
+import { ehUuid } from '@/lib/validacao/vaga'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
 import { AbasProjeto } from './AbasProjeto'
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export default async function LayoutProjeto({ children, params }: { children: React.ReactNode; params: Promise<{ id: string }> }) {
   const { id } = await params
-  if (!UUID.test(id)) notFound()
+  if (!ehUuid(id)) notFound()
   const sessao = await exigirSessao()
   const sb = await criarClienteServidor()
   // O RLS só devolve o projeto a quem pode vê-lo.

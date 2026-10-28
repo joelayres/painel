@@ -7,10 +7,12 @@ import { dataBR, ddmm } from '@/lib/formato/datas'
 import { carregarVaga } from '@/lib/painel/dados'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
 import { COR_PRAZO, ROTULO_PRAZO } from '../../cores'
+import { ehUuid } from '@/lib/validacao/vaga'
 import { Acoes } from './Acoes'
 
 export default async function DetalheVaga({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  if (!ehUuid(id)) notFound()
   const sessao = await exigirSessao()
   const sb = await criarClienteServidor()
   const hoje = hojeSP()

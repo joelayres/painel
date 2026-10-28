@@ -3,6 +3,7 @@ import { filtrarVagas, resumirOndas, resumirProjeto, type Filtro } from '@/domin
 import { hojeSP } from '@/dominio/tempo'
 import { dataBR } from '@/lib/formato/datas'
 import { carregarPainel } from '@/lib/painel/dados'
+import { ehUuid } from '@/lib/validacao/vaga'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
 import { Atencao } from './Atencao'
 import { CartoesOnda } from './CartoesOnda'
@@ -13,11 +14,10 @@ export const metadata = { title: 'Painel · Painel de Mobilização' }
 
 type Busca = { onda?: string; funcao?: string; area?: string; gestor?: string; candidato?: string }
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export default async function Painel({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Busca> }) {
   const { id } = await params
-  if (!UUID.test(id)) notFound()
+  if (!ehUuid(id)) notFound()
   const busca = await searchParams
   const hoje = hojeSP()
   const painel = await carregarPainel(await criarClienteServidor(), hoje, id)

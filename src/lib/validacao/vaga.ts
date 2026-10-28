@@ -38,3 +38,7 @@ export function validar<T>(esquema: z.ZodType<T>, entrada: unknown): { ok: true;
   for (const i of r.error.issues) erros[String(i.path[0] ?? '_')] ??= i.message
   return { ok: false, erros }
 }
+
+// Endereços com id inválido viram "não encontrado" antes de chegar numa coluna uuid do banco.
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+export const ehUuid = (texto: string): boolean => UUID.test(texto)
