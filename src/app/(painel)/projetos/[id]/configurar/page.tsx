@@ -26,8 +26,11 @@ function Bloco({ titulo, children }: { titulo: string; children: React.ReactNode
   )
 }
 
-export default async function Configurar({ params }: { params: Promise<{ id: string }> }) {
+export default async function Configurar({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ importadas?: string }> }) {
   const { id } = await params
+  // Depois da importação, a tela de importar volta para cá com ?importadas={n}.
+  const { importadas } = await searchParams
+  const nImportadas = importadas && /^\d+$/.test(importadas) ? Number(importadas) : null
   if (!ehUuid(id)) notFound()
   await exigirRh()
   const sb = await criarClienteServidor()
@@ -70,6 +73,9 @@ export default async function Configurar({ params }: { params: Promise<{ id: str
 
   return (
     <div className="flex flex-col gap-8">
+      {nImportadas !== null && (
+        <p role="status" className="rounded-lg px-3 py-2 font-medium" style={{ background: 'var(--st-finalizada-fundo)', color: 'var(--st-finalizada-texto)' }}>{nImportadas} vagas importadas.</p>
+      )}
       {somenteLeitura && (
         <p role="status" className="rounded-lg px-3 py-2 font-medium" style={{ background: 'var(--st-reprovada-fundo)', color: 'var(--st-reprovada-texto)' }}>Projeto encerrado. Reabra para alterar.</p>
       )}

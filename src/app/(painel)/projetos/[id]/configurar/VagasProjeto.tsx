@@ -34,7 +34,8 @@ export function VagasProjeto({ projetoId, organizacao, vagas, opcoes, somenteLei
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-3">
-        <Link href={`/projetos/${projetoId}/modelo`} className={estiloLink}>Baixar modelo Excel</Link>
+        {/* <a> e não <Link>: é um arquivo, não uma página (o Link tentaria pré-carregar). */}
+        <a href={`/projetos/${projetoId}/modelo`} download className={estiloLink}>Baixar modelo Excel</a>
         {!somenteLeitura && (
           <>
             <Link href={`/projetos/${projetoId}/importar`} className={estiloLink}>Importar planilha</Link>
