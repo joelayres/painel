@@ -12,7 +12,8 @@ export type VagaEditavel = { id: string; funcao: string; disciplina: string; are
 type Opcoes = { ondas: { id: string; numero: number }[]; gestores: { id: string; nome: string }[] }
 
 // Criar (vaga = null) ou editar uma vaga, num painel lateral.
-export function FormVaga({ vaga, opcoes, rotuloBotao }: { vaga: VagaEditavel | null; opcoes: Opcoes; rotuloBotao: string }) {
+// `rotuloAcessivel`: nome do botão para leitores de tela quando há vários na mesma página (ex.: "Editar Técnico").
+export function FormVaga({ vaga, opcoes, rotuloBotao, rotuloAcessivel }: { vaga: VagaEditavel | null; opcoes: Opcoes; rotuloBotao: string; rotuloAcessivel?: string }) {
   const router = useRouter()
   const [aberto, setAberto] = useState(false)
   const [erros, setErros] = useState<Record<string, string>>({})
@@ -29,7 +30,7 @@ export function FormVaga({ vaga, opcoes, rotuloBotao }: { vaga: VagaEditavel | n
 
   return (
     <>
-      <Botao variante={vaga ? 'secundario' : 'primario'} onClick={() => setAberto(true)}>{rotuloBotao}</Botao>
+      <Botao variante={vaga ? 'secundario' : 'primario'} aria-label={rotuloAcessivel} onClick={() => setAberto(true)}>{rotuloBotao}</Botao>
       <PainelLateral titulo={vaga ? 'Editar vaga' : 'Nova vaga'} aberto={aberto} aoFechar={() => setAberto(false)}>
         <form action={enviar} className="flex flex-col gap-4">
           <Campo rotulo="Função" name="funcao" defaultValue={vaga?.funcao} erro={erros.funcao} required />

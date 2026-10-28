@@ -8,7 +8,7 @@ import { FormVaga } from '@/components/rh/FormVaga'
 import { Botao } from '@/components/ui/Botao'
 import { dataBR } from '@/lib/formato/datas'
 
-type Vaga = { id: string; funcao: string; disciplina: string; area: string; onda: number; gestor: string | null; candidato: string | null; dataInicio: string; canceladaEm: string | null }
+type Vaga = { id: string; funcao: string; disciplina: string; area: string; onda: number; ondaId: string; gestor: string | null; gestorId: string | null; candidato: string | null; dataInicio: string; canceladaEm: string | null }
 type Opcoes = { ondas: { id: string; numero: number }[]; gestores: { id: string; nome: string }[] }
 
 export function CadastroVagas({ vagas, opcoes }: { vagas: Vaga[]; opcoes: Opcoes }) {
@@ -50,6 +50,12 @@ export function CadastroVagas({ vagas, opcoes }: { vagas: Vaga[]; opcoes: Opcoes
                 <td className="px-4 py-2.5">{v.candidato ?? '—'}</td>
                 <td className="px-4 py-2.5 whitespace-nowrap">{dataBR(v.dataInicio)}</td>
                 <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                  <FormVaga
+                    rotuloBotao="Editar"
+                    rotuloAcessivel={`Editar ${v.funcao}`}
+                    vaga={{ id: v.id, funcao: v.funcao, disciplina: v.disciplina, area: v.area, ondaId: v.ondaId, gestorId: v.gestorId, candidato: v.candidato, dataInicio: v.dataInicio }}
+                    opcoes={opcoes}
+                  />{' '}
                   {confirmando === v.id ? (
                     <>
                       <Botao variante="perigo" disabled={pendente} onClick={() => cancelar(v.id)}>Confirmar</Botao>{' '}
