@@ -10,7 +10,6 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "test:integracao": "vitest run --config vitest.integracao.config.mts",
     "db:push": "sh scripts/db.sh push",
     "db:tipos": "sh scripts/db.sh tipos",
     "criar-rh": "node --env-file=.env.local scripts/criar-rh.mts",

@@ -7,12 +7,11 @@ const ITENS = [
   { href: '/cadastros/clientes', titulo: 'Clientes', texto: 'Durações das etapas e gestores de cada cliente.' },
   { href: '/cadastros/usuarios', titulo: 'Usuários', texto: 'Quem pode entrar no painel e o que vê.' },
   { href: '/cadastros/feriados', titulo: 'Feriados', texto: 'Dias que não contam como úteis.' },
-  { href: '/cadastros/carga', titulo: 'Carga inicial', texto: 'Importar a planilha de acompanhamento.' },
 ]
 
 export default async function Cadastros() {
   await exigirRh()
-  // Mudanças gerais (feriados, carga) ficam no histórico sem vaga.
+  // Mudanças gerais (feriados, clientes) ficam no histórico sem vaga.
   const { data: registro } = await (await criarClienteServidor())
     .from('historico').select('id, acao, nome_usuario, em, detalhe').is('vaga_id', null).order('em', { ascending: false }).limit(50)
   return (

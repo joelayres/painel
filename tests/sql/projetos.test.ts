@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import type { Client } from 'pg'
 import { describe, expect, it } from 'vitest'
 import { comoUsuario, emTransacao, novaVaga, novoCliente, novoProjeto } from './apoio'
@@ -43,7 +44,7 @@ describe('migração da Braskem 2027', () => {
         )
         expect(projeto).toEqual([{ id: expect.any(String), cliente: 'Braskem', organizacao: 'ondas' }])
         expect(await contar(c, 'select count(*) as n from vagas where projeto_id is distinct from $1', [projeto[0].id])).toBe(0)
-        const { rows: ondas } = await c.query('select nome, projeto_id from ondas order by numero')
+        const { rows: ondas } = await c.query('select nome, projeto_id from ondas order by nome')
         expect(ondas.map((o) => o.nome)).toEqual(['1ª Onda', '2ª Onda', '3ª Onda', '4ª Onda'])
         for (const o of ondas) expect(o.projeto_id).toBe(projeto[0].id)
         expect(await contar(c, 'select count(*) as n from vagas')).toBe(antes!.vagas)
@@ -72,13 +73,36 @@ describe('migração da Braskem 2027', () => {
     )
   })
 
-  it('vaga criada sem projeto pelo código antigo entra no projeto da onda', () =>
+  it('depois da limpeza não existe vaga sem projeto', () =>
     emTransacao(async (c) => {
-      const { rows } = await c.query(
-        "insert into vagas (funcao, disciplina, area, onda_id, data_inicio) select 'teste-sql Vaga', 'x', 'x', id, '2026-10-22' from ondas where numero = 1 returning projeto_id",
-      )
-      const { rows: projeto } = await c.query("select id from projetos where nome = 'Mobilização Braskem 2027'")
-      expect(rows[0].projeto_id).toBe(projeto[0].id)
+      expect(await erroSalvo(c, () => c.query("insert into vagas (funcao, disciplina, area, data_inicio) values ('teste-sql Vaga', 'x', 'x', '2026-10-22')"))).toMatch(/null value|not-null/)
+      // Nem a onda preenche o projeto: o código novo informa o projeto.
+      expect(
+        await erroSalvo(c, () =>
+          c.query("insert into vagas (funcao, disciplina, area, onda_id, data_inicio) select 'teste-sql Vaga', 'x', 'x', id, '2026-10-22' from ondas limit 1"),
+        ),
+      ).toMatch(/null value|not-null/)
+      const { rows } = await c.query("select is_nullable from information_schema.columns where table_name = 'ondas' and column_name in ('projeto_id', 'nome')")
+      expect(rows.map((r) => r.is_nullable)).toEqual(['NO', 'NO'])
+      expect(await contar(c, "select count(*) as n from information_schema.columns where table_name = 'ondas' and column_name = 'numero'")).toBe(0)
+    }))
+
+  it('perfil visualizador não existe mais', () =>
+    emTransacao(async (c) => {
+      const id = randomUUID()
+      await c.query('insert into auth.users (id, email) values ($1, $2)', [id, `teste-sql-${id}@exemplo.test`])
+      expect(
+        await erroSalvo(c, () =>
+          c.query("insert into usuarios (usuario_id, nome, email, perfil) values ($1, 'teste-sql v', $2, 'visualizador')", [id, `teste-sql-${id}@exemplo.test`]),
+        ),
+      ).toMatch(/usuarios_perfil_check/)
+    }))
+
+  it('as funções do modelo antigo saíram', () =>
+    emTransacao(async (c) => {
+      expect(
+        await contar(c, "select count(*) as n from pg_proc where pronamespace = 'public'::regnamespace and proname in ('salvar_onda', 'alterar_duracao', 'importar_carga')"),
+      ).toBe(0)
     }))
 })
 

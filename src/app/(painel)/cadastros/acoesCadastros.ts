@@ -5,8 +5,6 @@ import { z } from 'zod'
 import { exigirRh } from '@/lib/auth/perfil'
 import { liberarAcesso, removerAcesso } from '@/lib/cadastros/acessos'
 import { alterarUsuario, cadastrarUsuario } from '@/lib/cadastros/usuarios'
-import { gravarCarga } from '@/lib/carga/gravar'
-import { lerPlanilhaMobilizacao, type VagaCarga } from '@/lib/carga/ler'
 import { criarClienteAdmin } from '@/lib/supabase/admin'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
 import { campoData, ehUuid, validar } from '@/lib/validacao/vaga'
@@ -107,23 +105,6 @@ export async function removerAcessoUsuario(projetoId: string, usuarioId: string)
   await exigirRh()
   if (!ehUuid(projetoId) || !ehUuid(usuarioId)) return FALHA_ACESSO
   const r = await removerAcesso(await criarClienteServidor(), projetoId, usuarioId)
-  if (r.ok) revalidatePath('/', 'layout')
-  return r
-}
-
-export async function previaCarga(form: FormData): Promise<{ ok: true; vagas: VagaCarga[] } | { ok: false; erros: { linha: number; mensagem: string }[] }> {
-  await exigirRh()
-  const arquivo = form.get('arquivo')
-  if (!(arquivo instanceof File) || arquivo.size === 0) return { ok: false, erros: [{ linha: 0, mensagem: 'Escolha a planilha.' }] }
-  const r = await lerPlanilhaMobilizacao(await arquivo.arrayBuffer())
-  return r.ok ? { ok: true, vagas: r.vagas } : r
-}
-
-export async function importarCarga(form: FormData): Promise<{ ok: true; vagas: number } | { ok: false; erro: string }> {
-  const rh = await exigirRh()
-  const previa = await previaCarga(form)
-  if (!previa.ok) return { ok: false, erro: 'A planilha tem erros. Corrija e envie de novo.' }
-  const r = await gravarCarga(criarClienteAdmin(), previa.vagas, rh.nome)
   if (r.ok) revalidatePath('/', 'layout')
   return r
 }
