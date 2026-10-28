@@ -6,7 +6,7 @@ import { afterEach } from 'vitest'
 afterEach(cleanup)
 
 // jsdom não implementa matchMedia; next-themes usa para ler o tema do sistema.
-if (!window.matchMedia) {
+if (typeof window !== 'undefined' && !window.matchMedia) {
   window.matchMedia = (query: string) =>
     ({
       matches: false,
