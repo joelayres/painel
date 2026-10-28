@@ -24,7 +24,7 @@ export function CascaApp({
         <div className="mx-auto flex h-16 max-w-screen-2xl items-center gap-4 px-4">
           <Logo />
           <span className="hidden h-6 w-px bg-current opacity-30 sm:block" aria-hidden />
-          <span className="hidden font-titulo text-lg font-medium sm:block">Mobilização Braskem 2027</span>
+          <span className="hidden font-titulo text-lg font-medium sm:block">Painel de Mobilização</span>
           <div className="flex-1" />
           <AlternadorTema />
           <span className="flex size-9 items-center justify-center rounded-full bg-white/15 text-sm font-semibold" title={usuario.nome}>

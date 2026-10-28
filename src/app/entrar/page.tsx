@@ -13,8 +13,8 @@ export default async function Entrar({ searchParams }: { searchParams: Promise<{
         <FundoRede />
         <Logo className="relative" />
         <div className="relative max-w-md [text-shadow:0_1px_12px_rgba(0,0,0,0.45)]">
-          <p className="font-titulo text-5xl leading-[1.05] font-semibold tracking-tight">Mobilização Braskem 2027</p>
-          <p className="mt-4 text-lg opacity-80">Acompanhamento das contratações.</p>
+          <p className="font-titulo text-5xl leading-[1.05] font-semibold tracking-tight">Painel de Mobilização</p>
+          <p className="mt-4 text-lg opacity-80">Acompanhamento das contratações</p>
         </div>
       </aside>
 
@@ -29,8 +29,8 @@ export default async function Entrar({ searchParams }: { searchParams: Promise<{
           <AlternadorTema className="lg:hover:bg-primaria-suave" />
         </div>
         <div data-testid="capa-celular" className="flex flex-1 flex-col justify-center px-5 pt-6 pb-10 [text-shadow:0_1px_12px_rgba(0,0,0,0.45)] lg:hidden">
-          <p className="font-titulo text-[30px] leading-[1.1] font-semibold tracking-tight">Mobilização Braskem 2027</p>
-          <p className="mt-3 text-base opacity-80">Acompanhamento das contratações.</p>
+          <p className="font-titulo text-[30px] leading-[1.1] font-semibold tracking-tight">Painel de Mobilização</p>
+          <p className="mt-3 text-base opacity-80">Acompanhamento das contratações</p>
         </div>
         <div
           data-testid="cartao-entrada"

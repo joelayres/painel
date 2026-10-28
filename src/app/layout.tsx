@@ -12,7 +12,7 @@ const barlowCondensed = Barlow_Semi_Condensed({
 
 export const metadata: Metadata = {
   title: 'Painel de Mobilização · Timenow',
-  description: 'Acompanhamento das contratações da Mobilização Braskem 2027',
+  description: 'Acompanhamento das contratações',
 }
 
 export const viewport: Viewport = {

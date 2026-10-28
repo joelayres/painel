@@ -6,7 +6,7 @@ vi.mock('@/components/marca/FundoRede', () => ({ FundoRede: () => <canvas /> }))
 vi.mock('@/components/tema/AlternadorTema', () => ({ AlternadorTema: () => <button type="button">tema</button> }))
 
 const { default: Entrar } = await import('../page')
-const TITULO = 'Mobilização Braskem 2027'
+const TITULO = 'Painel de Mobilização'
 
 test('capa do celular mostra o título e o formulário fica num cartão arredondado em cima', async () => {
   render(await Entrar({ searchParams: Promise.resolve({}) }))
