@@ -46,3 +46,31 @@ test('gestor só com projeto encerrado vê o projeto em Encerrados', () => {
   expect(within(secao).getByRole('link', { name: 'Projeto Parada Z' })).toHaveAttribute('href', '/projetos/9/resumo')
   expect(secao).toHaveTextContent('Encerrado')
 })
+
+test('com projetos de 2 clientes, mostra o filtro de cliente', () => {
+  render(<ListaProjetos projetos={lista} perfil="gestor" clientes={[]} />)
+  const filtro = screen.getByRole('navigation', { name: 'Clientes' })
+  const botoes = within(filtro).getAllByRole('link')
+  expect(botoes.map((b) => b.textContent)).toEqual(['Todos', 'Braskem', 'Timenow'])
+  expect(botoes[0]).toHaveAttribute('href', '/')
+  expect(botoes[0]).toHaveAttribute('aria-current', 'true')
+  expect(botoes[1]).toHaveAttribute('href', '/?cliente=Braskem')
+})
+
+test('com um cliente escolhido, mostra só os projetos dele', () => {
+  render(<ListaProjetos projetos={lista} perfil="rh" clientes={[]} clienteAtivo="Timenow" />)
+  expect(screen.queryByRole('region', { name: 'Braskem' })).toBeNull()
+  expect(within(screen.getByRole('region', { name: 'Timenow' })).getAllByRole('link')).toHaveLength(1)
+  expect(within(screen.getByRole('navigation', { name: 'Clientes' })).getByRole('link', { name: 'Timenow' })).toHaveAttribute('aria-current', 'true')
+})
+
+test('cliente desconhecido no endereço mostra todos', () => {
+  render(<ListaProjetos projetos={lista} perfil="rh" clientes={[]} clienteAtivo="outro" />)
+  expect(screen.getByRole('region', { name: 'Braskem' })).toBeTruthy()
+  expect(screen.getByRole('region', { name: 'Timenow' })).toBeTruthy()
+})
+
+test('com projetos de um cliente só, não mostra o filtro', () => {
+  render(<ListaProjetos projetos={lista.slice(0, 2)} perfil="rh" clientes={[]} />)
+  expect(screen.queryByRole('navigation', { name: 'Clientes' })).toBeNull()
+})
