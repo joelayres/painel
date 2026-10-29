@@ -67,15 +67,24 @@ describe('migração 007', () => {
           [2, 'captura'],
           [11, 'admissao'],
         ])
-        // Todo projeto existente ganhou as 13, com os ajustes de duração que já tinha.
-        expect(await contar(c, 'select count(*) as n from projetos p where (select count(*) from projeto_etapas e where e.projeto_id = p.id) <> 13')).toBe(0)
+        // A Braskem 2027 tem as 13 padrão, com os ajustes de duração que já tinha.
         expect(
           await contar(
             c,
             `select count(*) as n from projeto_etapas e left join projeto_duracoes d on d.projeto_id = e.projeto_id and d.ordem = e.padrao
-             where e.duracao is distinct from d.duracao or e.padrao <> e.posicao`,
+             where e.projeto_id = $1 and (e.duracao is distinct from d.duracao or e.padrao is distinct from e.posicao)`,
+            [projeto[0].id],
           ),
         ).toBe(0)
+        // As conclusões de toda vaga são as primeiras etapas da lista, sem buraco.
+        expect(
+          await contar(
+            c,
+            `select count(*) as n from (select vc.vaga_id from vaga_conclusoes vc join projeto_etapas e on e.id = vc.etapa_id
+             group by vc.vaga_id having count(*) <> max(e.posicao)) x`,
+          ),
+        ).toBe(0)
+        expect(await contar(c, 'select count(*) as n from vaga_conclusoes where automatica')).toBe(0)
         const { rows: depois } = await c.query(
           `select vc.vaga_id, vc.ordem, vc.concluida_em, e.posicao from vaga_conclusoes vc join projeto_etapas e on e.id = vc.etapa_id
            join vagas v on v.id = vc.vaga_id where e.projeto_id = v.projeto_id order by vc.vaga_id, vc.ordem`,
@@ -128,10 +137,12 @@ describe('incluir etapa', () => {
     emTransacao(async (c) => {
       const { projetoId, ondaId } = await projetoComOnda(c)
       const nova = () => novaVaga(c, { projetoId, ondaId, dataInicio: '2026-10-01' })
-      const [semNada, na10, na11, mobilizada] = [await nova(), await nova(), await nova(), await nova()]
+      const [semNada, na10, na11, mobilizada, cancelada] = [await nova(), await nova(), await nova(), await nova(), await nova()]
       await concluirAte(c, na10, 9, '2026-10-05')
       await concluirAte(c, na11, 10, '2026-10-05')
       await concluirAte(c, mobilizada, 13, '2026-10-05')
+      await concluirAte(c, cancelada, 12, '2026-10-05')
+      await c.query('update vagas set cancelada_em = now() where id = $1', [cancelada])
       // A posição 10 (Ambientação) tem data própria, para ver que é ela que vale.
       const lista = await etapasDoProjeto(c, projetoId)
       const ambientacao = lista[9]
@@ -153,12 +164,20 @@ describe('incluir etapa', () => {
       expect(await daNova(na10)).toEqual([])
       expect(await daNova(na11)).toEqual([{ posicao: 11, nome: 'Cadastro no eSocial', data: '2026-10-09' }])
       expect(await daNova(mobilizada)).toEqual([{ posicao: 11, nome: 'Cadastro no eSocial', data: '2026-10-09' }])
+      // A cancelada também, para as conclusões continuarem sendo as primeiras da lista.
+      expect(await daNova(cancelada)).toEqual([{ posicao: 11, nome: 'Cadastro no eSocial', data: '2026-10-09' }])
+      expect((await conclusoes(c, cancelada)).map((x) => x.posicao)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
+      // Só as conclusões automáticas ficam marcadas, para a previsão não contar com elas.
+      const { rows: auto } = await c.query('select vaga_id, automatica from vaga_conclusoes where etapa_id = $1 order by vaga_id', [id])
+      expect(auto.map((a) => a.vaga_id).sort()).toEqual([na11, mobilizada, cancelada].sort())
+      for (const a of auto) expect(a.automatica).toBe(true)
+      expect(await contar(c, 'select count(*) as n from vaga_conclusoes where etapa_id <> $1 and automatica and vaga_id in ($2, $3, $4)', [id, na11, mobilizada, cancelada])).toBe(0)
       expect(await etapaAtual(c, na10)).toBe(10)
       expect(await etapaAtual(c, na11)).toBe(12)
       expect(depois[11].nome).toBe('Admissão Timenow')
       expect(await etapaAtual(c, mobilizada)).toBe(15)
 
-      for (const vaga of [na11, mobilizada]) {
+      for (const vaga of [na11, mobilizada, cancelada]) {
         const { rows: h } = await c.query('select acao, nome_usuario from historico where vaga_id = $1', [vaga])
         expect(h).toEqual([{ acao: 'Etapa Cadastro no eSocial incluída e marcada como concluída', nome_usuario: 'teste-sql rh' }])
       }
@@ -166,7 +185,7 @@ describe('incluir etapa', () => {
       const { rows: geral } = await c.query("select detalhe from historico where vaga_id is null and detalhe->>'etapa' = 'Cadastro no eSocial'")
       const { rows: projeto } = await c.query('select nome from projetos where id = $1', [projetoId])
       expect(geral.map((g) => g.detalhe)).toEqual([
-        { projeto: projeto[0].nome, etapa: 'Cadastro no eSocial', depois_de: 'Ambientação/TBS', concluidas_automaticamente: 2 },
+        { projeto: projeto[0].nome, etapa: 'Cadastro no eSocial', depois_de: 'Ambientação/TBS', concluidas_automaticamente: 3 },
       ])
     }))
 
@@ -205,8 +224,11 @@ describe('excluir, renomear e mover', () => {
       const { projetoId, ondaId } = await projetoComOnda(c)
       const ate5 = await novaVaga(c, { projetoId, ondaId, dataInicio: '2026-10-01' })
       const na3 = await novaVaga(c, { projetoId, ondaId, dataInicio: '2026-10-01' })
+      const cancelada = await novaVaga(c, { projetoId, ondaId, dataInicio: '2026-10-01' })
       await concluirAte(c, ate5, 5, '2026-10-06')
       await concluirAte(c, na3, 2, '2026-10-06')
+      await concluirAte(c, cancelada, 4, '2026-10-06')
+      await c.query('update vagas set cancelada_em = now() where id = $1', [cancelada])
       const lista = await etapasDoProjeto(c, projetoId)
       await c.query("update vaga_conclusoes set concluida_em = '2026-10-03' where etapa_id = $1", [lista[2].id])
       await comoUsuario(c, 'rh')
@@ -219,11 +241,15 @@ describe('excluir, renomear e mover', () => {
       expect((await conclusoes(c, ate5)).map((x) => x.posicao)).toEqual([1, 2, 3, 4])
       const { rows: h } = await c.query('select acao, detalhe from historico where vaga_id = $1', [ate5])
       expect(h).toEqual([{ acao: 'Etapa Triagem de Candidatos excluída', detalhe: { concluida_em: '2026-10-03' } }])
+      // A cancelada também perde a conclusão, com a data no histórico, e fica sem buraco.
+      expect((await conclusoes(c, cancelada)).map((x) => x.posicao)).toEqual([1, 2, 3])
+      const { rows: hc } = await c.query('select acao, detalhe from historico where vaga_id = $1', [cancelada])
+      expect(hc).toEqual([{ acao: 'Etapa Triagem de Candidatos excluída', detalhe: { concluida_em: '2026-10-03' } }])
       expect(await etapaAtual(c, na3)).toBe(3)
       expect(depois[2].nome).toBe('Entrevista - Timenow')
       expect(await contar(c, 'select count(*) as n from historico where vaga_id = $1', [na3])).toBe(0)
       const { rows: geral } = await c.query("select detalhe from historico where vaga_id is null and detalhe->>'etapa' = 'Triagem de Candidatos'")
-      expect(geral[0].detalhe).toMatchObject({ etapa: 'Triagem de Candidatos', vagas_com_data: 1 })
+      expect(geral[0].detalhe).toMatchObject({ etapa: 'Triagem de Candidatos', vagas_com_data: 2 })
       expect(geral[0].detalhe.projeto).toEqual(expect.stringContaining('teste-sql Projeto'))
     }))
 
@@ -476,6 +502,21 @@ describe('permissões e projeto encerrado', () => {
         for (const [sql, params] of chamadas) expect(await erroSalvo(c, () => c.query(sql, params)), sql).toContain('sem permissão')
       }))
   }
+
+  it('nem o RH escreve direto na lista: só pelas funções', () =>
+    emTransacao(async (c) => {
+      const { projetoId } = await projetoComOnda(c)
+      const lista = await etapasDoProjeto(c, projetoId)
+      await comoUsuario(c, 'rh')
+      expect(await contar(c, 'select count(*) as n from projeto_etapas where projeto_id = $1', [projetoId])).toBe(13)
+      expect(
+        await erroSalvo(c, () => c.query("insert into projeto_etapas (projeto_id, posicao, nome, duracao) values ($1, 14, 'x', 1)", [projetoId])),
+      ).toMatch(/row-level security/)
+      expect((await c.query("update projeto_etapas set nome = 'x', fixa = null where id = $1", [lista[1].id])).rowCount).toBe(0)
+      expect((await c.query('update projeto_etapas set posicao = 20 where id = $1', [lista[10].id])).rowCount).toBe(0)
+      expect((await c.query('delete from projeto_etapas where id = $1', [lista[3].id])).rowCount).toBe(0)
+      expect(await etapasDoProjeto(c, projetoId)).toEqual(lista)
+    }))
 
   it('as funções internas da lista não podem ser chamadas pelo usuário', () =>
     emTransacao(async (c) => {

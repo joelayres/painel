@@ -3,7 +3,8 @@
 import { diaUtilSeguinte, fimDaEtapa, proximoDiaUtil, type Feriados } from './calendario'
 import type { EtapaDef, EtapaFixa } from './etapas'
 
-export type Conclusao = { ordem: number; concluidaEm: string }
+// automatica: concluída sozinha quando a etapa foi incluída com a vaga já depois daquele ponto.
+export type Conclusao = { ordem: number; concluidaEm: string; automatica?: boolean }
 export type EtapaPrevista = { ordem: number; nome: string; fixa: EtapaFixa | null; inicio: string; fim: string; concluidaEm: string | null }
 export type PrevisaoVaga = {
   etapas: EtapaPrevista[]
@@ -22,6 +23,7 @@ export function preverVaga(p: {
 }): PrevisaoVaga {
   const f = p.feriados
   const concluidas = new Map(p.conclusoes.map((c) => [c.ordem, c.concluidaEm]))
+  const automaticas = new Set(p.conclusoes.filter((c) => c.automatica).map((c) => c.ordem))
   const etapas: EtapaPrevista[] = []
   let inicio = proximoDiaUtil(p.dataInicio, f)
   for (const e of [...p.etapas].sort((a, b) => a.ordem - b.ordem)) {
@@ -31,6 +33,11 @@ export function preverVaga(p: {
       if (retomada > inicio) inicio = retomada
     }
     const concluidaEm = concluidas.get(e.ordem) ?? null
+    // A conclusão automática é transparente: a próxima etapa começa como se ela não estivesse na lista.
+    if (concluidaEm && automaticas.has(e.ordem)) {
+      etapas.push({ ordem: e.ordem, nome: e.nome, fixa: e.fixa, inicio: concluidaEm, fim: concluidaEm, concluidaEm })
+      continue
+    }
     const fim = concluidaEm ?? fimDaEtapa(inicio, e.duracao, f)
     etapas.push({ ordem: e.ordem, nome: e.nome, fixa: e.fixa, inicio, fim, concluidaEm })
     // Depois de um marco (0 dias) a próxima começa no mesmo dia útil; depois das outras, no dia útil seguinte.

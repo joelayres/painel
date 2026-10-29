@@ -68,6 +68,42 @@ describe('previsão das etapas', () => {
     expect(p.admissaoEstimada).toBe('2026-11-23')
   })
 
+  // Etapa incluída com a vaga já depois do ponto: a conclusão automática não mexe na previsão.
+  const incluir = (depoisDe: number, duracao: number): EtapaDef[] => [
+    ...ETAPAS_PADRAO.slice(0, depoisDe),
+    { id: 'n', ordem: depoisDe + 1, nome: 'Cadastro no eSocial', duracao, fixa: null },
+    ...ETAPAS_PADRAO.slice(depoisDe).map((e) => ({ ...e, ordem: e.ordem + 1 })),
+  ]
+
+  it('conclusão automática depois de um marco não muda o início da etapa atual', () => {
+    const datas = ['2026-10-22', '2026-10-28', '2026-10-29', '2026-10-30', '2026-11-03', '2026-11-04']
+    const sem = prever('2026-10-22', datas.map((d, i) => ({ ordem: i + 1, concluidaEm: d })))
+    const conclusoes: Conclusao[] = [
+      ...datas.map((d, i) => ({ ordem: i + 1, concluidaEm: d })),
+      { ordem: 7, concluidaEm: '2026-11-04', automatica: true },
+    ]
+    const com = preverVaga({ dataInicio: '2026-10-22', etapas: incluir(6, 2), conclusoes, feriados: F })
+    expect(com.etapas[6]).toMatchObject({ inicio: '2026-11-04', fim: '2026-11-04', concluidaEm: '2026-11-04' })
+    expect(com.etapaAtual).toBe(8)
+    expect(com.inicioEtapaAtual).toBe(sem.inicioEtapaAtual)
+    expect(com.etapas[7]).toMatchObject({ inicio: sem.etapas[6].inicio, fim: sem.etapas[6].fim })
+    expect(com.admissaoEstimada).toBe(sem.admissaoEstimada)
+    expect(com.conclusaoEstimada).toBe(sem.conclusaoEstimada)
+  })
+
+  it('conclusão automática na primeira posição não muda a Abertura', () => {
+    const sem = prever('2026-10-22')
+    const com = preverVaga({
+      dataInicio: '2026-10-22',
+      etapas: incluir(0, 1),
+      conclusoes: [{ ordem: 1, concluidaEm: '2026-10-22', automatica: true }],
+      feriados: F,
+    })
+    expect(com.etapaAtual).toBe(2)
+    expect(com.etapas[1]).toMatchObject({ nome: 'Abertura de vaga', inicio: sem.etapas[0].inicio, fim: sem.etapas[0].fim })
+    expect(com.conclusaoEstimada).toBe(sem.conclusaoEstimada)
+  })
+
   it('lista sem Treinamento termina na CTPS', () => {
     const p = preverVaga({ dataInicio: '2026-10-22', etapas: ETAPAS_PADRAO.slice(0, 12), conclusoes: [], feriados: F })
     expect(p.conclusaoEstimada).toBe('2026-11-24')

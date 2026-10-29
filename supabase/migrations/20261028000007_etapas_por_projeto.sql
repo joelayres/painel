@@ -44,9 +44,10 @@ create trigger etapas_do_projeto_novo after insert on projetos for each row exec
 -- Projeto encerrado: a lista também não muda.
 create trigger projeto_aberto before insert or update or delete on projeto_etapas for each row execute function projeto_aberto();
 
+-- Só leitura pela RLS: a lista muda só pelas funções abaixo (nem o RH escreve direto), para que as
+-- regras das fixas, das posições e do histórico não possam ser contornadas.
 alter table projeto_etapas enable row level security;
 create policy leitura on projeto_etapas for select to authenticated using (pode_ver_projeto(projeto_id));
-create policy rh_escreve on projeto_etapas for all to authenticated using (eh_rh()) with check (eh_rh());
 
 -- Funções auxiliares (só para as funções do banco) ------------------------------------------------
 
@@ -70,6 +71,9 @@ revoke execute on function public.posicao_etapa, public.etapa_na_posicao, public
 -- As conclusões apontam para a etapa do projeto --------------------------------------------------
 
 alter table vaga_conclusoes add column etapa_id uuid references projeto_etapas on delete restrict;
+-- Concluída sozinha por incluir_etapa (a vaga já tinha passado do ponto): a previsão não conta com
+-- ela, para que nenhuma vaga mude de previsão por causa da inclusão.
+alter table vaga_conclusoes add column automatica boolean not null default false;
 
 -- Sem o gatilho de projeto encerrado: preencher etapa_id não muda nada, nem em projeto encerrado.
 alter table vaga_conclusoes disable trigger projeto_aberto;
@@ -299,7 +303,8 @@ begin
     from vagas v left join vaga_conclusoes vc on vc.vaga_id = v.id and vc.etapa_id = p_depois_de
     where v.projeto_id = p_projeto and (p_depois_de is null or vc.vaga_id is not null)
   ), gravadas as (
-    insert into vaga_conclusoes (vaga_id, etapa_id, concluida_em) select vaga_id, v_id, data from chegaram returning vaga_id, concluida_em
+    insert into vaga_conclusoes (vaga_id, etapa_id, concluida_em, automatica)
+    select vaga_id, v_id, data, true from chegaram returning vaga_id, concluida_em
   )
   insert into historico (vaga_id, nome_usuario, acao, detalhe)
   select vaga_id, meu_nome(), 'Etapa ' || v_nome || ' incluída e marcada como concluída', jsonb_build_object('data', concluida_em) from gravadas;
