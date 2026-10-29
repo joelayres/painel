@@ -1,6 +1,6 @@
 import type { Client } from 'pg'
 import { describe, expect, it } from 'vitest'
-import { comoUsuario, concluirAte, emTransacao, etapasDoProjeto, novaVaga, novoCliente, novoProjeto } from './apoio'
+import { comoUsuario, concluirAte, emTransacao, etapasDoProjeto, migracaoAplicada, novaVaga, novoCliente, novoProjeto } from './apoio'
 
 const erro = async (p: Promise<unknown>) => {
   try {
@@ -58,8 +58,10 @@ describe('migração 007', () => {
   it('a 007 dá às vagas reais da Braskem 2027 a lista padrão sem mudar nada', async () => {
     let antes: { vaga_id: string; ordem: number; concluida_em: string }[] = []
     let duracoesAntes: { padrao: number; duracao: number }[] = []
+    let pular = false
     await emTransacao(
       async (c) => {
+        if (pular) return
         const { rows: projeto } = await c.query("select id from projetos where nome = 'Mobilização Braskem 2027'")
         const lista = await etapasDoProjeto(c, projeto[0].id)
         const { rows: padrao } = await c.query('select ordem as posicao, nome from etapas order by ordem')
@@ -70,6 +72,8 @@ describe('migração 007', () => {
         ])
         // A Braskem 2027 tem as 13 padrão, com os ajustes de duração que já tinha.
         expect(lista.every((e) => e.posicao === lista.indexOf(e) + 1)).toBe(true)
+        const { rows: desvio } = await c.query('select 1 from projeto_etapas where projeto_id = $1 and padrao is distinct from posicao', [projeto[0].id])
+        expect(desvio).toHaveLength(0)
         const { rows: duracoes } = await c.query(
           'select padrao, duracao from projeto_etapas where projeto_id = $1 and duracao is not null order by padrao',
           [projeto[0].id],
@@ -93,6 +97,9 @@ describe('migração 007', () => {
         expect(depois.map(({ vaga_id, ordem, concluida_em }) => ({ vaga_id, ordem, concluida_em }))).toEqual(antes)
       },
       async (c) => {
+        // Com a 008 já aplicada, ordem e projeto_duracoes não existem mais: não há o que comparar.
+        pular = await migracaoAplicada(c, '20261028000008')
+        if (pular) return
         antes = (await c.query('select vaga_id, ordem, concluida_em from vaga_conclusoes order by vaga_id, ordem')).rows
         duracoesAntes = (
           await c.query(

@@ -4,6 +4,7 @@ Acompanhamento de projetos de mobilização: cada cliente tem seus projetos, e c
 
 - Perfis: **RH** vê tudo e é o único que altera (projetos, vagas, clientes, usuários e acessos). **Gestor** e **Cliente** só leem, e só os projetos que o RH liberar para eles em Cadastros → Usuários. O usuário Cliente pertence a um cliente e só recebe projetos dele; com um único projeto liberado, cai direto no painel.
 - Projeto encerrado não aceita alteração até ser reaberto.
+- Etapas por projeto: cada projeto tem a própria lista de etapas, que o RH edita na aba Configurar (incluir, renomear, mover, excluir e ajustar a duração); Captura e Admissão são obrigatórias. No quadro, o RH avança as vagas arrastando o cartão para a etapa.
 - Importação: em cada projeto o RH baixa o modelo Excel, preenche as vagas (e as etapas já concluídas) e envia a planilha; o painel mostra a prévia com os erros por linha e só grava se estiver tudo certo.
 - O banco guarda só fatos (cadastros e datas reais de conclusão). Previsões e cores são calculadas em `src/dominio` a cada leitura.
 - Desenho: `docs/superpowers/specs/2026-10-27-painel-mobilizacao-design.md` e, para os projetos de mobilização, `docs/superpowers/specs/2026-10-28-projetos-de-mobilizacao-design.md`. Plano: `docs/superpowers/plans/2026-10-27-plano-1-painel-mobilizacao.md` e `docs/superpowers/plans/2026-10-28-plano-2-projetos-de-mobilizacao.md`.

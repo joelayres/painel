@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { Client } from 'pg'
 import { describe, expect, it } from 'vitest'
-import { comoUsuario, concluirAte, emTransacao, novaVaga, novoCliente, novoProjeto } from './apoio'
+import { comoUsuario, concluirAte, emTransacao, migracaoAplicada, novaVaga, novoCliente, novoProjeto } from './apoio'
 
 const erro = async (p: Promise<unknown>) => {
   try {
@@ -37,8 +37,10 @@ const contar = async (c: Client, sql: string, params: unknown[] = []) => Number(
 describe('migração da Braskem 2027', () => {
   it('a migração põe as vagas reais na Braskem 2027 sem perder nada', async () => {
     let antes: { vagas: number; conclusoes: number; historico: number; lista: unknown[] } | undefined
+    let pular = false
     await emTransacao(
       async (c) => {
+        if (pular) return
         const { rows: projeto } = await c.query(
           "select p.id, c.nome as cliente, p.organizacao from projetos p join clientes c on c.id = p.cliente_id where p.nome = 'Mobilização Braskem 2027'",
         )
@@ -65,6 +67,9 @@ describe('migração da Braskem 2027', () => {
         expect(await contar(c, 'select count(*) as n from gestores where cliente_id is distinct from $1', [await braskem(c)])).toBe(0)
       },
       async (c) => {
+        // Com a 008 já aplicada, vaga_conclusoes.ordem não existe mais: não há o que comparar.
+        pular = await migracaoAplicada(c, '20261028000008')
+        if (pular) return
         antes = {
           vagas: await contar(c, 'select count(*) as n from vagas'),
           conclusoes: await contar(c, 'select count(*) as n from vaga_conclusoes'),

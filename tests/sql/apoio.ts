@@ -24,6 +24,13 @@ export async function aplicarPendentes(c: Client): Promise<void> {
   }
 }
 
+// A migração já está no banco? Os testes que guardam o estado de antes de uma migração usam isto
+// para não rodar (nem consultar o que ela removeu) depois que ela foi aplicada.
+export async function migracaoAplicada(c: Client, versao: string): Promise<boolean> {
+  const { rows } = await c.query('select 1 from supabase_migrations.schema_migrations where version = $1', [versao])
+  return rows.length > 0
+}
+
 // `antes` roda na transação antes das migrações pendentes: serve para guardar o estado de antes da migração.
 export async function emTransacao(fn: (c: Client) => Promise<void>, antes?: (c: Client) => Promise<void>): Promise<void> {
   const c = conexao()
