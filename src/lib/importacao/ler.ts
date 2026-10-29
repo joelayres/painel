@@ -6,7 +6,7 @@ import { chaveFuncao } from '@/dominio/painel'
 import { preverVaga } from '@/dominio/previsao'
 import { avisoMeta } from '@/dominio/situacao'
 import { lerData, texto } from './datas'
-import { colunasFixas, type Organizacao } from './modelo'
+import { COLUNAS_FIXAS, colunasFixas, type Organizacao } from './modelo'
 
 export type ContextoImportacao = {
   organizacao: Organizacao
@@ -57,9 +57,22 @@ export async function lerModeloVagas(arquivo: ArrayBuffer, ctx: ContextoImportac
     const nome = normalizar(texto(c.value))
     if (nome && !colunas.has(nome)) colunas.set(nome, n)
   })
+  const erros: ErroImportacao[] = []
   const fixas = colunasFixas(ctx.organizacao)
   const faltando = fixas.filter((c) => !colunas.has(normalizar(c)))
   if (faltando.length) return { ok: false, erros: faltando.map((c) => ({ linha: 1, mensagem: `Falta a coluna ${c}. Use o modelo baixado do projeto.` })) }
+
+  // Toda coluna do cabeçalho precisa ser do modelo: as fixas ou uma etapa da lista do projeto.
+  const conhecidas = new Set([...COLUNAS_FIXAS, 'Meta', ...ctx.etapas.map((e) => e.nome)].map(normalizar))
+  const desconhecidas = [...colunas.keys()].filter((c) => !conhecidas.has(c))
+  if (desconhecidas.length) {
+    ws.getRow(1).eachCell((c) => {
+      if (desconhecidas.includes(normalizar(texto(c.value)))) erros.push({ linha: 1, mensagem: `Coluna desconhecida: ${texto(c.value).trim()}. Baixe o modelo de novo.` })
+    })
+  }
+  const semEtapa = ctx.etapas.filter((e) => !colunas.has(normalizar(e.nome)))
+  erros.push(...semEtapa.map((e) => ({ linha: 1, mensagem: `Falta a coluna ${e.nome}. Baixe o modelo de novo.` })))
+  if (erros.length) return { ok: false, erros }
 
   const col = (nome: string) => colunas.get(normalizar(nome))
   const etapas = [...ctx.etapas].sort((a, b) => a.ordem - b.ordem)
@@ -69,7 +82,6 @@ export async function lerModeloVagas(arquivo: ArrayBuffer, ctx: ContextoImportac
   const colunaOnda = col('Onda')
 
   const vagas: VagaImportada[] = []
-  const erros: ErroImportacao[] = []
 
   ws.eachRow((row, n) => {
     if (n === 1) return

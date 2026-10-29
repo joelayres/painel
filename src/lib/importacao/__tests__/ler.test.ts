@@ -1,7 +1,7 @@
 // @vitest-environment node
 import ExcelJS from 'exceljs'
 import { describe, expect, it } from 'vitest'
-import { ETAPAS_PADRAO } from '@/dominio/etapas'
+import { ETAPAS_PADRAO, type EtapaDef } from '@/dominio/etapas'
 import { type ContextoImportacao, lerModeloVagas } from '../ler'
 import { gerarModelo } from '../modelo'
 
@@ -20,9 +20,9 @@ const contexto = (extra: Partial<ContextoImportacao> = {}): ContextoImportacao =
 })
 
 // Preenche o modelo do projeto pelo nome da coluna, como o RH faria no Excel.
-async function planilha(organizacao: 'ondas' | 'meta', linhas: Record<string, unknown>[], tirar: string[] = []): Promise<ArrayBuffer> {
+async function planilha(organizacao: 'ondas' | 'meta', linhas: Record<string, unknown>[], tirar: string[] = [], etapas: EtapaDef[] = ETAPAS_PADRAO): Promise<ArrayBuffer> {
   const wb = new ExcelJS.Workbook()
-  await wb.xlsx.load((await gerarModelo({ organizacao, ondas: ONDAS.map((o) => o.nome), gestores: GESTORES.map((g) => g.nome), etapas: ETAPAS_PADRAO })) as unknown as ArrayBuffer)
+  await wb.xlsx.load((await gerarModelo({ organizacao, ondas: ONDAS.map((o) => o.nome), gestores: GESTORES.map((g) => g.nome), etapas })) as unknown as ArrayBuffer)
   const ws = wb.getWorksheet('Vagas')!
   for (const nome of tirar) {
     const i = (ws.getRow(1).values as unknown[]).indexOf(nome)
@@ -132,5 +132,30 @@ describe('leitura do modelo de vagas', () => {
       { linha: 2, mensagem: 'Informe a meta.' },
       { linha: 3, mensagem: 'Este projeto não usa ondas; deixe a coluna Onda vazia.' },
     ] })
+  })
+
+  it('coluna de etapa que o projeto não tem dá erro e não importa nada', async () => {
+    const semTreinamento = ETAPAS_PADRAO.filter((e) => e.nome !== 'Treinamento')
+    const r = await lerModeloVagas(await planilha('ondas', [{ 'Função': 'A', 'Onda': '1ª Onda', 'Treinamento': '22/10/2026' }]), contexto({ etapas: semTreinamento }))
+    expect(r).toEqual({ ok: false, erros: [{ linha: 1, mensagem: 'Coluna desconhecida: Treinamento. Baixe o modelo de novo.' }] })
+  })
+
+  it('falta de coluna de etapa dá erro pedindo o modelo de novo', async () => {
+    const r = await lerModeloVagas(await planilha('ondas', [{ 'Função': 'A', 'Onda': '1ª Onda' }], ['Treinamento']), contexto())
+    expect(r).toEqual({ ok: false, erros: [{ linha: 1, mensagem: 'Falta a coluna Treinamento. Baixe o modelo de novo.' }] })
+  })
+
+  it('lê a conclusão da etapa nova no modelo de um projeto de 14 etapas', async () => {
+    const lista: EtapaDef[] = [
+      ...ETAPAS_PADRAO.slice(0, 3),
+      { id: 'nova', ordem: 4, nome: 'Teste prático', duracao: 2, fixa: null },
+      ...ETAPAS_PADRAO.slice(3).map((e) => ({ ...e, ordem: e.ordem + 1 })),
+    ]
+    const r = await lerModeloVagas(await planilha('ondas', [
+      { 'Função': 'A', 'Onda': '1ª Onda', 'Abertura de vaga': '20/10/2026', 'Captura de Mercado': '21/10/2026', 'Triagem de Candidatos': '22/10/2026', 'Teste prático': '23/10/2026' },
+    ], [], lista), contexto({ etapas: lista }))
+    expect(r.ok && r.vagas[0].concluidas).toEqual([
+      { ordem: 1, concluidaEm: '2026-10-20' }, { ordem: 2, concluidaEm: '2026-10-21' }, { ordem: 3, concluidaEm: '2026-10-22' }, { ordem: 4, concluidaEm: '2026-10-23' },
+    ])
   })
 })

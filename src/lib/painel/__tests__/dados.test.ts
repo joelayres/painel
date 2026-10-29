@@ -12,6 +12,12 @@ const base = [
   { ordem: 11, nome: 'Admissão Timenow', duracao: 0 }, { ordem: 12, nome: 'Atualização da CTPS', duracao: 3 },
   { ordem: 13, nome: 'Treinamento', duracao: 5 },
 ]
+// A lista padrão de um projeto, como o banco a guarda: id `${projeto}-${posição}`, duração nula quando segue o padrão.
+const listaDe = (projeto_id: string, duracoes: Record<number, number> = {}): LinhasPainel['projetoEtapas'] =>
+  base.map((e) => ({
+    id: `${projeto_id}-${e.ordem}`, projeto_id, posicao: e.ordem, nome: e.nome, duracao: duracoes[e.ordem] ?? null, padrao: e.ordem,
+    fixa: e.ordem === 2 ? 'captura' : e.ordem === 11 ? 'admissao' : null,
+  }))
 const vaga = (id: string, projeto_id: string, extra: Partial<LinhasPainel['vagas'][number]> = {}): LinhasPainel['vagas'][number] => ({
   id, projeto_id, meta: null, funcao: 'Técnico de Campo', disciplina: 'NR-13', area: 'Caldeiraria', onda_id: 'o1', gestor_id: null,
   candidato: null, data_inicio: '2026-10-22', retomada_em: null, cancelada_em: null, ...extra,
@@ -25,14 +31,13 @@ const linhas: LinhasPainel = {
     { id: 'pM', cliente_id: 'c1', nome: 'Contratação', area: null, organizacao: 'meta', encerrado_em: '2026-10-01T00:00:00Z' },
   ],
   clienteDuracoes: [],
-  projetoDuracoes: [{ projeto_id: 'pB', ordem: 2, duracao: 1 }],
+  projetoEtapas: [...listaDe('pA'), ...listaDe('pB', { 2: 1 }), ...listaDe('pM')],
   ondas: [
     { id: 'o1', nome: 'Onda 1', inicio: '2026-10-22', fim: '2026-11-18', projeto_id: 'pA' },
     { id: 'o2', nome: 'Onda 1', inicio: '2026-10-22', fim: '2026-11-18', projeto_id: 'pB' },
     { id: 'o3', nome: 'Onda 2', inicio: '2026-11-01', fim: '2026-12-18', projeto_id: 'pB' },
   ],
   gestores: [{ id: 'g1', nome: 'Ana' }],
-  etapas: base,
   feriados: [{ data: '2026-11-02' }, { data: '2026-11-15' }, { data: '2026-11-20' }],
   vagas: [
     vaga('vA', 'pA', { gestor_id: 'g1', candidato: 'Lucas' }),
@@ -40,7 +45,7 @@ const linhas: LinhasPainel = {
     vaga('vM', 'pM', { onda_id: null, meta: '2026-11-18' }),
     vaga('vX', 'pA', { cancelada_em: '2026-10-25T10:00:00Z' }),
   ],
-  conclusoes: [{ vaga_id: 'vA', ordem: 1, concluida_em: '2026-10-22' }, { vaga_id: 'vM', ordem: 1, concluida_em: '2026-10-22' }],
+  conclusoes: [{ vaga_id: 'vA', etapa_id: 'pA-1', automatica: false, concluida_em: '2026-10-22' }, { vaga_id: 'vM', etapa_id: 'pM-1', automatica: false, concluida_em: '2026-10-22' }],
 }
 
 describe('montarPainel', () => {
@@ -57,6 +62,32 @@ describe('montarPainel', () => {
     const [a, b] = montarPainel(linhas, '2026-10-27')
     const fim2 = (v: typeof a) => v.previsao.etapas.find((e) => e.ordem === 2)!.fim
     expect(fim2(b) < fim2(a)).toBe(true)
+  })
+
+  it('com 14 etapas (uma incluída), a conclusão da etapa nova cai na posição certa', () => {
+    const nova = { id: 'pA-nova', projeto_id: 'pA', posicao: 4, nome: 'Teste prático', duracao: 2, padrao: null, fixa: null as null }
+    const lista = [...listaDe('pA').map((e) => (e.posicao >= 4 ? { ...e, posicao: e.posicao + 1 } : e)), nova]
+    const l = {
+      ...linhas,
+      projetoEtapas: lista,
+      vagas: [vaga('vA', 'pA')],
+      conclusoes: [
+        { vaga_id: 'vA', etapa_id: 'pA-1', automatica: false, concluida_em: '2026-10-22' },
+        { vaga_id: 'vA', etapa_id: 'pA-2', automatica: false, concluida_em: '2026-10-23' },
+        { vaga_id: 'vA', etapa_id: 'pA-3', automatica: false, concluida_em: '2026-10-26' },
+        { vaga_id: 'vA', etapa_id: 'pA-nova', automatica: false, concluida_em: '2026-10-27' },
+      ],
+    }
+    const [v] = montarPainel(l, '2026-10-27')
+    expect(v.previsao.etapas).toHaveLength(14)
+    expect(v.previsao.etapas.find((e) => e.ordem === 4)).toMatchObject({ nome: 'Teste prático', concluidaEm: '2026-10-27' })
+    expect(v.previsao.etapaAtual).toBe(5)
+  })
+
+  it('passa a marca de conclusão automática para a previsão', () => {
+    const l = { ...linhas, vagas: [vaga('vA', 'pA')], conclusoes: [{ vaga_id: 'vA', etapa_id: 'pA-1', automatica: true, concluida_em: '2026-10-22' }] }
+    const [v] = montarPainel(l, '2026-10-27')
+    expect(v.previsao.etapas[0].concluidaEm).toBe('2026-10-22')
   })
 
   it('projeto por meta usa a meta da vaga e não tem onda', () => {

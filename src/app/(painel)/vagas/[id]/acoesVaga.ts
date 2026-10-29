@@ -20,6 +20,7 @@ const MENSAGENS: [string, string][] = [
   ['data antes da retomada', 'A data não pode ser antes da desistência do candidato anterior.'],
   ['vaga já admitida', 'A vaga já passou da admissão; não volta para a captura.'],
   ['projeto encerrado', 'Este projeto está encerrado. Reabra para alterar.'],
+  ['etapa obrigatória', 'Esta etapa é obrigatória e não pode ser excluída nem renomeada.'],
 ]
 
 function resposta(error: { message: string } | null): Resposta {
@@ -31,11 +32,16 @@ function resposta(error: { message: string } | null): Resposta {
   return { ok: false, erro: conhecida?.[1] ?? 'Não foi possível salvar. Tente de novo.' }
 }
 
-export async function concluirEtapa(vagaId: string, ordemEsperada: number, data: string): Promise<Resposta> {
+// Conclui da etapa esperada até a posição `ate`, todas com a mesma data (salto de etapas).
+export async function concluirEtapas(vagaId: string, ordemEsperada: number, ate: number, data: string): Promise<Resposta> {
   await exigirRh()
   const sb = await criarClienteServidor()
-  const { error } = await sb.rpc('concluir_etapa', { p_vaga: vagaId, p_ordem_esperada: ordemEsperada, p_data: data })
+  const { error } = await sb.rpc('concluir_etapas', { p_vaga: vagaId, p_ordem_esperada: ordemEsperada, p_ate: ate, p_data: data })
   return resposta(error)
+}
+
+export async function concluirEtapa(vagaId: string, ordemEsperada: number, data: string): Promise<Resposta> {
+  return concluirEtapas(vagaId, ordemEsperada, ordemEsperada, data)
 }
 
 export async function desfazerEtapa(vagaId: string, ordemEsperada: number): Promise<Resposta> {

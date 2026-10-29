@@ -19,7 +19,7 @@ function vaga(id: string, c: { cor: Cor | null; etapaAtual: number | null; fimAt
     gestor: { id: 'g1', nome: 'Ana' },
     candidato: c.candidato ?? null,
     previsao: {
-      etapas: c.etapaAtual ? [{ ordem: c.etapaAtual, nome: 'x', inicio: '2026-10-22', fim: c.fimAtual ?? '2026-11-01', concluidaEm: null }] : [],
+      etapas: c.etapaAtual ? [{ ordem: c.etapaAtual, nome: 'x', inicio: '2026-10-22', fim: c.fimAtual ?? '2026-11-01', concluidaEm: null, fixa: null }] : [],
       etapaAtual: c.etapaAtual,
       inicioEtapaAtual: c.etapaAtual ? '2026-10-22' : null,
       admissaoEstimada: c.admissao ?? '2026-11-19',

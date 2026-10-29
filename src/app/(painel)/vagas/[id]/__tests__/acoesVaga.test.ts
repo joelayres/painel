@@ -11,7 +11,7 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 const vagaRecarregada = vi.fn()
 vi.mock('@/lib/painel/dados', () => ({ carregarVaga: (...a: unknown[]) => vagaRecarregada(...a) }))
 vi.mock('@/dominio/tempo', () => ({ hojeSP: () => '2026-10-28' }))
-const { cancelarVaga, candidatoDesistiu, concluirEtapa, salvarVaga } = await import('../acoesVaga')
+const { cancelarVaga, candidatoDesistiu, concluirEtapa, concluirEtapas, salvarVaga } = await import('../acoesVaga')
 
 beforeEach(() => vi.clearAllMocks())
 
@@ -30,7 +30,18 @@ test('data antes da etapa anterior e data no futuro viram mensagens claras', asy
 test('concluir chama a função do banco com a etapa esperada', async () => {
   rpc.mockResolvedValue({ error: null })
   expect(await concluirEtapa('v1', 3, '2026-10-27')).toEqual({ ok: true })
-  expect(rpc).toHaveBeenCalledWith('concluir_etapa', { p_vaga: 'v1', p_ordem_esperada: 3, p_data: '2026-10-27' })
+  expect(rpc).toHaveBeenCalledWith('concluir_etapas', { p_vaga: 'v1', p_ordem_esperada: 3, p_ate: 3, p_data: '2026-10-27' })
+})
+
+test('concluir várias etapas chama a função do banco com o intervalo', async () => {
+  rpc.mockResolvedValue({ error: null })
+  expect(await concluirEtapas('v', 3, 5, '2026-10-28')).toEqual({ ok: true })
+  expect(rpc).toHaveBeenCalledWith('concluir_etapas', { p_vaga: 'v', p_ordem_esperada: 3, p_ate: 5, p_data: '2026-10-28' })
+})
+
+test('etapa obrigatória vira mensagem clara', async () => {
+  rpc.mockResolvedValue({ error: { message: 'etapa obrigatória' } })
+  expect(await concluirEtapas('v', 3, 5, '2026-10-28')).toEqual({ ok: false, erro: 'Esta etapa é obrigatória e não pode ser excluída nem renomeada.' })
 })
 
 const ONDA = '11111111-1111-4111-8111-111111111111'
