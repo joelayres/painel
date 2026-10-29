@@ -313,6 +313,9 @@ isOneToOne: false
 "duracao_efetiva":
 { Args: { "p_etapa": string }; Returns: number
                            },
+"eh_analista":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
 "eh_rh":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
@@ -344,6 +347,9 @@ isOneToOne: false
 "excluir_etapa":
 { Args: { "p_etapa": string }; Returns: undefined
                            },
+"exigir_projeto":
+{ Args: { "p": string }; Returns: undefined
+                           },
 "hoje_sp":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
@@ -361,6 +367,19 @@ isOneToOne: false
                            },
 "mover_etapa":
 { Args: { "p_etapa": string,"p_para": number }; Returns: undefined
+                           },
+"pessoas_do_projeto":
+{ Args: { "p_projeto": string }; Returns: {
+              "id": string,"nome": string,"perfil": string
+            }[]
+                           },
+"pessoas_liberaveis":
+{ Args: { "p_projeto": string }; Returns: {
+              "cliente_id": string,"id": string,"nome": string,"perfil": string
+            }[]
+                           },
+"pode_alterar_projeto":
+{ Args: { "p": string }; Returns: boolean
                            },
 "pode_ver_projeto":
 { Args: { "p": string }; Returns: boolean
