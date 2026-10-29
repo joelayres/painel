@@ -6,31 +6,17 @@ import { hojeSP } from '@/dominio/tempo'
 import { exigirEquipe } from '@/lib/auth/perfil'
 import { carregarVaga } from '@/lib/painel/dados'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
+import { traduzirErro } from '@/lib/validacao/mensagens'
 import { esquemaVaga, validar } from '@/lib/validacao/vaga'
 
 type Resposta = { ok: true } | { ok: false; erro: string }
-
-// Mensagens das funções do banco (supabase/migrations/20261028000002_acoes_rh.sql) para a tela.
-const MENSAGENS: [string, string][] = [
-  ['etapa mudou', 'Esta vaga mudou enquanto você olhava. Atualize a página.'],
-  ['data antes da etapa anterior', 'A data não pode ser antes da conclusão da etapa anterior.'],
-  ['data no futuro', 'A data não pode ser no futuro.'],
-  ['vaga cancelada', 'Esta vaga foi cancelada.'],
-  ['data antes do início da vaga', 'A data não pode ser antes do início do processo da vaga.'],
-  ['data antes da retomada', 'A data não pode ser antes da desistência do candidato anterior.'],
-  ['vaga já admitida', 'A vaga já passou da admissão; não volta para a captura.'],
-  ['sem permissão', 'Você não tem acesso a este projeto.'],
-  ['projeto encerrado', 'Este projeto está encerrado. Reabra para alterar.'],
-  ['etapa obrigatória', 'Esta etapa é obrigatória e não pode ser excluída nem renomeada.'],
-]
 
 function resposta(error: { message: string } | null): Resposta {
   if (!error) {
     revalidatePath('/', 'layout')
     return { ok: true }
   }
-  const conhecida = MENSAGENS.find(([chave]) => error.message.includes(chave))
-  return { ok: false, erro: conhecida?.[1] ?? 'Não foi possível salvar. Tente de novo.' }
+  return { ok: false, erro: traduzirErro(error.message, 'Não foi possível salvar. Tente de novo.') }
 }
 
 // Conclui da etapa esperada até a posição `ate`, todas com a mesma data (salto de etapas).

@@ -2,11 +2,15 @@
 
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { avisoMeta } from '@/dominio/situacao'
+import { hojeSP } from '@/dominio/tempo'
 import { exigirEquipe } from '@/lib/auth/perfil'
 import { liberarAcesso, removerAcesso } from '@/lib/cadastros/acessos'
 import { nomeReservado } from '@/lib/importacao/modelo'
+import { carregarPainel } from '@/lib/painel/dados'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
-import { campoData, ehUuid, validar } from '@/lib/validacao/vaga'
+import { traduzirErro } from '@/lib/validacao/mensagens'
+import { campoData, dataValida, ehUuid, validar } from '@/lib/validacao/vaga'
 
 export type RespostaAcao = { ok: true } | { ok: false; erros: Record<string, string> }
 
@@ -165,4 +169,55 @@ export async function remover(projetoId: string, usuarioId: string): Promise<Res
   const r = await removerAcesso(await criarClienteServidor(), projetoId, usuarioId)
   if (r.ok) revalidatePath('/', 'layout')
   return r
+}
+
+// Ações em grupo nas vagas: tudo ou nada. O banco diz qual vaga travou ('vaga <id>: <motivo>').
+export type RespostaGrupo = { ok: true; alteradas: number; puladas: number; foraDaMeta: number } | { ok: false; erro: string; vagaId: string | null }
+
+const ERRO_GRUPO = 'Não foi possível aplicar. Tente de novo.'
+const CAMPOS_GRUPO = ['onda_id', 'meta', 'data_inicio'] as const
+
+function erroDoGrupo(mensagem: string): RespostaGrupo {
+  const m = /^vaga ([0-9a-f-]{36}): ([\s\S]*)$/i.exec(mensagem)
+  return m ? { ok: false, vagaId: m[1], erro: traduzirErro(m[2], ERRO_GRUPO) } : { ok: false, vagaId: null, erro: traduzirErro(mensagem, ERRO_GRUPO) }
+}
+
+function grupoInvalido(projetoId: string, vagaIds: string[]): RespostaGrupo | null {
+  if (!ehUuid(projetoId)) return { ok: false, vagaId: null, erro: 'Projeto inválido.' }
+  if (vagaIds.length === 0) return { ok: false, vagaId: null, erro: 'Selecione pelo menos uma vaga.' }
+  if (!vagaIds.every(ehUuid)) return { ok: false, vagaId: null, erro: 'Vaga inválida.' }
+  return null
+}
+
+// Quantas vagas do grupo ficaram com a admissão prevista depois da meta (o aviso de meta curta, em grupo).
+async function contarForaDaMeta(sb: Awaited<ReturnType<typeof criarClienteServidor>>, projetoId: string, vagaIds: string[]): Promise<number> {
+  const painel = await carregarPainel(sb, hojeSP(), projetoId)
+  const grupo = new Set(vagaIds)
+  return (painel?.vagas ?? []).filter((v) => grupo.has(v.id) && avisoMeta(v.previsao, v.meta) !== null).length
+}
+
+export async function avancarEmGrupo(projetoId: string, vagaIds: string[], ordem: number, data: string): Promise<RespostaGrupo> {
+  await exigirEquipe()
+  const invalido = grupoInvalido(projetoId, vagaIds)
+  if (invalido) return invalido
+  if (!dataValida(data)) return { ok: false, vagaId: null, erro: 'Informe uma data válida.' }
+  const sb = await criarClienteServidor()
+  const { data: n, error } = await sb.rpc('concluir_etapa_em_grupo', { p_vagas: vagaIds, p_ordem_esperada: ordem, p_data: data })
+  if (error) return erroDoGrupo(error.message)
+  revalidatePath('/', 'layout')
+  return { ok: true, alteradas: Number(n), puladas: 0, foraDaMeta: 0 }
+}
+
+export async function alterarEmGrupo(projetoId: string, vagaIds: string[], campo: (typeof CAMPOS_GRUPO)[number], valor: string): Promise<RespostaGrupo> {
+  await exigirEquipe()
+  const invalido = grupoInvalido(projetoId, vagaIds)
+  if (invalido) return invalido
+  if (!CAMPOS_GRUPO.includes(campo)) return { ok: false, vagaId: null, erro: ERRO_GRUPO }
+  if (campo === 'onda_id' ? !ehUuid(valor) : !dataValida(valor)) return { ok: false, vagaId: null, erro: campo === 'onda_id' ? 'Escolha a onda.' : 'Informe uma data válida.' }
+  const sb = await criarClienteServidor()
+  const { data: r, error } = await sb.rpc('alterar_vagas_em_grupo', { p_vagas: vagaIds, p_campo: campo, p_valor: valor })
+  if (error) return erroDoGrupo(error.message)
+  revalidatePath('/', 'layout')
+  const { alteradas, puladas } = r as { alteradas: number; puladas: number }
+  return { ok: true, alteradas, puladas, foraDaMeta: await contarForaDaMeta(sb, projetoId, vagaIds) }
 }
