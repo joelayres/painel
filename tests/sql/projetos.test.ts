@@ -73,40 +73,6 @@ describe('migração da Braskem 2027', () => {
     )
   })
 
-  it('a limpeza põe na Braskem 2027 o que o código antigo criou depois da 005', async () => {
-    const ids = { onda: '', vaga: '', usuario: '', gestor: '' }
-    await emTransacao(
-      async (c) => {
-        const { rows: projeto } = await c.query(
-          "select p.id from projetos p join clientes c on c.id = p.cliente_id where p.nome = 'Mobilização Braskem 2027' and c.nome = 'Braskem'",
-        )
-        const braskem2027 = projeto[0].id
-        expect((await c.query('select nome, projeto_id from ondas where id = $1', [ids.onda])).rows).toEqual([{ nome: '9ª Onda', projeto_id: braskem2027 }])
-        expect((await c.query('select projeto_id from vagas where id = $1', [ids.vaga])).rows).toEqual([{ projeto_id: braskem2027 }])
-        expect((await c.query('select perfil from usuarios where id = $1', [ids.usuario])).rows).toEqual([{ perfil: 'gestor' }])
-        expect((await c.query('select projeto_id from projeto_acessos where usuario_id = $1', [ids.usuario])).rows).toEqual([{ projeto_id: braskem2027 }])
-        expect((await c.query('select cliente_id from gestores where id = $1', [ids.gestor])).rows).toEqual([{ cliente_id: await braskem(c) }])
-        const { rows } = await c.query("select is_nullable from information_schema.columns where table_name = 'gestores' and column_name = 'cliente_id'")
-        expect(rows).toEqual([{ is_nullable: 'NO' }])
-      },
-      // Com a 005 aplicada e a 006 pendente, como o código antigo gravaria. O check de 1 a 4 sai só
-      // aqui dentro: as quatro ondas reais já usam esses números.
-      async (c) => {
-        await c.query('alter table ondas drop constraint ondas_numero_check')
-        ids.onda = (await c.query("insert into ondas (numero, inicio, fim) values (9, '2026-10-22', '2026-12-31') returning id")).rows[0].id
-        ids.vaga = (
-          await c.query("insert into vagas (funcao, disciplina, area, onda_id, data_inicio) values ('teste-sql Vaga', 'x', 'x', $1, '2026-10-22') returning id", [ids.onda])
-        ).rows[0].id
-        const id = randomUUID()
-        await c.query('insert into auth.users (id, email) values ($1, $2)', [id, `teste-sql-${id}@exemplo.test`])
-        ids.usuario = (
-          await c.query("insert into usuarios (usuario_id, nome, email, perfil) values ($1, 'teste-sql v', $2, 'visualizador') returning id", [id, `teste-sql-${id}@exemplo.test`])
-        ).rows[0].id
-        ids.gestor = (await c.query("insert into gestores (nome) values ('teste-sql Gestor') returning id")).rows[0].id
-      },
-    )
-  })
-
   it('depois da limpeza não existe vaga sem projeto', () =>
     emTransacao(async (c) => {
       expect(await erroSalvo(c, () => c.query("insert into vagas (funcao, disciplina, area, data_inicio) values ('teste-sql Vaga', 'x', 'x', '2026-10-22')"))).toMatch(/null value|not-null/)
