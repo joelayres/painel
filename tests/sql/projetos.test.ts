@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { Client } from 'pg'
 import { describe, expect, it } from 'vitest'
-import { comoUsuario, concluirAte, emTransacao, migracaoAplicada, novaVaga, novoCliente, novoProjeto } from './apoio'
+import { comoUsuario, concluirAte, emTransacao, liberar, migracaoAplicada, novaVaga, novoCliente, novoProjeto } from './apoio'
 
 const erro = async (p: Promise<unknown>) => {
   try {
@@ -18,13 +18,6 @@ async function erroSalvo(c: Client, p: () => Promise<unknown>): Promise<string |
   const msg = await erro(p())
   await c.query('rollback to savepoint s')
   return msg
-}
-
-// Libera o projeto para o usuário com o papel do banco e volta a agir como o usuário de antes.
-async function liberar(c: Client, projetoId: string, usuarioId: string): Promise<void> {
-  await c.query('reset role')
-  await c.query('insert into projeto_acessos (projeto_id, usuario_id) values ($1, $2)', [projetoId, usuarioId])
-  await c.query('set local role authenticated')
 }
 
 async function braskem(c: Client): Promise<string> {

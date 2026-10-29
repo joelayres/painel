@@ -50,7 +50,7 @@ export async function emTransacao(fn: (c: Client) => Promise<void>, antes?: (c: 
 // Devolve o id do auth (authId) e o id do registro em usuarios (usuarioId).
 export async function comoUsuario(
   c: Client,
-  perfil: 'rh' | 'gestor' | 'cliente',
+  perfil: 'rh' | 'analista' | 'gestor' | 'cliente',
   clienteId?: string,
 ): Promise<{ authId: string; usuarioId: string }> {
   const id = randomUUID()
@@ -63,6 +63,18 @@ export async function comoUsuario(
   await c.query("select set_config('request.jwt.claims', json_build_object('sub', $1::text, 'role', 'authenticated')::text, true)", [id])
   await c.query('set local role authenticated')
   return { authId: id, usuarioId: rows[0].id }
+}
+
+// Libera o projeto para o usuário com o papel do banco e volta a agir como o usuário de antes.
+// Sem o usuário da sessão durante o insert: a regra do Analista (que não libera outro Analista)
+// valeria para a liberação feita pelo teste.
+export async function liberar(c: Client, projetoId: string, usuarioId: string): Promise<void> {
+  const { rows } = await c.query("select current_setting('request.jwt.claims', true) as claims")
+  await c.query('reset role')
+  await c.query("select set_config('request.jwt.claims', '', true)")
+  await c.query('insert into projeto_acessos (projeto_id, usuario_id) values ($1, $2)', [projetoId, usuarioId])
+  await c.query("select set_config('request.jwt.claims', $1, true)", [rows[0].claims ?? ''])
+  await c.query('set local role authenticated')
 }
 
 // Os ajudantes abaixo agem com o papel do banco: chame-os antes de comoUsuario.
