@@ -1,5 +1,5 @@
 import { hojeSP } from '@/dominio/tempo'
-import { obterSessao } from '@/lib/auth/perfil'
+import { ehEquipe, obterSessao } from '@/lib/auth/perfil'
 import { gerarModelo } from '@/lib/importacao/modelo'
 import { carregarPainel } from '@/lib/painel/dados'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
@@ -11,12 +11,12 @@ const naoEncontrado = () => new Response('Não encontrado.', { status: 404 })
 const nomeArquivo = (nome: string) =>
   nome.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'projeto'
 
-// Só o RH baixa o modelo; para os outros, a rota não existe.
+// Só a equipe (Administrador e Analista de RH) baixa o modelo; para os outros, a rota não existe.
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   if (!ehUuid(id)) return naoEncontrado()
   const sessao = await obterSessao()
-  if (sessao?.perfil !== 'rh') return naoEncontrado()
+  if (!sessao || !ehEquipe(sessao.perfil)) return naoEncontrado()
   const painel = await carregarPainel(await criarClienteServidor(), hojeSP(), id)
   if (!painel) return naoEncontrado()
 

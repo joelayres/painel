@@ -28,6 +28,17 @@ test('o RH vê Novo projeto e Encerrados', () => {
   expect(screen.getByRole('link', { name: 'Encerrados' })).toHaveAttribute('href', '/encerrados')
 })
 
+test('o Analista vê Novo projeto, o filtro e os encerrados no fim, sem o link Encerrados', () => {
+  const encerrado = { ...proj('9', 'Parada Z', 'Braskem'), encerrado: true }
+  render(<ListaProjetos projetos={lista} encerrados={[encerrado]} perfil="analista" clientes={[]} />)
+  expect(screen.getByText('+ Novo projeto')).toBeTruthy()
+  expect(screen.queryByRole('link', { name: 'Encerrados' })).toBeNull()
+  expect(screen.getByRole('navigation', { name: 'Clientes' })).toBeTruthy()
+  const secao = screen.getByRole('region', { name: 'Encerrados' })
+  expect(within(secao).getByRole('link', { name: 'Projeto Parada Z' })).toBeTruthy()
+  expect(screen.getAllByRole('region', { name: 'Braskem' })).toHaveLength(2)
+})
+
 test('gestor não vê Novo projeto', () => {
   render(<ListaProjetos projetos={lista} perfil="gestor" clientes={[]} />)
   expect(screen.queryByText('+ Novo projeto')).toBeNull()
@@ -35,13 +46,13 @@ test('gestor não vê Novo projeto', () => {
 
 test('gestor sem projetos vê a mensagem', () => {
   render(<ListaProjetos projetos={[]} perfil="gestor" clientes={[]} />)
-  expect(screen.getByText('Ainda não há projetos liberados para você. Fale com o RH.')).toBeTruthy()
+  expect(screen.getByText('Ainda não há projetos liberados para você. Fale com o Administrador.')).toBeTruthy()
 })
 
 test('gestor só com projeto encerrado vê o projeto em Encerrados', () => {
   const encerrado = { ...proj('9', 'Parada Z', 'Braskem'), encerrado: true }
   render(<ListaProjetos projetos={[]} encerrados={[encerrado]} perfil="gestor" clientes={[]} />)
-  expect(screen.queryByText('Ainda não há projetos liberados para você. Fale com o RH.')).toBeNull()
+  expect(screen.queryByText('Ainda não há projetos liberados para você. Fale com o Administrador.')).toBeNull()
   const secao = screen.getByRole('region', { name: 'Encerrados' })
   expect(within(secao).getByRole('link', { name: 'Projeto Parada Z' })).toHaveAttribute('href', '/projetos/9/resumo')
   expect(secao).toHaveTextContent('Encerrado')

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
-import { exigirRh } from '@/lib/auth/perfil'
+import { exigirEquipe } from '@/lib/auth/perfil'
 import { liberarAcesso, removerAcesso } from '@/lib/cadastros/acessos'
 import { nomeReservado } from '@/lib/importacao/modelo'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
@@ -28,7 +28,7 @@ const esquemaOnda = z
   .refine((o) => o.fim >= o.inicio, { path: ['fim'], message: 'O fim precisa ser no mesmo dia ou depois do início.' })
 
 export async function salvarOndaProjeto(projetoId: string, id: string | null, entrada: unknown): Promise<RespostaAcao> {
-  await exigirRh()
+  await exigirEquipe()
   if (!ehUuid(projetoId)) return PROJETO_INVALIDO
   const r = validar(esquemaOnda, entrada)
   if (!r.ok) return r
@@ -96,7 +96,7 @@ const esquemaInclusao = z.object({
 })
 
 export async function incluirEtapa(projetoId: string, entrada: { nome: string; duracao: string; depoisDe: string }): Promise<RespostaAcao> {
-  await exigirRh()
+  await exigirEquipe()
   if (!ehUuid(projetoId)) return PROJETO_INVALIDO
   const r = validar(esquemaInclusao, entrada)
   if (!r.ok) return r
@@ -109,7 +109,7 @@ export async function incluirEtapa(projetoId: string, entrada: { nome: string; d
 }
 
 export async function excluirEtapa(projetoId: string, etapaId: string): Promise<RespostaAcao> {
-  await exigirRh()
+  await exigirEquipe()
   if (!ehUuid(projetoId) || !ehUuid(etapaId)) return PROJETO_INVALIDO
   const sb = await criarClienteServidor()
   const { error } = await sb.rpc('excluir_etapa', { p_etapa: etapaId })
@@ -118,7 +118,7 @@ export async function excluirEtapa(projetoId: string, etapaId: string): Promise<
 }
 
 export async function renomearEtapa(projetoId: string, etapaId: string, entrada: { nome: string }): Promise<RespostaAcao> {
-  await exigirRh()
+  await exigirEquipe()
   if (!ehUuid(projetoId) || !ehUuid(etapaId)) return PROJETO_INVALIDO
   const r = validar(esquemaNome, entrada)
   if (!r.ok) return r
@@ -130,7 +130,7 @@ export async function renomearEtapa(projetoId: string, etapaId: string, entrada:
 }
 
 export async function moverEtapa(projetoId: string, etapaId: string, para: number): Promise<RespostaAcao> {
-  await exigirRh()
+  await exigirEquipe()
   if (!ehUuid(projetoId) || !ehUuid(etapaId) || !Number.isInteger(para) || para < 1) return PROJETO_INVALIDO
   const sb = await criarClienteServidor()
   const { error } = await sb.rpc('mover_etapa', { p_etapa: etapaId, p_para: para })
@@ -139,7 +139,7 @@ export async function moverEtapa(projetoId: string, etapaId: string, para: numbe
 }
 
 export async function alterarDuracaoEtapa(projetoId: string, etapaId: string, entrada: { duracao: string }): Promise<RespostaAcao> {
-  await exigirRh()
+  await exigirEquipe()
   if (!ehUuid(projetoId) || !ehUuid(etapaId)) return PROJETO_INVALIDO
   const r = validar(esquemaDuracao, entrada)
   if (!r.ok) return r
@@ -152,7 +152,7 @@ export async function alterarDuracaoEtapa(projetoId: string, etapaId: string, en
 type Resultado = { ok: true } | { ok: false; erro: string }
 
 export async function liberar(projetoId: string, usuarioId: string): Promise<Resultado> {
-  await exigirRh()
+  await exigirEquipe()
   if (!ehUuid(projetoId) || !ehUuid(usuarioId)) return { ok: false, erro: 'Não foi possível salvar. Tente de novo.' }
   const r = await liberarAcesso(await criarClienteServidor(), projetoId, usuarioId)
   if (r.ok) revalidatePath('/', 'layout')
@@ -160,7 +160,7 @@ export async function liberar(projetoId: string, usuarioId: string): Promise<Res
 }
 
 export async function remover(projetoId: string, usuarioId: string): Promise<Resultado> {
-  await exigirRh()
+  await exigirEquipe()
   if (!ehUuid(projetoId) || !ehUuid(usuarioId)) return { ok: false, erro: 'Não foi possível salvar. Tente de novo.' }
   const r = await removerAcesso(await criarClienteServidor(), projetoId, usuarioId)
   if (r.ok) revalidatePath('/', 'layout')

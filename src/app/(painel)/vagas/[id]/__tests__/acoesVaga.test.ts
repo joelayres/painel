@@ -6,7 +6,7 @@ const insert = vi.fn()
 vi.mock('@/lib/supabase/servidor', () => ({
   criarClienteServidor: async () => ({ rpc, from: () => ({ update: (d: unknown) => ({ eq: () => update(d) }), insert: (d: unknown) => insert(d) }) }),
 }))
-vi.mock('@/lib/auth/perfil', () => ({ exigirRh: async () => ({ usuarioId: 'u', perfil: 'rh', nome: 'RH' }) }))
+vi.mock('@/lib/auth/perfil', () => ({ exigirEquipe: async () => ({ usuarioId: 'u', perfil: 'rh', nome: 'RH' }) }))
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 const vagaRecarregada = vi.fn()
 vi.mock('@/lib/painel/dados', () => ({ carregarVaga: (...a: unknown[]) => vagaRecarregada(...a) }))

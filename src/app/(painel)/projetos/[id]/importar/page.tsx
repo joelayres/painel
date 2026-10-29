@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { hojeSP } from '@/dominio/tempo'
-import { exigirRh } from '@/lib/auth/perfil'
+import { exigirEquipe } from '@/lib/auth/perfil'
 import { carregarPainel } from '@/lib/painel/dados'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
 import { ehUuid } from '@/lib/validacao/vaga'
@@ -12,7 +12,7 @@ export const metadata = { title: 'Importar vagas · Painel de Mobilização' }
 export default async function Importar({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   if (!ehUuid(id)) notFound()
-  await exigirRh()
+  await exigirEquipe()
   const painel = await carregarPainel(await criarClienteServidor(), hojeSP(), id)
   if (!painel) notFound()
   const { projeto, ondas, gestores } = painel

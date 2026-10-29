@@ -31,7 +31,7 @@ export function Acoes({ vagaId, perfil, etapaAtual, ultimaConcluida, admitida = 
     return () => window.removeEventListener('focus', aoVoltar)
   }, [alterouData])
 
-  if (perfil !== 'rh') return null
+  if (perfil !== 'rh' && perfil !== 'analista') return null
 
   const executar = (acao: () => Promise<{ ok: true } | { ok: false; erro: string }>) =>
     iniciar(async () => {

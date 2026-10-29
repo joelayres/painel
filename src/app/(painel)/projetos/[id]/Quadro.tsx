@@ -9,7 +9,7 @@ import { ConfirmarAvanco } from './ConfirmarAvanco'
 type Avanco = { vaga: VagaPainel; de: number; ate: number }
 
 // Uma coluna por etapa; no celular as colunas rolam na horizontal.
-// O RH (projeto aberto, ponteiro fino) arrasta o cartão para uma coluna à frente e confirma.
+// A equipe (projeto aberto, ponteiro fino) arrasta o cartão para uma coluna à frente e confirma.
 export function Quadro({ vagas, etapas, podeArrastar = false }: { vagas: VagaPainel[]; etapas: EtapaDef[]; podeArrastar?: boolean }) {
   const grupos = porEtapa(vagas)
   const mobilizadas = vagas.filter((v) => v.situacao.mobilizada).length

@@ -7,7 +7,8 @@ import { GruposPorCliente } from './GruposPorCliente'
 const botao = (ativo: boolean) =>
   `rounded-full border px-3 py-1.5 text-sm font-medium focus-visible:outline-2 focus-visible:outline-foco ${ativo ? 'border-primaria bg-primaria text-white' : 'border-borda bg-superficie hover:border-primaria'}`
 
-// encerrados: só para quem não é RH e não tem projeto ativo; o RH tem a página Encerrados.
+// encerrados: o Analista os vê no fim da lista; gestor e cliente, só quando não têm projeto ativo.
+// O Administrador tem a página Encerrados.
 // clienteAtivo: id do cliente escolhido no filtro (?cliente=), que só aparece com projetos de 2 ou mais clientes.
 export function ListaProjetos({
   projetos,
@@ -22,16 +23,17 @@ export function ListaProjetos({
   clientes: { id: string; nome: string }[]
   clienteAtivo?: string
 }) {
-  const rh = perfil === 'rh'
+  const admin = perfil === 'rh'
+  const equipe = admin || perfil === 'analista'
   const daLista = [...new Map(projetos.map((p) => [p.cliente.id, p.cliente])).values()]
   const ativo = daLista.some((c) => c.id === clienteAtivo) ? clienteAtivo : undefined
   const visiveis = ativo ? projetos.filter((p) => p.cliente.id === ativo) : projetos
   return (
     <div className="flex flex-col gap-5">
-      {rh && (
+      {equipe && (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <FormProjeto clientes={clientes} />
-          <Link href="/encerrados" className="text-sm font-medium text-primaria underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-foco">Encerrados</Link>
+          {admin && <Link href="/encerrados" className="text-sm font-medium text-primaria underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-foco">Encerrados</Link>}
         </div>
       )}
       {daLista.length > 1 && (
@@ -44,15 +46,16 @@ export function ListaProjetos({
       )}
       {projetos.length > 0 ? (
         <GruposPorCliente projetos={visiveis} />
-      ) : encerrados.length > 0 ? (
+      ) : encerrados.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-borda p-8 text-center text-texto-suave">
+          {equipe ? 'Nenhum projeto ainda. Crie o primeiro.' : 'Ainda não há projetos liberados para você. Fale com o Administrador.'}
+        </p>
+      ) : null}
+      {encerrados.length > 0 && (
         <section aria-labelledby="encerrados" className="flex flex-col gap-3">
           <h2 id="encerrados" className="font-titulo text-2xl font-semibold">Encerrados</h2>
           <GruposPorCliente projetos={encerrados} />
         </section>
-      ) : (
-        <p className="rounded-xl border border-dashed border-borda p-8 text-center text-texto-suave">
-          {rh ? 'Nenhum projeto ainda. Crie o primeiro.' : 'Ainda não há projetos liberados para você. Fale com o RH.'}
-        </p>
       )}
     </div>
   )

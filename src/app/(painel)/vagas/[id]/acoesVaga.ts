@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { avisoMeta } from '@/dominio/situacao'
 import { hojeSP } from '@/dominio/tempo'
-import { exigirRh } from '@/lib/auth/perfil'
+import { exigirEquipe } from '@/lib/auth/perfil'
 import { carregarVaga } from '@/lib/painel/dados'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
 import { esquemaVaga, validar } from '@/lib/validacao/vaga'
@@ -19,6 +19,7 @@ const MENSAGENS: [string, string][] = [
   ['data antes do início da vaga', 'A data não pode ser antes do início do processo da vaga.'],
   ['data antes da retomada', 'A data não pode ser antes da desistência do candidato anterior.'],
   ['vaga já admitida', 'A vaga já passou da admissão; não volta para a captura.'],
+  ['sem permissão', 'Você não tem acesso a este projeto.'],
   ['projeto encerrado', 'Este projeto está encerrado. Reabra para alterar.'],
   ['etapa obrigatória', 'Esta etapa é obrigatória e não pode ser excluída nem renomeada.'],
 ]
@@ -34,7 +35,7 @@ function resposta(error: { message: string } | null): Resposta {
 
 // Conclui da etapa esperada até a posição `ate`, todas com a mesma data (salto de etapas).
 export async function concluirEtapas(vagaId: string, ordemEsperada: number, ate: number, data: string): Promise<Resposta> {
-  await exigirRh()
+  await exigirEquipe()
   const sb = await criarClienteServidor()
   const { error } = await sb.rpc('concluir_etapas', { p_vaga: vagaId, p_ordem_esperada: ordemEsperada, p_ate: ate, p_data: data })
   return resposta(error)
@@ -45,14 +46,14 @@ export async function concluirEtapa(vagaId: string, ordemEsperada: number, data:
 }
 
 export async function desfazerEtapa(vagaId: string, ordemEsperada: number): Promise<Resposta> {
-  await exigirRh()
+  await exigirEquipe()
   const sb = await criarClienteServidor()
   const { error } = await sb.rpc('desfazer_etapa', { p_vaga: vagaId, p_ordem_esperada: ordemEsperada })
   return resposta(error)
 }
 
 export async function candidatoDesistiu(vagaId: string): Promise<Resposta> {
-  await exigirRh()
+  await exigirEquipe()
   const sb = await criarClienteServidor()
   const { error } = await sb.rpc('candidato_desistiu', { p_vaga: vagaId })
   return resposta(error)
@@ -61,7 +62,7 @@ export async function candidatoDesistiu(vagaId: string): Promise<Resposta> {
 type RespostaSalvar = { ok: true; id: string; aviso: string | null } | { ok: false; erros: Record<string, string> }
 
 export async function salvarVaga(id: string | null, entrada: unknown): Promise<RespostaSalvar> {
-  await exigirRh()
+  await exigirEquipe()
   const r = validar(esquemaVaga, entrada)
   if (!r.ok) return r
   const d = r.dados
@@ -89,7 +90,7 @@ export async function salvarVaga(id: string | null, entrada: unknown): Promise<R
 }
 
 export async function cancelarVaga(id: string): Promise<Resposta> {
-  await exigirRh()
+  await exigirEquipe()
   const sb = await criarClienteServidor()
   const { error } = await sb.rpc('cancelar_vaga', { p_id: id })
   return resposta(error)

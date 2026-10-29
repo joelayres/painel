@@ -40,6 +40,3 @@ export async function exigirEquipe(): Promise<Sessao> {
   if (!ehEquipe(sessao.perfil)) redirect('/')
   return sessao
 }
-
-/** @deprecated Alias de exigirAdmin até a Task 3 trocar as páginas e actions de projeto por exigirEquipe. */
-export const exigirRh = exigirAdmin

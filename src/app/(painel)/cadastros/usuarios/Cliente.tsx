@@ -9,18 +9,18 @@ import { useEnvio } from '@/components/rh/useEnvio'
 import { Botao } from '@/components/ui/Botao'
 import { Campo } from '@/components/ui/Campo'
 import { Selecao } from '@/components/ui/Selecao'
-import { ROTULO_PERFIL, type PerfilUsuario } from '@/lib/cadastros/usuarios'
+import { PERFIS_USUARIO, ROTULO_PERFIL, type PerfilUsuario } from '@/lib/cadastros/usuarios'
 import { liberarAcessoUsuario, removerAcessoUsuario, salvarUsuario } from '../acoesCadastros'
 
 type Usuario = { id: string; nome: string; email: string; perfil: PerfilUsuario; clienteId: string | null; ativo: boolean; acessos: string[] }
 type Cliente = { id: string; nome: string }
 type Projeto = { id: string; nome: string; clienteId: string }
 
-const PERFIS = (['rh', 'gestor', 'cliente'] as const).map((valor) => ({ valor, rotulo: ROTULO_PERFIL[valor] }))
+const PERFIS = PERFIS_USUARIO.map((valor) => ({ valor, rotulo: ROTULO_PERFIL[valor] }))
 
-// Projetos que a pessoa pode receber: todos para o gestor, os do cliente dela para o cliente.
+// Projetos que a pessoa pode receber: todos para o Analista e o gestor, os do cliente dela para o cliente.
 function projetosElegiveis(u: Usuario, projetos: Projeto[]): Projeto[] {
-  if (u.perfil === 'gestor') return projetos
+  if (u.perfil === 'gestor' || u.perfil === 'analista') return projetos
   if (u.perfil === 'cliente') return projetos.filter((p) => p.clienteId === u.clienteId)
   return []
 }
@@ -32,7 +32,7 @@ function Acessos({ usuario, projetos }: { usuario: Usuario; projetos: Projeto[] 
   const [pendente, iniciar] = useTransition()
   const elegiveis = projetosElegiveis(usuario, projetos)
 
-  if (usuario.perfil === 'rh') return <p className="text-sm text-texto-suave">O RH vê todos os projetos.</p>
+  if (usuario.perfil === 'rh') return <p className="text-sm text-texto-suave">O Administrador vê todos os projetos.</p>
   if (elegiveis.length === 0) return <p className="text-sm text-texto-suave">Nenhum projeto disponível para esta pessoa.</p>
 
   const alternar = (projetoId: string, marcar: boolean) =>

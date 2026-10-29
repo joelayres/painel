@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation'
 import { ETAPAS_PADRAO } from '@/dominio/etapas'
 import { hojeSP } from '@/dominio/tempo'
-import { exigirRh } from '@/lib/auth/perfil'
-import { usuariosLiberaveis } from '@/lib/cadastros/acessos'
+import { exigirEquipe } from '@/lib/auth/perfil'
+import { carregarPessoasDoProjeto } from '@/lib/cadastros/acessos'
 import { carregarPainel } from '@/lib/painel/dados'
 import { lerTodas } from '@/lib/supabase/paginar'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
@@ -15,8 +15,6 @@ import { OndasProjeto } from './OndasProjeto'
 import { VagasProjeto } from './VagasProjeto'
 
 export const metadata = { title: 'Configurar · Painel de Mobilização' }
-
-type PerfilUsuario = 'rh' | 'gestor' | 'cliente'
 
 function Bloco({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
@@ -33,21 +31,20 @@ export default async function Configurar({ params, searchParams }: { params: Pro
   const { importadas } = await searchParams
   const nImportadas = importadas && /^\d+$/.test(importadas) ? Number(importadas) : null
   if (!ehUuid(id)) notFound()
-  await exigirRh()
+  const sessao = await exigirEquipe()
   const sb = await criarClienteServidor()
   const painel = await carregarPainel(sb, hojeSP(), id)
   if (!painel) notFound()
   const { projeto, ondas, gestores, etapas: efetivas } = painel
 
-  const [vagas, duracoesCliente, linhasEtapa, conclusoes, usuarios, acessos] = await Promise.all([
+  const [vagas, duracoesCliente, linhasEtapa, conclusoes, pessoas] = await Promise.all([
     lerTodas((de, ate) => sb.from('vagas').select('id, funcao, disciplina, area, onda_id, meta, gestor_id, candidato, data_inicio, cancelada_em').eq('projeto_id', id).order('criado_em').order('id').range(de, ate)),
     sb.from('cliente_duracoes').select('ordem, duracao').eq('cliente_id', projeto.cliente.id),
     sb.from('projeto_etapas').select('id, padrao, duracao').eq('projeto_id', id),
     lerTodas((de, ate) => sb.from('vaga_conclusoes').select('etapa_id, vagas!inner(projeto_id)').eq('vagas.projeto_id', id).order('vaga_id').order('etapa_id').range(de, ate)),
-    sb.from('usuarios').select('id, nome, perfil, cliente_id, ativo').order('nome'),
-    sb.from('projeto_acessos').select('usuario_id').eq('projeto_id', id),
+    carregarPessoasDoProjeto(sb, id),
   ])
-  for (const r of [vagas, duracoesCliente, linhasEtapa, conclusoes, usuarios, acessos]) {
+  for (const r of [vagas, duracoesCliente, linhasEtapa, conclusoes]) {
     if (r.error) throw new Error(`Não foi possível ler a configuração do projeto: ${r.error.message}`)
   }
 
@@ -80,11 +77,6 @@ export default async function Configurar({ params, searchParams }: { params: Pro
   const totalVagas = linhasVaga.filter((v) => v.canceladaEm === null).length
   const temVagas = totalVagas > 0
 
-  const todos = (usuarios.data ?? []).map((u) => ({ id: u.id, nome: u.nome, perfil: u.perfil as PerfilUsuario, clienteId: u.cliente_id, ativo: u.ativo }))
-  const comAcesso = new Set((acessos.data ?? []).map((a) => a.usuario_id))
-  const pessoas = todos.filter((u) => comAcesso.has(u.id))
-  const liberaveis = usuariosLiberaveis(todos, projeto.cliente.id).filter((u) => !comAcesso.has(u.id))
-
   return (
     <div className="flex flex-col gap-8">
       {nImportadas !== null && (
@@ -106,7 +98,7 @@ export default async function Configurar({ params, searchParams }: { params: Pro
         <VagasProjeto projetoId={id} organizacao={projeto.organizacao} vagas={linhasVaga} opcoes={{ ondas: ondas.map((o) => ({ id: o.id, nome: o.nome })), gestores }} somenteLeitura={somenteLeitura} />
       </Bloco>
       <Bloco titulo="Quem vê este projeto">
-        <AcessosProjeto projetoId={id} cliente={projeto.cliente.nome} pessoas={pessoas} liberaveis={liberaveis} />
+        <AcessosProjeto perfil={sessao.perfil} projetoId={id} cliente={projeto.cliente.nome} pessoas={pessoas.liberadas} liberaveis={pessoas.liberaveis} />
       </Bloco>
       <EncerrarProjeto projetoId={id} encerrado={projeto.encerrado} />
     </div>

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { hojeSP } from '@/dominio/tempo'
-import { exigirRh } from '@/lib/auth/perfil'
+import { exigirEquipe } from '@/lib/auth/perfil'
 import { lerModeloVagas, type ErroImportacao, type VagaImportada } from '@/lib/importacao/ler'
 import { carregarPainel } from '@/lib/painel/dados'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
@@ -22,7 +22,7 @@ const MENSAGENS: [string, string][] = [
 
 // Relê o arquivo no servidor com os dados atuais do projeto (ondas, gestores, durações e vagas).
 export async function previaImportacao(projetoId: string, form: FormData): Promise<RespostaPrevia> {
-  await exigirRh()
+  await exigirEquipe()
   if (!ehUuid(projetoId)) return { ok: false, erros: [{ linha: 0, mensagem: 'Projeto inválido.' }] }
   const arquivo = form.get('arquivo')
   if (!(arquivo instanceof File) || arquivo.size === 0) return { ok: false, erros: [{ linha: 0, mensagem: 'Escolha a planilha.' }] }
@@ -46,7 +46,7 @@ export async function previaImportacao(projetoId: string, form: FormData): Promi
 }
 
 export async function importarVagas(projetoId: string, form: FormData): Promise<RespostaImportacao> {
-  await exigirRh()
+  await exigirEquipe()
   const previa = await previaImportacao(projetoId, form)
   if (!previa.ok) return { ok: false, erro: 'A planilha tem erros. Corrija e envie de novo.' }
   if (previa.vagas.length === 0) return { ok: false, erro: 'A planilha não tem vagas.' }

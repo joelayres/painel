@@ -24,7 +24,12 @@ test('gestor não vê as ações', () => {
   expect(screen.queryByRole('button', { name: /Concluir/ })).toBeNull()
 })
 
-test('RH conclui a etapa atual com a data de hoje em um clique', async () => {
+test('Analista de RH também conclui a etapa', () => {
+  render(<Acoes {...base} perfil="analista" />)
+  expect(screen.getByRole('button', { name: 'Concluir Triagem de Candidatos' })).toBeInTheDocument()
+})
+
+test('Administrador conclui a etapa atual com a data de hoje em um clique', async () => {
   render(<Acoes {...base} perfil="rh" />)
   await userEvent.click(screen.getByRole('button', { name: 'Concluir Triagem de Candidatos' }))
   expect(concluirEtapa).toHaveBeenCalledWith('v1', 3, '2026-10-27')

@@ -4,13 +4,15 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { Botao } from '@/components/ui/Botao'
 import { Selecao } from '@/components/ui/Selecao'
-import { ROTULO_PERFIL, type PerfilUsuario } from '@/lib/cadastros/usuarios'
+import type { Perfil } from '@/lib/auth/perfil'
+import { ROTULO_PERFIL } from '@/lib/cadastros/usuarios'
 import { liberar, remover } from './acoesConfigurar'
 
-export type PessoaAcesso = { id: string; nome: string; perfil: PerfilUsuario }
+export type PessoaAcesso = { id: string; nome: string; perfil: Perfil }
 
 // Quem vê o projeto: lista de pessoas liberadas e seletor para liberar mais uma.
-export function AcessosProjeto({ projetoId, cliente, pessoas, liberaveis }: { projetoId: string; cliente: string; pessoas: PessoaAcesso[]; liberaveis: PessoaAcesso[] }) {
+// O Analista não mexe no acesso de outros Analistas nem de Administradores (o banco também barra).
+export function AcessosProjeto({ perfil, projetoId, cliente, pessoas, liberaveis }: { perfil: Perfil; projetoId: string; cliente: string; pessoas: PessoaAcesso[]; liberaveis: PessoaAcesso[] }) {
   const router = useRouter()
   const [escolhida, setEscolhida] = useState('')
   const [erro, setErro] = useState<string | null>(null)
@@ -43,13 +45,15 @@ export function AcessosProjeto({ projetoId, cliente, pessoas, liberaveis }: { pr
                 <td className="px-4 py-2.5 font-medium">{p.nome}</td>
                 <td className="px-4 py-2.5">{ROTULO_PERFIL[p.perfil]}</td>
                 <td className="px-4 py-2.5 text-right">
-                  <Botao variante="fantasma" disabled={pendente} onClick={() => executar(() => remover(projetoId, p.id))}>remover{' '}<span className="sr-only">{p.nome}</span></Botao>
+                  {(perfil === 'rh' || (p.perfil !== 'analista' && p.perfil !== 'rh')) && (
+                    <Botao variante="fantasma" disabled={pendente} onClick={() => executar(() => remover(projetoId, p.id))}>remover{' '}<span className="sr-only">{p.nome}</span></Botao>
+                  )}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        {pessoas.length === 0 && <p className="p-6 text-center text-texto-suave">Ninguém liberado ainda. O RH vê todos os projetos.</p>}
+        {pessoas.length === 0 && <p className="p-6 text-center text-texto-suave">Ninguém liberado ainda. O Administrador vê todos os projetos.</p>}
       </div>
       <div className="flex flex-wrap items-end gap-3">
         <Selecao
@@ -58,7 +62,7 @@ export function AcessosProjeto({ projetoId, cliente, pessoas, liberaveis }: { pr
         />
         <Botao disabled={pendente || !escolhida} onClick={() => executar(() => liberar(projetoId, escolhida))}>Liberar</Botao>
       </div>
-      <p className="text-sm text-texto-suave">Só aparecem os Gestores Timenow e as pessoas do cliente {cliente}.</p>
+      <p className="text-sm text-texto-suave">Só aparecem os Gestores Timenow e as pessoas do cliente {cliente}{perfil === 'rh' ? ' e os Analistas de RH' : ''}.</p>
     </div>
   )
 }

@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { FormVaga } from '@/components/rh/FormVaga'
 import { hojeSP } from '@/dominio/tempo'
-import { exigirSessao } from '@/lib/auth/perfil'
+import { ehEquipe, exigirSessao } from '@/lib/auth/perfil'
 import { dataBR, ddmm } from '@/lib/formato/datas'
 import { carregarVaga } from '@/lib/painel/dados'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
@@ -20,7 +20,7 @@ export default async function DetalheVaga({ params }: { params: Promise<{ id: st
   const carregada = await carregarVaga(sb, hoje, id)
   if (!carregada) notFound()
   const { painel: { projeto, ondas, gestores }, vaga } = carregada
-  const podeEditar = sessao.perfil === 'rh' && !projeto.encerrado
+  const podeEditar = ehEquipe(sessao.perfil) && !projeto.encerrado
   const [{ data: bruta }, { data: historico }] = await Promise.all([
     sb.from('vagas').select('onda_id, meta, gestor_id, data_inicio').eq('id', id).single(),
     sb.from('historico').select('id, nome_usuario, acao, em, detalhe').eq('vaga_id', id).order('em', { ascending: false }),

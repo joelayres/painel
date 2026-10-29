@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { hojeSP } from '@/dominio/tempo'
-import { exigirSessao } from '@/lib/auth/perfil'
+import { ehEquipe, exigirSessao } from '@/lib/auth/perfil'
 import { carregarProjetos } from '@/lib/painel/dados'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
 import { ListaProjetos } from './ListaProjetos'
@@ -13,10 +13,11 @@ export default async function Projetos({ searchParams }: { searchParams: Promise
   const sb = await criarClienteServidor()
   const todos = await carregarProjetos(sb, hojeSP())
   const projetos = todos.filter((p) => !p.encerrado)
-  const rh = sessao.perfil === 'rh'
-  if (!rh && projetos.length === 1) redirect(`/projetos/${projetos[0].id}/resumo`)
-  // Quem não é RH não tem a página Encerrados: sem projeto ativo, vê aqui os encerrados liberados.
-  const encerrados = !rh && projetos.length === 0 ? todos.filter((p) => p.encerrado) : []
-  const clientes = rh ? ((await sb.from('clientes').select('id, nome').order('nome')).data ?? []) : []
+  const equipe = ehEquipe(sessao.perfil)
+  if (!equipe && projetos.length === 1) redirect(`/projetos/${projetos[0].id}/resumo`)
+  // O Administrador tem a página Encerrados. O Analista vê os encerrados dele no fim da lista;
+  // gestor e cliente, só quando não têm projeto ativo.
+  const encerrados = sessao.perfil === 'analista' ? todos.filter((p) => p.encerrado) : !equipe && projetos.length === 0 ? todos.filter((p) => p.encerrado) : []
+  const clientes = equipe ? ((await sb.from('clientes').select('id, nome').order('nome')).data ?? []) : []
   return <ListaProjetos projetos={projetos} encerrados={encerrados} perfil={sessao.perfil} clientes={clientes} clienteAtivo={cliente} />
 }

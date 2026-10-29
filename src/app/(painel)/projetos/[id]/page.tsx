@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { filtrarVagas, resumirOndas, resumirProjeto, type Filtro } from '@/dominio/painel'
 import { hojeSP } from '@/dominio/tempo'
 import { dataBR } from '@/lib/formato/datas'
-import { exigirSessao } from '@/lib/auth/perfil'
+import { ehEquipe, exigirSessao } from '@/lib/auth/perfil'
 import { carregarPainel } from '@/lib/painel/dados'
 import { ehUuid } from '@/lib/validacao/vaga'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
@@ -56,7 +56,7 @@ export default async function Painel({ params, searchParams }: { params: Promise
         <CartoesOnda resumos={[{ ...resumirProjeto(semOnda), nome: 'Todas as vagas' }]} />
       )}
       <Atencao vagas={filtradas} />
-      <Quadro vagas={filtradas} etapas={etapas} podeArrastar={sessao.perfil === 'rh' && !projeto.encerrado} />
+      <Quadro vagas={filtradas} etapas={etapas} podeArrastar={ehEquipe(sessao.perfil) && !projeto.encerrado} />
     </div>
   )
 }

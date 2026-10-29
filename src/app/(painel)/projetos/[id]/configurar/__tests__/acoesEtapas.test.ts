@@ -2,7 +2,7 @@ import { beforeEach, expect, test, vi } from 'vitest'
 
 const rpc = vi.fn()
 vi.mock('@/lib/supabase/servidor', () => ({ criarClienteServidor: async () => ({ rpc }) }))
-vi.mock('@/lib/auth/perfil', () => ({ exigirRh: async () => ({ usuarioId: 'u', perfil: 'rh', nome: 'RH' }) }))
+vi.mock('@/lib/auth/perfil', () => ({ exigirEquipe: async () => ({ usuarioId: 'u', perfil: 'rh', nome: 'RH' }) }))
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 const { incluirEtapa, renomearEtapa } = await import('../acoesConfigurar')
 
