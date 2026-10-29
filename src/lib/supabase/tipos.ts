@@ -71,6 +71,20 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"entradas_portal": {
+                  Row: {
+                    "jti": string,"usado_em": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "jti": string,"usado_em"?: string
+                  }
+                  Update: {
+                    "jti"?: string,"usado_em"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"etapas": {
                   Row: {
                     "duracao": number,"nome": string,"ordem": number

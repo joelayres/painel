@@ -6,12 +6,19 @@ import { Botao } from '@/components/ui/Botao'
 import { Campo } from '@/components/ui/Campo'
 import { enviarCodigo, verificarCodigo } from './acoes'
 
-export function FormularioEntrada({ semAcesso }: { semAcesso: boolean }) {
+export type Aviso = 'sem-acesso' | 'portal' | null
+
+const AVISOS = {
+  'sem-acesso': 'Seu acesso não está ativo. Fale com o Administrador.',
+  portal: 'Seu acesso pelo portal não foi aceito. Entre com o código ou fale com o administrador.',
+}
+
+export function FormularioEntrada({ aviso }: { aviso: Aviso }) {
   const router = useRouter()
   const [etapa, setEtapa] = useState<'email' | 'codigo'>('email')
   const [email, setEmail] = useState('')
   const [codigo, setCodigo] = useState('')
-  const [erro, setErro] = useState<string | null>(semAcesso ? 'Seu acesso não está ativo. Fale com o Administrador.' : null)
+  const [erro, setErro] = useState<string | null>(aviso ? AVISOS[aviso] : null)
   const [pendente, iniciar] = useTransition()
 
   function pedirCodigo(e: React.FormEvent) {
