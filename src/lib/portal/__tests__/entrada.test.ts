@@ -30,7 +30,7 @@ beforeEach(() => {
 test('rh, analista e gestor ativos entram', async () => {
   for (const perfil of ['rh', 'analista', 'gestor']) {
     respostas.usuarios = usuario({ perfil })
-    expect(await usuarioDoPortal(admin, 'ana@x.com')).toEqual({ id: 'r1', perfil })
+    expect(await usuarioDoPortal(admin, 'ana@x.com')).toEqual({ id: 'r1', perfil, usuarioId: 'u1' })
   }
 })
 

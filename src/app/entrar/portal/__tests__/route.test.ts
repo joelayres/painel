@@ -2,8 +2,9 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { assinarEntrada } from '@/lib/portal/token'
 
 const generateLink = vi.fn()
+const getUserById = vi.fn()
 const verifyOtp = vi.fn()
-vi.mock('@/lib/supabase/admin', () => ({ criarClienteAdmin: () => ({ auth: { admin: { generateLink } } }) }))
+vi.mock('@/lib/supabase/admin', () => ({ criarClienteAdmin: () => ({ auth: { admin: { generateLink, getUserById } } }) }))
 vi.mock('@/lib/supabase/servidor', () => ({ criarClienteServidor: async () => ({ auth: { verifyOtp } }) }))
 const usuarioDoPortal = vi.fn()
 const registrarUso = vi.fn()
@@ -19,8 +20,9 @@ beforeEach(() => {
   vi.clearAllMocks()
   vi.spyOn(console, 'warn').mockImplementation(() => {})
   process.env.PORTAL_SEGREDO = 'segredo'
-  usuarioDoPortal.mockResolvedValue({ id: 'r1', perfil: 'gestor' })
+  usuarioDoPortal.mockResolvedValue({ id: 'r1', perfil: 'gestor', usuarioId: 'u1' })
   registrarUso.mockResolvedValue(true)
+  getUserById.mockResolvedValue({ data: { user: { email: 'ana.login@x.com' } }, error: null })
   generateLink.mockResolvedValue({ data: { properties: { hashed_token: 'hash1' } }, error: null })
   verifyOtp.mockResolvedValue({ error: null })
 })
@@ -38,7 +40,9 @@ test('sem PORTAL_SEGREDO a rota não existe', async () => {
 test('token válido cria a sessão e leva ao painel', async () => {
   await chamar(token())
   expect(usuarioDoPortal).toHaveBeenCalledWith(expect.anything(), 'ana@x.com')
-  expect(generateLink).toHaveBeenCalledWith({ type: 'magiclink', email: 'ana@x.com' })
+  // O link sai da conta encontrada no cadastro, não do e-mail escrito no token.
+  expect(getUserById).toHaveBeenCalledWith('u1')
+  expect(generateLink).toHaveBeenCalledWith({ type: 'magiclink', email: 'ana.login@x.com' })
   // Troca a sessão mesmo que o navegador já esteja logado com outra conta.
   expect(verifyOtp).toHaveBeenCalledWith({ token_hash: 'hash1', type: 'email' })
   expect(redirect).toHaveBeenCalledWith('/')

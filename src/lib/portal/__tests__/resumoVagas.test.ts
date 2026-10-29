@@ -36,7 +36,7 @@ test('sem projeto visível mostra total zerado', () => {
 test('projetosVisiveis: rh vê todos; os outros, os liberados em projeto_acessos', async () => {
   const eq = vi.fn(async () => ({ data: [{ projeto_id: 'p1' }, { projeto_id: 'p9' }], error: null }))
   const admin = { from: vi.fn(() => ({ select: () => ({ eq }) })) } as never
-  expect(await projetosVisiveis(admin, { id: 'r1', perfil: 'rh' })).toBe('todos')
-  expect(await projetosVisiveis(admin, { id: 'r1', perfil: 'gestor' })).toEqual(new Set(['p1', 'p9']))
+  expect(await projetosVisiveis(admin, { id: 'r1', perfil: 'rh', usuarioId: 'u1' })).toBe('todos')
+  expect(await projetosVisiveis(admin, { id: 'r1', perfil: 'gestor', usuarioId: 'u1' })).toEqual(new Set(['p1', 'p9']))
   expect(eq).toHaveBeenCalledWith('usuario_id', 'r1')
 })

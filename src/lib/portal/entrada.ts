@@ -3,7 +3,8 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/supabase/tipos'
 
 type Admin = SupabaseClient<Database>
-export type UsuarioPortal = { id: string; perfil: 'rh' | 'analista' | 'gestor' }
+// id é o usuarios.id (usado em projeto_acessos); usuarioId é o do login (auth).
+export type UsuarioPortal = { id: string; perfil: 'rh' | 'analista' | 'gestor'; usuarioId: string }
 
 const UM_DIA_MS = 24 * 60 * 60 * 1000
 const PERFIS_DO_PORTAL = ['rh', 'analista', 'gestor']
@@ -15,7 +16,7 @@ export async function usuarioDoPortal(admin: Admin, email: string): Promise<Usua
   const { data, error } = await admin.from('usuarios').select('id, perfil, ativo, usuario_id').ilike('email', literal(email.trim().toLowerCase())).maybeSingle()
   if (error) throw new Error(`Não foi possível conferir o usuário: ${error.message}`)
   if (!data?.ativo || !data.usuario_id || !PERFIS_DO_PORTAL.includes(data.perfil)) return null
-  return { id: data.id, perfil: data.perfil as UsuarioPortal['perfil'] }
+  return { id: data.id, perfil: data.perfil as UsuarioPortal['perfil'], usuarioId: data.usuario_id }
 }
 
 // false quando o token já foi usado. Aproveita para apagar os registros com mais de um dia (sem rotina agendada).

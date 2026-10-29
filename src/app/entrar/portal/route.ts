@@ -28,8 +28,11 @@ async function entrar(token: string, segredo: string): Promise<string> {
     console.warn('Entrada pelo portal recusada: token já usado', email)
     return AVISO
   }
+  // O link sai da conta encontrada (não do e-mail do token), para nunca abrir nem criar outra conta.
+  const { data: conta, error: erroConta } = await admin.auth.admin.getUserById(usuario.usuarioId)
+  if (erroConta || !conta.user?.email) throw new Error(`Não foi possível ler o acesso: ${erroConta?.message ?? 'sem e-mail'}`)
   // O link não é enviado: o hash vira a sessão aqui mesmo, nos cookies desta resposta.
-  const { data, error } = await admin.auth.admin.generateLink({ type: 'magiclink', email })
+  const { data, error } = await admin.auth.admin.generateLink({ type: 'magiclink', email: conta.user.email })
   if (error || !data?.properties?.hashed_token) throw new Error(`Não foi possível gerar o acesso: ${error?.message ?? 'sem hash'}`)
   const supabase = await criarClienteServidor()
   const { error: erroSessao } = await supabase.auth.verifyOtp({ token_hash: data.properties.hashed_token, type: 'email' })

@@ -13,7 +13,7 @@ const chamar = (consulta: string, auth: string | null = 'Bearer segredo') =>
 beforeEach(() => {
   vi.clearAllMocks()
   process.env.PORTAL_SEGREDO = 'segredo'
-  usuarioDoPortal.mockResolvedValue({ id: 'r1', perfil: 'gestor' })
+  usuarioDoPortal.mockResolvedValue({ id: 'r1', perfil: 'gestor', usuarioId: 'u1' })
   carregarResumoVagas.mockResolvedValue({ versao: 1, secoes: [], alertas: [] })
 })
 afterEach(() => {
@@ -45,7 +45,7 @@ test('devolve o resumo da pessoa', async () => {
   expect(r.status).toBe(200)
   expect(await r.json()).toEqual({ versao: 1, secoes: [], alertas: [] })
   expect(usuarioDoPortal).toHaveBeenCalledWith({}, 'ana@x.com')
-  expect(carregarResumoVagas).toHaveBeenCalledWith({}, { id: 'r1', perfil: 'gestor' })
+  expect(carregarResumoVagas).toHaveBeenCalledWith({}, { id: 'r1', perfil: 'gestor', usuarioId: 'u1' })
 })
 
 test('falha ao ler devolve 500 sem detalhes', async () => {
