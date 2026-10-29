@@ -71,6 +71,7 @@ function Linha({ projetoId, etapa, total, temVagas }: { projetoId: string; etapa
       <td className="px-4 py-3">
         <form onSubmit={salvar} className="flex flex-wrap items-center gap-2">
           <input
+            key={String(etapa.duracao ?? '')}
             name="duracao" type="number" min={0} max={60} defaultValue={etapa.duracao ?? ''} placeholder={etapa.padraoCliente !== null ? String(etapa.padraoCliente) : ''}
             aria-label={`Duração de ${etapa.nome} neste projeto`}
             className="min-h-11 w-20 rounded-lg border border-borda bg-superficie px-3 text-texto"
@@ -85,7 +86,12 @@ function Linha({ projetoId, etapa, total, temVagas }: { projetoId: string; etapa
         </form>
         {modo === 'excluir' && (
           <div role="group" aria-label={`Confirmar exclusão de ${etapa.nome}`} className="mt-3 flex flex-col gap-2 rounded-lg border border-borda bg-superficie-2 p-3 text-sm">
-            <p>Excluir {etapa.nome}? {etapa.concluidasPor} vagas já concluíram esta etapa; essas datas ficam no histórico de cada vaga.</p>
+            <p>
+              Excluir {etapa.nome}?{' '}
+              {etapa.concluidasPor === 1
+                ? '1 vaga já concluiu esta etapa; essa data fica no histórico da vaga.'
+                : `${etapa.concluidasPor} vagas já concluíram esta etapa; essas datas ficam no histórico de cada vaga.`}
+            </p>
             <div className="flex flex-wrap gap-2">
               <Botao type="button" disabled={pendente} onClick={() => rodar(() => excluirEtapa(projetoId, etapa.id), () => setModo('normal'))}>Excluir etapa</Botao>
               <Botao type="button" variante="fantasma" disabled={pendente} onClick={() => { setModo('normal'); setErro(null) }}>Cancelar</Botao>
@@ -106,14 +112,15 @@ function Linha({ projetoId, etapa, total, temVagas }: { projetoId: string; etapa
   )
 }
 
-function FormInclusao({ projetoId, etapas, temVagas, fechar }: { projetoId: string; etapas: EtapaConfig[]; temVagas: boolean; fechar: () => void }) {
+function FormInclusao({ projetoId, etapas, temVagas, totalVagas, fechar }: { projetoId: string; etapas: EtapaConfig[]; temVagas: boolean; totalVagas: number; fechar: () => void }) {
   const router = useRouter()
   const [depoisDe, setDepoisDe] = useState('')
   const { erros, pendente, enviar } = useEnvio(
     (d) => incluirEtapa(projetoId, d as { nome: string; duracao: string; depoisDe: string }),
     () => { fechar(); router.refresh() },
   )
-  const escolhida = etapas.find((e) => e.id === depoisDe)
+  // No início, toda vaga já passou do ponto; depois de uma etapa, só quem a concluiu.
+  const passaram = depoisDe === '' ? totalVagas : (etapas.find((e) => e.id === depoisDe)?.chegaramAoPonto ?? 0)
   return (
     <form onSubmit={enviar} className="flex flex-col gap-4">
       <Campo rotulo="Nome" name="nome" erro={erros.nome} required />
@@ -122,8 +129,12 @@ function FormInclusao({ projetoId, etapas, temVagas, fechar }: { projetoId: stri
         rotulo="Depois de" name="depoisDe" value={depoisDe} onChange={(e) => setDepoisDe(e.target.value)} erro={erros.depoisDe}
         opcoes={[{ valor: '', rotulo: 'No início' }, ...etapas.map((e) => ({ valor: e.id, rotulo: e.nome }))]}
       />
-      {temVagas && escolhida && escolhida.chegaramAoPonto > 0 && (
-        <p role="status" className="rounded-lg bg-superficie-2 px-3 py-2 text-sm">{escolhida.chegaramAoPonto} vagas já passaram deste ponto e vão ficar com a etapa concluída automaticamente.</p>
+      {temVagas && passaram > 0 && (
+        <p role="status" className="rounded-lg bg-superficie-2 px-3 py-2 text-sm">
+          {passaram === 1
+            ? '1 vaga já passou deste ponto e vai ficar com a etapa concluída automaticamente.'
+            : `${passaram} vagas já passaram deste ponto e vão ficar com a etapa concluída automaticamente.`}
+        </p>
       )}
       <ErroGeral mensagem={erros._} />
       <Botao type="submit" disabled={pendente}>Incluir</Botao>
@@ -132,7 +143,7 @@ function FormInclusao({ projetoId, etapas, temVagas, fechar }: { projetoId: stri
 }
 
 // A lista de etapas do projeto: duração, nome, ordem (antes de haver vagas) e inclusão.
-export function EtapasProjeto({ projetoId, cliente, etapas, temVagas, somenteLeitura }: { projetoId: string; cliente: string; etapas: EtapaConfig[]; temVagas: boolean; somenteLeitura: boolean }) {
+export function EtapasProjeto({ projetoId, cliente, etapas, temVagas, totalVagas, somenteLeitura }: { projetoId: string; cliente: string; etapas: EtapaConfig[]; temVagas: boolean; totalVagas: number; somenteLeitura: boolean }) {
   const [aberto, setAberto] = useState(false)
   return (
     <section className="flex flex-col gap-3">
@@ -169,7 +180,7 @@ export function EtapasProjeto({ projetoId, cliente, etapas, temVagas, somenteLei
         <>
           <div><Botao type="button" variante="secundario" onClick={() => setAberto(true)}>+ Incluir etapa</Botao></div>
           <PainelLateral titulo="Incluir etapa" aberto={aberto} aoFechar={() => setAberto(false)}>
-            <FormInclusao projetoId={projetoId} etapas={etapas} temVagas={temVagas} fechar={() => setAberto(false)} />
+            <FormInclusao projetoId={projetoId} etapas={etapas} temVagas={temVagas} totalVagas={totalVagas} fechar={() => setAberto(false)} />
           </PainelLateral>
         </>
       )}

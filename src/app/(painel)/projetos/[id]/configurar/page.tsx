@@ -76,7 +76,8 @@ export default async function Configurar({ params, searchParams }: { params: Pro
       concluidasPor: n, chegaramAoPonto: n,
     }
   })
-  const temVagas = linhasVaga.some((v) => v.canceladaEm === null)
+  const totalVagas = linhasVaga.filter((v) => v.canceladaEm === null).length
+  const temVagas = totalVagas > 0
 
   const todos = (usuarios.data ?? []).map((u) => ({ id: u.id, nome: u.nome, perfil: u.perfil as PerfilUsuario, clienteId: u.cliente_id, ativo: u.ativo }))
   const comAcesso = new Set((acessos.data ?? []).map((a) => a.usuario_id))
@@ -99,7 +100,7 @@ export default async function Configurar({ params, searchParams }: { params: Pro
           <OndasProjeto projetoId={id} ondas={ondas} somenteLeitura={somenteLeitura} />
         </Bloco>
       )}
-      <EtapasProjeto projetoId={id} cliente={projeto.cliente.nome} etapas={etapas} temVagas={temVagas} somenteLeitura={somenteLeitura} />
+      <EtapasProjeto projetoId={id} cliente={projeto.cliente.nome} etapas={etapas} temVagas={temVagas} totalVagas={totalVagas} somenteLeitura={somenteLeitura} />
       <Bloco titulo="Vagas">
         <VagasProjeto projetoId={id} organizacao={projeto.organizacao} vagas={linhasVaga} opcoes={{ ondas: ondas.map((o) => ({ id: o.id, nome: o.nome })), gestores }} somenteLeitura={somenteLeitura} />
       </Bloco>
