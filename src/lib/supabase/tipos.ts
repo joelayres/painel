@@ -159,32 +159,6 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"projeto_duracoes": {
-                  Row: {
-                    "duracao": number,"ordem": number,"projeto_id": string
-                  }
-                  ComputedFields: never
-                  Insert: {
-                    "duracao": number,"ordem": number,"projeto_id": string
-                  }
-                  Update: {
-                    "duracao"?: number,"ordem"?: number,"projeto_id"?: string
-                  }
-                  Relationships: [
-                    {
-      foreignKeyName: "projeto_duracoes_ordem_fkey"
-      columns: ["ordem"]
-isOneToOne: false
-      referencedRelation: "etapas"
-      referencedColumns: ["ordem"]
-    },{
-      foreignKeyName: "projeto_duracoes_projeto_id_fkey"
-      columns: ["projeto_id"]
-isOneToOne: false
-      referencedRelation: "projetos"
-      referencedColumns: ["id"]
-    }
-                  ]
                 },"projeto_etapas": {
                   Row: {
                     "duracao": number | null,"fixa": string | null,"id": string,"nome": string,"padrao": number | null,"posicao": number,"projeto_id": string
@@ -253,14 +227,14 @@ isOneToOne: false
                   ]
                 },"vaga_conclusoes": {
                   Row: {
-                    "automatica": boolean,"concluida_em": string,"etapa_id": string,"ordem": number | null,"vaga_id": string
+                    "automatica": boolean,"concluida_em": string,"etapa_id": string,"vaga_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "automatica"?: boolean,"concluida_em": string,"etapa_id": string,"ordem"?: number | null,"vaga_id": string
+                    "automatica"?: boolean,"concluida_em": string,"etapa_id": string,"vaga_id": string
                   }
                   Update: {
-                    "automatica"?: boolean,"concluida_em"?: string,"etapa_id"?: string,"ordem"?: number | null,"vaga_id"?: string
+                    "automatica"?: boolean,"concluida_em"?: string,"etapa_id"?: string,"vaga_id"?: string
                   }
                   Relationships: [
                     {
@@ -269,12 +243,6 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "projeto_etapas"
       referencedColumns: ["id"]
-    },{
-      foreignKeyName: "vaga_conclusoes_ordem_fkey"
-      columns: ["ordem"]
-isOneToOne: false
-      referencedRelation: "etapas"
-      referencedColumns: ["ordem"]
     },{
       foreignKeyName: "vaga_conclusoes_vaga_id_fkey"
       columns: ["vaga_id"]
@@ -326,9 +294,6 @@ isOneToOne: false
                            },
 "alterar_duracao_etapa":
 { Args: { "p_dias": number,"p_etapa": string }; Returns: undefined
-                           },
-"alterar_duracao_projeto":
-{ Args: { "p_dias": number,"p_ordem": number,"p_projeto": string }; Returns: undefined
                            },
 "cancelar_vaga":
 { Args: { "p_id": string }; Returns: undefined
