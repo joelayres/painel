@@ -32,10 +32,25 @@ function secao(titulo: string, resumos: CartaoProjeto['resumo'][]): SecaoResumo 
   }
 }
 
+const vagas = (n: number, texto: string) => `${n} ${n === 1 ? 'vaga' : 'vagas'} ${texto}`
+
 export function resumirVagas(cartoes: CartaoProjeto[], visiveis: Visiveis): ResumoSistema {
   const meus = cartoes.filter((c) => !c.encerrado && (visiveis === 'todos' || visiveis.has(c.id)))
   const porProjeto = meus.length > 1 ? meus.map((c) => secao(`${c.cliente.nome} · ${c.nome}`, [c.resumo])) : []
-  return { versao: 1, secoes: [secao('Total', meus.map((c) => c.resumo)), ...porProjeto], alertas: [] }
+  const total = (campo: 'total' | 'admitidas' | 'vermelho' | 'amarelo') => meus.reduce((s, c) => s + c.resumo[campo], 0)
+  const admitidas = total('admitidas')
+  return {
+    versao: 1,
+    destaques: [
+      { rotulo: 'Vagas abertas', valor: total('total'), unidade: 'quantidade', nota: `${admitidas} ${admitidas === 1 ? 'admitida' : 'admitidas'}` },
+      { rotulo: 'Vagas em atraso', valor: total('vermelho'), unidade: 'quantidade', cor: 'vermelho', nota: `+${total('amarelo')} em risco` },
+    ],
+    secoes: [secao('Total', meus.map((c) => c.resumo)), ...porProjeto],
+    alertas: [
+      ...(total('vermelho') ? [vagas(total('vermelho'), 'em atraso')] : []),
+      ...(total('amarelo') ? [vagas(total('amarelo'), 'em risco')] : []),
+    ],
+  }
 }
 
 // Cliente admin lê todos os projetos; o filtro de visibilidade é aplicado aqui.

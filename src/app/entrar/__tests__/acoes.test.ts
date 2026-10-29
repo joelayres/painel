@@ -10,6 +10,8 @@ vi.mock('@/lib/supabase/servidor', () => ({
   criarClienteServidor: async () => ({ auth, rpc }),
 }))
 
+const cookieDelete = vi.fn()
+vi.mock('next/headers', () => ({ cookies: async () => ({ delete: cookieDelete }) }))
 const redirect = vi.fn()
 vi.mock('next/navigation', () => ({ redirect: (url: string) => redirect(url) }))
 
@@ -53,6 +55,7 @@ test('código certo sem perfil ativo encerra a sessão', async () => {
 test('sair encerra a sessão e volta para a entrada', async () => {
   await sair()
   expect(auth.signOut).toHaveBeenCalled()
+  expect(cookieDelete).toHaveBeenCalledWith('veio_do_portal')
   expect(redirect).toHaveBeenCalledWith('/entrar')
 })
 

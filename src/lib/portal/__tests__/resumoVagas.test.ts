@@ -18,7 +18,7 @@ test('gestor com só o projeto Braskem não soma o de outro cliente', () => {
   expect(valores(r)).toEqual({ Vagas: 50, Admitidas: 20, Mobilizadas: 12, Vermelhas: 3, Amarelas: 5 })
   expect(r.secoes[0].indicadores.find((i) => i.rotulo === 'Vermelhas')?.cor).toBe('vermelho')
   expect(r.secoes[0].indicadores.find((i) => i.rotulo === 'Amarelas')?.cor).toBe('amarelo')
-  expect(r).toMatchObject({ versao: 1, alertas: [] })
+  expect(r).toMatchObject({ versao: 1, alertas: ['3 vagas em atraso', '5 vagas em risco'] })
   expect(r.periodo).toBeUndefined()
 })
 
@@ -39,4 +39,21 @@ test('projetosVisiveis: rh vê todos; os outros, os liberados em projeto_acessos
   expect(await projetosVisiveis(admin, { id: 'r1', perfil: 'rh', usuarioId: 'u1' })).toBe('todos')
   expect(await projetosVisiveis(admin, { id: 'r1', perfil: 'gestor', usuarioId: 'u1' })).toEqual(new Set(['p1', 'p9']))
   expect(eq).toHaveBeenCalledWith('usuario_id', 'r1')
+})
+
+test('destaques e avisos para o topo do portal', () => {
+  const r = resumirVagas([braskem, outro], 'todos')
+  expect(r.destaques).toEqual([
+    { rotulo: 'Vagas abertas', valor: 60, unidade: 'quantidade', nota: '21 admitidas' },
+    { rotulo: 'Vagas em atraso', valor: 4, unidade: 'quantidade', cor: 'vermelho', nota: '+5 em risco' },
+  ])
+  expect(r.alertas).toEqual(['4 vagas em atraso', '5 vagas em risco'])
+})
+
+test('sem atraso nem risco não há aviso; singular quando é uma', () => {
+  expect(resumirVagas([cartao('p', 'C', 'X', { total: 3 })], 'todos').alertas).toEqual([])
+  expect(resumirVagas([cartao('p', 'C', 'X', { total: 3, vermelho: 1, amarelo: 1, admitidas: 1 })], 'todos')).toMatchObject({
+    alertas: ['1 vaga em atraso', '1 vaga em risco'],
+    destaques: [{ nota: '1 admitida' }, { nota: '+1 em risco' }],
+  })
 })

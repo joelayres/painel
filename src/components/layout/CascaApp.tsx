@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { sair } from '@/app/entrar/acoes'
 import { AlternadorTema } from '../tema/AlternadorTema'
 import { Logo } from './Logo'
+import { VoltarAoPortal } from './VoltarAoPortal'
 
 export function CascaApp({
   titulo,
@@ -26,6 +27,7 @@ export function CascaApp({
           <span className="hidden h-6 w-px bg-current opacity-30 sm:block" aria-hidden />
           <span className="hidden font-titulo text-lg font-medium sm:block">Painel de Mobilização</span>
           <div className="flex-1" />
+          <VoltarAoPortal />
           <AlternadorTema />
           <span className="flex size-9 items-center justify-center rounded-full bg-white/15 text-sm font-semibold" title={usuario.nome}>
             {iniciais}
