@@ -1,12 +1,17 @@
 // Modelo Excel para importar as vagas de um projeto: aba "Vagas" (só o cabeçalho) e aba "Instruções".
 import ExcelJS from 'exceljs'
 import type { EtapaDef } from '@/dominio/etapas'
+import { chaveFuncao } from '@/dominio/painel'
 
 export type Organizacao = 'ondas' | 'meta'
 
 // A quinta coluna é "Onda" ou "Meta", conforme a organização do projeto.
 export const COLUNAS_FIXAS = ['Função', 'Disciplina', 'Área', 'Gestor', 'Onda', 'Início do processo', 'Candidato'] as const
 export const colunasFixas = (organizacao: Organizacao): string[] => COLUNAS_FIXAS.map((c) => (c === 'Onda' && organizacao === 'meta' ? 'Meta' : c))
+
+// Nome de etapa que a leitura da planilha confundiria com uma coluna fixa (mesma normalização do cabeçalho).
+const RESERVADAS = new Set([...COLUNAS_FIXAS, 'Meta'].map(chaveFuncao))
+export const nomeReservado = (nome: string): boolean => RESERVADAS.has(chaveFuncao(nome))
 
 export async function gerarModelo(p: { organizacao: Organizacao; ondas: string[]; gestores: string[]; etapas: EtapaDef[] }): Promise<Buffer> {
   const wb = new ExcelJS.Workbook()

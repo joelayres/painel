@@ -13,8 +13,7 @@
     "db:push": "sh scripts/db.sh push",
     "db:tipos": "sh scripts/db.sh tipos",
     "criar-rh": "node --env-file=.env.local scripts/criar-rh.mts",
-    "test:sql": "vitest run --config vitest.sql.config.mts",
-    "ajustar-datas-futuras": "node --env-file=.env.local scripts/ajustar-datas-futuras.mjs"
+    "test:sql": "vitest run --config vitest.sql.config.mts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

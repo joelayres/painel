@@ -359,7 +359,7 @@ describe('ações por posição', () => {
       await c.query('select desfazer_etapa($1, 3::smallint)', [vaga])
       expect((await conclusoes(c, vaga)).map((x) => x.posicao)).toEqual([1, 2])
       const { rows } = await c.query("select acao, detalhe from historico where vaga_id = $1 and acao like 'Desfez%'", [vaga])
-      expect(rows).toEqual([{ acao: 'Desfez Captura de Mercado', detalhe: { ordem: 3 } }])
+      expect(rows).toEqual([{ acao: 'Desfez Captura de Mercado', detalhe: { ordem: 3, concluida_em: '2026-10-05' } }])
     }))
 
   it('desistência volta para a captura onde ela estiver', () =>

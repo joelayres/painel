@@ -27,13 +27,16 @@ export function ConfirmarAvanco({ vaga, de, ate, etapas, aoFechar }: { vaga: Vag
   const lista = nomes.length > 1 ? `${nomes.slice(0, -1).join(', ')} e ${nomes[nomes.length - 1]}` : nomes[0]
   const texto = nomes.length > 1 ? `Concluir ${nomes.length} etapas: ${lista}` : `Concluir ${lista}`
 
-  const concluir = () =>
+  const concluir = () => {
+    // Fora da transição: o erro antigo some já, não só quando a chamada termina.
+    setErro(null)
     iniciar(async () => {
       const r = await concluirEtapas(vaga.id, de, ate, data)
       if (!r.ok) return setErro(r.erro)
       router.refresh()
       aoFechar()
     })
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -43,7 +46,7 @@ export function ConfirmarAvanco({ vaga, de, ate, etapas, aoFechar }: { vaga: Vag
         aria-modal="true"
         aria-labelledby="confirmar-avanco-titulo"
         onKeyDown={(e) => {
-          if (e.key === 'Escape') aoFechar()
+          if (e.key === 'Escape' && !pendente) aoFechar()
           // Mantém o foco dentro do painel.
           if (e.key === 'Tab') {
             const itens = [...e.currentTarget.querySelectorAll<HTMLElement>('input, button:not(:disabled)')]
@@ -60,7 +63,7 @@ export function ConfirmarAvanco({ vaga, de, ate, etapas, aoFechar }: { vaga: Vag
         <Campo rotulo="Data" type="date" value={data} onChange={(e) => setData(e.target.value)} required />
         {erro && <p role="alert" className="rounded-lg px-3 py-2 font-medium" style={{ background: 'var(--st-reprovada-fundo)', color: 'var(--st-reprovada-texto)' }}>{erro}</p>}
         <div className="flex justify-end gap-2">
-          <Botao type="button" variante="secundario" onClick={aoFechar}>Cancelar</Botao>
+          <Botao type="button" variante="secundario" onClick={aoFechar} disabled={pendente}>Cancelar</Botao>
           <Botao type="button" onClick={concluir} disabled={pendente || !data}>{pendente ? 'Concluindo...' : 'Concluir'}</Botao>
         </div>
       </div>

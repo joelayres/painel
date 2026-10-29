@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { exigirRh } from '@/lib/auth/perfil'
 import { liberarAcesso, removerAcesso } from '@/lib/cadastros/acessos'
+import { nomeReservado } from '@/lib/importacao/modelo'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
 import { campoData, ehUuid, validar } from '@/lib/validacao/vaga'
 
@@ -74,6 +75,8 @@ function erroDeEtapa(mensagem: string): RespostaAcao {
   return FALHA
 }
 
+const RESERVADO: RespostaAcao = { ok: false, erros: { nome: 'Este nome é usado por uma coluna fixa da planilha. Escolha outro.' } }
+
 const esquemaNome = z.object({ nome: z.string({ error: 'Informe o nome.' }).trim().min(1, 'Informe o nome.') })
 
 const esquemaInclusao = z.object({
@@ -97,6 +100,7 @@ export async function incluirEtapa(projetoId: string, entrada: { nome: string; d
   if (!ehUuid(projetoId)) return PROJETO_INVALIDO
   const r = validar(esquemaInclusao, entrada)
   if (!r.ok) return r
+  if (nomeReservado(r.dados.nome)) return RESERVADO
   if (r.dados.depoisDe !== '' && !ehUuid(r.dados.depoisDe)) return { ok: false, erros: { depoisDe: 'Escolha uma etapa válida.' } }
   const sb = await criarClienteServidor()
   const { error } = await sb.rpc('incluir_etapa', { p_projeto: projetoId, p_nome: r.dados.nome, p_duracao: r.dados.duracao, p_depois_de: (r.dados.depoisDe || null) as string })
@@ -118,6 +122,7 @@ export async function renomearEtapa(projetoId: string, etapaId: string, entrada:
   if (!ehUuid(projetoId) || !ehUuid(etapaId)) return PROJETO_INVALIDO
   const r = validar(esquemaNome, entrada)
   if (!r.ok) return r
+  if (nomeReservado(r.dados.nome)) return RESERVADO
   const sb = await criarClienteServidor()
   const { error } = await sb.rpc('renomear_etapa', { p_etapa: etapaId, p_nome: r.dados.nome })
   if (error) return erroDeEtapa(error.message)

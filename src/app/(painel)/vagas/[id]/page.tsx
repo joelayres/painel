@@ -9,6 +9,7 @@ import { criarClienteServidor } from '@/lib/supabase/servidor'
 import { COR_PRAZO, ROTULO_PRAZO } from '../../cores'
 import { ehUuid } from '@/lib/validacao/vaga'
 import { Acoes } from './Acoes'
+import { HistoricoVaga } from './HistoricoVaga'
 
 export default async function DetalheVaga({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -22,7 +23,7 @@ export default async function DetalheVaga({ params }: { params: Promise<{ id: st
   const podeEditar = sessao.perfil === 'rh' && !projeto.encerrado
   const [{ data: bruta }, { data: historico }] = await Promise.all([
     sb.from('vagas').select('onda_id, meta, gestor_id, data_inicio').eq('id', id).single(),
-    sb.from('historico').select('id, nome_usuario, acao, em').eq('vaga_id', id).order('em', { ascending: false }),
+    sb.from('historico').select('id, nome_usuario, acao, em, detalhe').eq('vaga_id', id).order('em', { ascending: false }),
   ])
   const p = vaga.previsao
   const atual = p.etapas.find((e) => e.ordem === p.etapaAtual) ?? null
@@ -76,20 +77,7 @@ export default async function DetalheVaga({ params }: { params: Promise<{ id: st
         </table>
       </div>
 
-      <section className="rounded-xl border border-borda bg-superficie p-4">
-        <h3 className="font-titulo text-xl font-semibold">Histórico</h3>
-        {historico?.length ? (
-          <ul className="mt-2 flex flex-col gap-1 text-sm">
-            {historico.map((h) => (
-              <li key={h.id}>
-                <span className="text-texto-suave">{new Date(h.em).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' })}</span> · {h.acao} · {h.nome_usuario}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-2 text-sm text-texto-suave">Nada registrado ainda.</p>
-        )}
-      </section>
+      <HistoricoVaga historico={historico ?? []} />
     </div>
   )
 }

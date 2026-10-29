@@ -4,6 +4,7 @@ import { etapasDoProjeto, type EtapaDef, type LinhaEtapaProjeto } from '@/domini
 import { resumirProjeto, type OndaVaga, type ResumoGrupo, type VagaPainel } from '@/dominio/painel'
 import { preverVaga } from '@/dominio/previsao'
 import { situacaoVaga } from '@/dominio/situacao'
+import { lerTodas } from '@/lib/supabase/paginar'
 import type { Database } from '@/lib/supabase/tipos'
 
 type LinhaVaga = {
@@ -147,8 +148,8 @@ export async function carregarPainel(sb: SupabaseClient<Database>, hoje: string,
   if (!projeto) return null
 
   const [vagas, conclusoes, projetoEtapas, feriados, ondas, gestores, clientes, clienteDuracoes] = await Promise.all([
-    sb.from('vagas').select(COLUNAS_VAGA).eq('projeto_id', projetoId).order('criado_em').then((r) => exigir(r, 'as vagas')),
-    sb.from('vaga_conclusoes').select('vaga_id, etapa_id, automatica, concluida_em, vagas!inner(projeto_id)').eq('vagas.projeto_id', projetoId).then((r) => exigir(r, 'as etapas concluídas')),
+    lerTodas((de, ate) => sb.from('vagas').select(COLUNAS_VAGA).eq('projeto_id', projetoId).order('criado_em').order('id').range(de, ate)).then((r) => exigir(r, 'as vagas')),
+    lerTodas((de, ate) => sb.from('vaga_conclusoes').select('vaga_id, etapa_id, automatica, concluida_em, vagas!inner(projeto_id)').eq('vagas.projeto_id', projetoId).order('vaga_id').order('etapa_id').range(de, ate)).then((r) => exigir(r, 'as etapas concluídas')),
     sb.from('projeto_etapas').select(COLUNAS_ETAPA).eq('projeto_id', projetoId).order('posicao').then((r) => exigir(r, 'as etapas')),
     sb.from('feriados').select('data').then((r) => exigir(r, 'os feriados')),
     sb.from('ondas').select('id, nome, inicio, fim, projeto_id').eq('projeto_id', projetoId).order('inicio').then((r) => exigir(r, 'as ondas')),
@@ -191,8 +192,8 @@ export type PainelProjeto = NonNullable<Awaited<ReturnType<typeof carregarPainel
 
 export async function carregarProjetos(sb: SupabaseClient<Database>, hoje: string): Promise<CartaoProjeto[]> {
   const [vagas, conclusoes, projetoEtapas, feriados, ondas, gestores, projetos, clientes, clienteDuracoes] = await Promise.all([
-    sb.from('vagas').select(COLUNAS_VAGA).order('criado_em').then((r) => exigir(r, 'as vagas')),
-    sb.from('vaga_conclusoes').select('vaga_id, etapa_id, automatica, concluida_em').then((r) => exigir(r, 'as etapas concluídas')),
+    lerTodas((de, ate) => sb.from('vagas').select(COLUNAS_VAGA).order('criado_em').order('id').range(de, ate)).then((r) => exigir(r, 'as vagas')),
+    lerTodas((de, ate) => sb.from('vaga_conclusoes').select('vaga_id, etapa_id, automatica, concluida_em').order('vaga_id').order('etapa_id').range(de, ate)).then((r) => exigir(r, 'as etapas concluídas')),
     sb.from('projeto_etapas').select(COLUNAS_ETAPA).order('posicao').then((r) => exigir(r, 'as etapas')),
     sb.from('feriados').select('data').then((r) => exigir(r, 'os feriados')),
     sb.from('ondas').select('id, nome, inicio, fim, projeto_id').then((r) => exigir(r, 'as ondas')),

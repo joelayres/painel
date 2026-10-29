@@ -32,6 +32,20 @@ begin
   end loop;
 end $$;
 
+-- O "Desfez" do histórico passa a guardar a data que foi desfeita.
+create or replace function public.desfazer_etapa(p_vaga uuid, p_ordem_esperada smallint) returns void
+language plpgsql security definer set search_path = public, pg_temp as $$
+declare v_nome text; v_data date;
+begin
+  perform travar_vaga_rh(p_vaga);
+  if etapa_atual(p_vaga) - 1 <> p_ordem_esperada or p_ordem_esperada < 1 then raise exception 'etapa mudou'; end if;
+  delete from vaga_conclusoes vc using projeto_etapas e
+    where e.id = vc.etapa_id and vc.vaga_id = p_vaga and e.posicao = p_ordem_esperada
+    returning e.nome, vc.concluida_em into v_nome, v_data;
+  insert into historico (vaga_id, nome_usuario, acao, detalhe)
+  values (p_vaga, meu_nome(), 'Desfez ' || v_nome, jsonb_build_object('ordem', p_ordem_esperada, 'concluida_em', v_data));
+end $$;
+
 -- p_dias null volta a etapa padrão à duração do cliente; numa etapa incluída é recusado. O "antes"
 -- e o "depois" são as durações efetivas.
 create or replace function public.alterar_duracao_etapa(p_etapa uuid, p_dias smallint) returns void

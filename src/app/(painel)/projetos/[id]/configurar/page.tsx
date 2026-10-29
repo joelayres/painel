@@ -4,6 +4,7 @@ import { hojeSP } from '@/dominio/tempo'
 import { exigirRh } from '@/lib/auth/perfil'
 import { usuariosLiberaveis } from '@/lib/cadastros/acessos'
 import { carregarPainel } from '@/lib/painel/dados'
+import { lerTodas } from '@/lib/supabase/paginar'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
 import { ehUuid } from '@/lib/validacao/vaga'
 import { AcessosProjeto } from './AcessosProjeto'
@@ -39,10 +40,10 @@ export default async function Configurar({ params, searchParams }: { params: Pro
   const { projeto, ondas, gestores, etapas: efetivas } = painel
 
   const [vagas, duracoesCliente, linhasEtapa, conclusoes, usuarios, acessos] = await Promise.all([
-    sb.from('vagas').select('id, funcao, disciplina, area, onda_id, meta, gestor_id, candidato, data_inicio, cancelada_em').eq('projeto_id', id).order('criado_em'),
+    lerTodas((de, ate) => sb.from('vagas').select('id, funcao, disciplina, area, onda_id, meta, gestor_id, candidato, data_inicio, cancelada_em').eq('projeto_id', id).order('criado_em').order('id').range(de, ate)),
     sb.from('cliente_duracoes').select('ordem, duracao').eq('cliente_id', projeto.cliente.id),
     sb.from('projeto_etapas').select('id, padrao, duracao').eq('projeto_id', id),
-    sb.from('vaga_conclusoes').select('etapa_id, vagas!inner(projeto_id)').eq('vagas.projeto_id', id),
+    lerTodas((de, ate) => sb.from('vaga_conclusoes').select('etapa_id, vagas!inner(projeto_id)').eq('vagas.projeto_id', id).order('vaga_id').order('etapa_id').range(de, ate)),
     sb.from('usuarios').select('id, nome, perfil, cliente_id, ativo').order('nome'),
     sb.from('projeto_acessos').select('usuario_id').eq('projeto_id', id),
   ])

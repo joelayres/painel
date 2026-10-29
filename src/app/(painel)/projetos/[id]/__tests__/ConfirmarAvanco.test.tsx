@@ -52,3 +52,30 @@ test('Esc e Cancelar fecham', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
   expect(aoFechar).toHaveBeenCalledTimes(2)
 })
+
+test('enquanto conclui, Esc e Cancelar não fecham', async () => {
+  let terminar: (r: { ok: true }) => void = () => {}
+  concluirEtapas.mockReturnValue(new Promise((res) => { terminar = res }))
+  const aoFechar = vi.fn()
+  render(<ConfirmarAvanco vaga={vaga} de={4} ate={5} etapas={ETAPAS_PADRAO} aoFechar={aoFechar} />)
+  await userEvent.click(screen.getByRole('button', { name: 'Concluir' }))
+  const cancelar = await screen.findByRole('button', { name: 'Cancelar' })
+  expect(cancelar).toBeDisabled()
+  await userEvent.keyboard('{Escape}')
+  await userEvent.click(cancelar)
+  expect(aoFechar).not.toHaveBeenCalled()
+  terminar({ ok: true })
+  await waitFor(() => expect(aoFechar).toHaveBeenCalledTimes(1))
+})
+
+test('uma nova tentativa limpa o erro da anterior', async () => {
+  concluirEtapas.mockResolvedValueOnce({ ok: false, erro: 'Falhou.' })
+  let terminar: (r: { ok: true }) => void = () => {}
+  concluirEtapas.mockReturnValueOnce(new Promise((res) => { terminar = res }))
+  render(<ConfirmarAvanco vaga={vaga} de={4} ate={5} etapas={ETAPAS_PADRAO} aoFechar={() => {}} />)
+  await userEvent.click(screen.getByRole('button', { name: 'Concluir' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Falhou.')
+  await userEvent.click(screen.getByRole('button', { name: 'Concluir' }))
+  await waitFor(() => expect(screen.queryByRole('alert')).toBeNull())
+  terminar({ ok: true })
+})
