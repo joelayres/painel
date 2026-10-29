@@ -3,13 +3,14 @@ import type { VagaPainel } from '@/dominio/painel'
 import { ddmm } from '@/lib/formato/datas'
 import { COR_PRAZO, ROTULO_PRAZO } from '../../cores'
 
-export function CartaoVaga({ vaga }: { vaga: VagaPainel }) {
+export function CartaoVaga({ vaga, arrastavel = false, aoArrastar, aoSoltar }: { vaga: VagaPainel; arrastavel?: boolean; aoArrastar?: () => void; aoSoltar?: () => void }) {
   const cor = vaga.situacao.cor ?? 'verde'
   const d = vaga.situacao.diasNaEtapa
   return (
     <Link
       href={`/vagas/${vaga.id}`}
-      className="block rounded-lg border-l-[6px] bg-superficie p-2.5 text-sm shadow-sm hover:bg-primaria-suave focus-visible:outline-2 focus-visible:outline-foco"
+      {...(arrastavel ? { draggable: true, onDragStart: aoArrastar, onDragEnd: aoSoltar } : {})}
+      className={`block rounded-lg border-l-[6px] bg-superficie p-2.5 text-sm shadow-sm hover:bg-primaria-suave focus-visible:outline-2 focus-visible:outline-foco${arrastavel ? ' cursor-grab' : ''}`}
       style={{ borderColor: COR_PRAZO[cor] }}
       title={ROTULO_PRAZO[cor]}
     >
