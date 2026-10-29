@@ -4,10 +4,12 @@ import { z } from 'zod'
 import type { Perfil } from '@/lib/auth/perfil'
 import { validar } from '@/lib/validacao/vaga'
 
+export const PERFIS_USUARIO = ['rh', 'analista', 'gestor', 'cliente'] as const
+
 export const esquemaUsuario = z.object({
   nome: z.string({ error: 'Informe o nome.' }).trim().min(1, 'Informe o nome.'),
   email: z.string({ error: 'Informe o e-mail.' }).trim().toLowerCase().pipe(z.email('E-mail inválido.')),
-  perfil: z.enum(['rh', 'analista', 'gestor', 'cliente'], { error: 'Escolha o perfil.' }),
+  perfil: z.enum(PERFIS_USUARIO, { error: 'Escolha o perfil.' }),
   clienteId: z.string().nullish().transform((v) => v || null),
 }).superRefine((d, ctx) => {
   if (d.perfil === 'cliente' && !d.clienteId) ctx.addIssue({ code: 'custom', path: ['clienteId'], message: 'Escolha o cliente.' })

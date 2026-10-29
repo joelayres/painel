@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { exigirAdmin } from '@/lib/auth/perfil'
 import { liberarAcesso, removerAcesso } from '@/lib/cadastros/acessos'
-import { alterarUsuario, cadastrarUsuario } from '@/lib/cadastros/usuarios'
+import { alterarUsuario, cadastrarUsuario, PERFIS_USUARIO } from '@/lib/cadastros/usuarios'
 import { criarClienteAdmin } from '@/lib/supabase/admin'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
 import { campoData, ehUuid, validar } from '@/lib/validacao/vaga'
@@ -79,13 +79,13 @@ export async function salvarUsuario(id: string | null, entrada: Dados): Promise<
     const r = await cadastrarUsuario(admin, entrada)
     return r.ok ? pronto() : r
   }
-  const v = validar(z.object({ nome: z.string().trim().min(1, 'Informe o nome.'), perfil: z.enum(['rh', 'gestor', 'cliente']), clienteId: z.string().optional(), ativo: z.string().optional() }), entrada)
+  const v = validar(z.object({ nome: z.string().trim().min(1, 'Informe o nome.'), perfil: z.enum(PERFIS_USUARIO), clienteId: z.string().optional(), ativo: z.string().optional() }), entrada)
   if (!v.ok) return v
   if (v.dados.perfil === 'cliente' && !v.dados.clienteId) return { ok: false, erros: { clienteId: 'Escolha o cliente.' } }
   const ativo = v.dados.ativo === 'on'
   const { data: alvo } = await admin.from('usuarios').select('usuario_id').eq('id', id).single()
-  // Ninguém tira o próprio acesso de RH por engano.
-  if (alvo?.usuario_id === rh.usuarioId && (!ativo || v.dados.perfil !== 'rh')) return { ok: false, erros: { _: 'Você não pode tirar o seu próprio acesso de RH.' } }
+  // Ninguém tira o próprio acesso de Administrador por engano.
+  if (alvo?.usuario_id === rh.usuarioId && (!ativo || v.dados.perfil !== 'rh')) return { ok: false, erros: { _: 'Você não pode tirar o seu próprio acesso de Administrador.' } }
   const r = await alterarUsuario(admin, id, { nome: v.dados.nome, perfil: v.dados.perfil, clienteId: v.dados.perfil === 'cliente' ? v.dados.clienteId || null : null, ativo })
   return r.ok ? pronto() : r
 }
