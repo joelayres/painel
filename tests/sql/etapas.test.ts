@@ -57,6 +57,7 @@ async function projetoComOnda(c: Client) {
 describe('migração 007', () => {
   it('a 007 dá às vagas reais da Braskem 2027 a lista padrão sem mudar nada', async () => {
     let antes: { vaga_id: string; ordem: number; concluida_em: string }[] = []
+    let duracoesAntes: { padrao: number; duracao: number }[] = []
     await emTransacao(
       async (c) => {
         const { rows: projeto } = await c.query("select id from projetos where nome = 'Mobilização Braskem 2027'")
@@ -68,14 +69,12 @@ describe('migração 007', () => {
           [11, 'admissao'],
         ])
         // A Braskem 2027 tem as 13 padrão, com os ajustes de duração que já tinha.
-        expect(
-          await contar(
-            c,
-            `select count(*) as n from projeto_etapas e left join projeto_duracoes d on d.projeto_id = e.projeto_id and d.ordem = e.padrao
-             where e.projeto_id = $1 and (e.duracao is distinct from d.duracao or e.padrao is distinct from e.posicao)`,
-            [projeto[0].id],
-          ),
-        ).toBe(0)
+        expect(lista.every((e) => e.posicao === lista.indexOf(e) + 1)).toBe(true)
+        const { rows: duracoes } = await c.query(
+          'select padrao, duracao from projeto_etapas where projeto_id = $1 and duracao is not null order by padrao',
+          [projeto[0].id],
+        )
+        expect(duracoes).toEqual(duracoesAntes)
         // As conclusões de toda vaga são as primeiras etapas da lista, sem buraco.
         expect(
           await contar(
@@ -86,16 +85,21 @@ describe('migração 007', () => {
         ).toBe(0)
         expect(await contar(c, 'select count(*) as n from vaga_conclusoes where automatica')).toBe(0)
         const { rows: depois } = await c.query(
-          `select vc.vaga_id, vc.ordem, vc.concluida_em, e.posicao from vaga_conclusoes vc join projeto_etapas e on e.id = vc.etapa_id
-           join vagas v on v.id = vc.vaga_id where e.projeto_id = v.projeto_id order by vc.vaga_id, vc.ordem`,
+          `select vc.vaga_id, e.posicao as ordem, vc.concluida_em from vaga_conclusoes vc join projeto_etapas e on e.id = vc.etapa_id
+           join vagas v on v.id = vc.vaga_id where e.projeto_id = v.projeto_id order by vc.vaga_id, e.posicao`,
         )
         expect(depois).toHaveLength(antes.length)
         expect(await contar(c, 'select count(*) as n from vaga_conclusoes')).toBe(antes.length)
-        for (const d of depois) expect(d.posicao).toBe(d.ordem)
         expect(depois.map(({ vaga_id, ordem, concluida_em }) => ({ vaga_id, ordem, concluida_em }))).toEqual(antes)
       },
       async (c) => {
         antes = (await c.query('select vaga_id, ordem, concluida_em from vaga_conclusoes order by vaga_id, ordem')).rows
+        duracoesAntes = (
+          await c.query(
+            `select d.ordem as padrao, d.duracao from projeto_duracoes d join projetos p on p.id = d.projeto_id
+             where p.nome = 'Mobilização Braskem 2027' order by d.ordem`,
+          )
+        ).rows
         expect(antes.length).toBeGreaterThan(0)
       },
     )
@@ -118,17 +122,6 @@ describe('migração 007', () => {
           fixa: e.ordem === 2 ? 'captura' : e.ordem === 11 ? 'admissao' : null,
         })),
       )
-    }))
-
-  it('código antigo continua concluindo', () =>
-    emTransacao(async (c) => {
-      const { projetoId, ondaId } = await projetoComOnda(c)
-      const vaga = await novaVaga(c, { projetoId, ondaId })
-      await c.query("insert into vaga_conclusoes (vaga_id, ordem, concluida_em) values ($1, 1, '2026-10-22'), ($1, 2, '2026-10-23')", [vaga])
-      expect(await conclusoes(c, vaga)).toEqual([
-        { posicao: 1, nome: 'Abertura de vaga', data: '2026-10-22' },
-        { posicao: 2, nome: 'Captura de Mercado', data: '2026-10-23' },
-      ])
     }))
 })
 
@@ -355,8 +348,6 @@ describe('ações por posição', () => {
       await c.query("select concluir_etapa($1, 3::smallint, '2026-10-05'::date)", [vaga])
       const ultima = (await conclusoes(c, vaga)).at(-1)
       expect(ultima).toEqual({ posicao: 3, nome: 'Captura de Mercado', data: '2026-10-05' })
-      // A ordem antiga continua a da etapa padrão (Captura = 2), para o código publicado.
-      expect((await c.query('select ordem from vaga_conclusoes where vaga_id = $1 and etapa_id = $2', [vaga, lista[1].id])).rows).toEqual([{ ordem: 2 }])
       expect(await erroSalvo(c, () => c.query('select desfazer_etapa($1, 2::smallint)', [vaga]))).toContain('etapa mudou')
       await c.query('select desfazer_etapa($1, 3::smallint)', [vaga])
       expect((await conclusoes(c, vaga)).map((x) => x.posicao)).toEqual([1, 2])
@@ -424,18 +415,12 @@ describe('ações por posição', () => {
 })
 
 describe('durações da lista', () => {
-  it('alterar_duracao_etapa e alterar_duracao_projeto mantêm a lista igual', () =>
+  it('alterar_duracao_etapa muda a duração da lista', () =>
     emTransacao(async (c) => {
       const { projetoId } = await projetoComOnda(c)
       const lista = await etapasDoProjeto(c, projetoId)
       await comoUsuario(c, 'rh')
       const duracao = async (id: string) => (await c.query('select duracao from projeto_etapas where id = $1', [id])).rows[0].duracao
-      // O código publicado ainda muda a duração por ordem: a lista acompanha.
-      await c.query('select alterar_duracao_projeto($1, 9::smallint, 3::smallint)', [projetoId])
-      expect(await duracao(lista[8].id)).toBe(3)
-      await c.query('select alterar_duracao_projeto($1, 9::smallint, null)', [projetoId])
-      expect(await duracao(lista[8].id)).toBe(null)
-
       await c.query('select alterar_duracao_etapa($1, 4::smallint)', [lista[8].id])
       expect(await duracao(lista[8].id)).toBe(4)
       await c.query('select alterar_duracao_etapa($1, null)', [lista[8].id])
@@ -522,7 +507,6 @@ describe('permissões e projeto encerrado', () => {
     emTransacao(async (c) => {
       for (const f of [
         'etapas_do_projeto_novo()',
-        'etapa_da_conclusao()',
         'posicao_etapa(uuid)',
         'etapa_na_posicao(uuid, smallint)',
         'etapa_fixa(uuid, text)',
@@ -542,5 +526,20 @@ describe('permissões e projeto encerrado', () => {
         expect((await c.query("select has_function_privilege('authenticated', $1, 'execute') as ok", [f])).rows[0].ok, f).toBe(true)
         expect((await c.query("select has_function_privilege('anon', $1, 'execute') as ok", [f])).rows[0].ok, f).toBe(false)
       }
+    }))
+})
+
+describe('migração 008', () => {
+  it('depois da limpeza toda conclusão tem etapa', () =>
+    emTransacao(async (c) => {
+      const existe = async (sql: string) => (await contar(c, sql)) > 0
+      expect(await existe("select count(*) as n from information_schema.columns where table_name = 'vaga_conclusoes' and column_name = 'ordem'")).toBe(false)
+      expect(await existe("select count(*) as n from information_schema.tables where table_schema = 'public' and table_name = 'projeto_duracoes'")).toBe(false)
+      expect(await existe("select count(*) as n from pg_proc where pronamespace = 'public'::regnamespace and proname in ('alterar_duracao_projeto', 'etapa_da_conclusao')")).toBe(false)
+      expect(await existe("select count(*) as n from information_schema.columns where table_name = 'vaga_conclusoes' and column_name = 'etapa_id' and is_nullable = 'YES'")).toBe(false)
+      expect(await contar(c, 'select count(*) as n from vaga_conclusoes where etapa_id is null')).toBe(0)
+      const { projetoId, ondaId } = await projetoComOnda(c)
+      const vaga = await novaVaga(c, { projetoId, ondaId })
+      await expect(c.query("insert into vaga_conclusoes (vaga_id, concluida_em) values ($1, '2026-10-22')", [vaga])).rejects.toThrow()
     }))
 })

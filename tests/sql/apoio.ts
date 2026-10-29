@@ -108,8 +108,8 @@ export async function etapasDoProjeto(
 // da lista do projeto da vaga, todas na mesma data. As já concluídas ficam como estão.
 export async function concluirAte(c: Client, vagaId: string, posicao: number, data: string): Promise<void> {
   await c.query(
-    `insert into vaga_conclusoes (vaga_id, etapa_id, ordem, concluida_em)
-     select v.id, e.id, e.padrao, $3 from vagas v join projeto_etapas e on e.projeto_id = v.projeto_id
+    `insert into vaga_conclusoes (vaga_id, etapa_id, concluida_em)
+     select v.id, e.id, $3 from vagas v join projeto_etapas e on e.projeto_id = v.projeto_id
      where v.id = $1 and e.posicao <= $2 on conflict do nothing`,
     [vagaId, posicao, data],
   )

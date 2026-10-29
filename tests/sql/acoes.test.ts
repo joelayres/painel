@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Client } from 'pg'
-import { conexao, comoUsuario, emTransacao, novaVaga, novoCliente, novoProjeto } from './apoio'
+import { conexao, comoUsuario, concluirAte, emTransacao, novaVaga, novoCliente, novoProjeto } from './apoio'
 
 const erro = async (p: Promise<unknown>) => {
   try {
@@ -55,9 +55,7 @@ describe('desistência do candidato', () => {
   it('não vale depois da admissão', () =>
     emTransacao(async (c) => {
       const vaga = await vagaDeTeste(c, '2026-10-01')
-      for (let ordem = 1; ordem <= 11; ordem++) {
-        await c.query('insert into vaga_conclusoes (vaga_id, ordem, concluida_em) values ($1, $2, $3)', [vaga, ordem, '2026-10-15'])
-      }
+      await concluirAte(c, vaga, 11, '2026-10-15')
       await comoUsuario(c, 'rh')
       expect(await erro(c.query('select candidato_desistiu($1)', [vaga]))).toContain('vaga já admitida')
     }))

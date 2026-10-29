@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { Client } from 'pg'
 import { describe, expect, it } from 'vitest'
-import { comoUsuario, emTransacao, novaVaga, novoCliente, novoProjeto } from './apoio'
+import { comoUsuario, concluirAte, emTransacao, novaVaga, novoCliente, novoProjeto } from './apoio'
 
 const erro = async (p: Promise<unknown>) => {
   try {
@@ -50,7 +50,9 @@ describe('migração da Braskem 2027', () => {
         expect(await contar(c, 'select count(*) as n from vagas')).toBe(antes!.vagas)
         expect(await contar(c, 'select count(*) as n from vaga_conclusoes')).toBe(antes!.conclusoes)
         expect(await contar(c, 'select count(*) as n from historico')).toBe(antes!.historico)
-        const { rows: lista } = await c.query('select vaga_id, ordem, concluida_em from vaga_conclusoes order by vaga_id, ordem')
+        const { rows: lista } = await c.query(
+          'select vc.vaga_id, e.posicao as ordem, vc.concluida_em from vaga_conclusoes vc join projeto_etapas e on e.id = vc.etapa_id order by vc.vaga_id, e.posicao',
+        )
         expect(lista).toEqual(antes!.lista)
         // As durações da Braskem são as de hoje.
         expect(
@@ -114,7 +116,8 @@ describe('leitura por projeto', () => {
       const p2 = await novoProjeto(c, { clienteId: cli, organizacao: 'meta' })
       const v1 = await novaVaga(c, { projetoId: p1.projetoId, ondaId: p1.ondaId })
       const v2 = await novaVaga(c, { projetoId: p2.projetoId, meta: '2026-12-01' })
-      await c.query("insert into vaga_conclusoes (vaga_id, ordem, concluida_em) values ($1, 1, '2026-10-22'), ($2, 1, '2026-10-22')", [v1, v2])
+      await concluirAte(c, v1, 1, '2026-10-22')
+      await concluirAte(c, v2, 1, '2026-10-22')
       await c.query("insert into historico (vaga_id, nome_usuario, acao) values (null, 'teste-sql', 'geral'), ($1, 'teste-sql', 'da vaga 2')", [v2])
       const { usuarioId } = await comoUsuario(c, 'cliente', cli)
       await liberar(c, p1.projetoId, usuarioId)
@@ -135,7 +138,7 @@ describe('leitura por projeto', () => {
       const { projetoId, ondaId } = await novoProjeto(c, { clienteId: await novoCliente(c), organizacao: 'ondas' })
       await novaVaga(c, { projetoId, ondaId })
       await comoUsuario(c, 'gestor')
-      for (const t of ['projetos', 'vagas', 'ondas', 'vaga_conclusoes', 'historico', 'clientes', 'cliente_duracoes', 'gestores', 'projeto_duracoes', 'projeto_acessos']) {
+      for (const t of ['projetos', 'vagas', 'ondas', 'vaga_conclusoes', 'historico', 'clientes', 'cliente_duracoes', 'gestores', 'projeto_acessos']) {
         expect(await contar(c, `select count(*) as n from ${t}`), t).toBe(0)
       }
       expect(await contar(c, 'select count(*) as n from etapas')).toBe(13)
@@ -227,12 +230,15 @@ describe('durações', () => {
       const cli = await novoCliente(c)
       const { projetoId: p1 } = await novoProjeto(c, { clienteId: cli, organizacao: 'meta' })
       await comoUsuario(c, 'rh')
-      await c.query('select alterar_duracao_projeto($1, 9::smallint, 3::smallint)', [p1])
+      const { rows: lista } = await c.query('select id from projeto_etapas where projeto_id = $1 and posicao = 9', [p1])
+      const etapa = lista[0].id
+      const duracaoDaEtapa = async () => (await c.query('select duracao from projeto_etapas where id = $1', [etapa])).rows
+      await c.query('select alterar_duracao_etapa($1, 3::smallint)', [etapa])
       await c.query('select alterar_duracao_cliente($1, 9::smallint, 5::smallint)', [cli])
-      expect((await c.query('select duracao from projeto_duracoes where projeto_id = $1 and ordem = 9', [p1])).rows).toEqual([{ duracao: 3 }])
+      expect(await duracaoDaEtapa()).toEqual([{ duracao: 3 }])
       expect((await c.query('select duracao from cliente_duracoes where cliente_id = $1 and ordem = 9', [cli])).rows).toEqual([{ duracao: 5 }])
-      await c.query('select alterar_duracao_projeto($1, 9::smallint, null)', [p1])
-      expect(await contar(c, 'select count(*) as n from projeto_duracoes where projeto_id = $1', [p1])).toBe(0)
+      await c.query('select alterar_duracao_etapa($1, null)', [etapa])
+      expect(await duracaoDaEtapa()).toEqual([{ duracao: null }])
       const { rows } = await c.query("select detalhe from historico where vaga_id is null and nome_usuario = 'teste-sql rh' order by em, detalhe->>'depois'")
       expect(rows).toHaveLength(3)
     }))
@@ -255,7 +261,7 @@ describe('projeto encerrado', () => {
       await comoUsuario(c, 'rh')
       await c.query('select encerrar_projeto($1)', [projetoId])
       expect(await erroSalvo(c, () => c.query("select concluir_etapa($1, 1::smallint, '2026-10-22'::date)", [vaga]))).toContain('projeto encerrado')
-      expect(await erroSalvo(c, () => c.query('select alterar_duracao_projeto($1, 9::smallint, 3::smallint)', [projetoId]))).toContain('projeto encerrado')
+      expect(await erroSalvo(c, () => c.query('select alterar_duracao_etapa((select id from projeto_etapas where projeto_id = $1 and posicao = 9), 3::smallint)', [projetoId]))).toContain('projeto encerrado')
       expect(await erroSalvo(c, () => c.query("select salvar_onda_projeto($1, $2, '1ª Onda', '2026-10-22', '2027-01-31')", [ondaId, projetoId]))).toContain(
         'projeto encerrado',
       )
