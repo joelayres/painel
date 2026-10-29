@@ -1,8 +1,10 @@
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { rotaInicial } from '@/lib/auth/rotas'
 import { registrarUso, usuarioDoPortal } from '@/lib/portal/entrada'
 import { segredoPortal } from '@/lib/portal/segredo'
 import { conferirEntrada } from '@/lib/portal/token'
+import { COOKIE_PORTAL } from '@/lib/portal/voltar'
 import { criarClienteAdmin } from '@/lib/supabase/admin'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
 
@@ -37,6 +39,8 @@ async function entrar(token: string, segredo: string): Promise<string> {
   const supabase = await criarClienteServidor()
   const { error: erroSessao } = await supabase.auth.verifyOtp({ token_hash: data.properties.hashed_token, type: 'email' })
   if (erroSessao) throw new Error(`Não foi possível criar a sessão: ${erroSessao.message}`)
+  // Sem prazo próprio: vale enquanto o navegador estiver aberto; sair apaga.
+  ;(await cookies()).set(COOKIE_PORTAL, '1', { httpOnly: true, secure: true, sameSite: 'lax', path: '/' })
   return rotaInicial(usuario.perfil)
 }
 

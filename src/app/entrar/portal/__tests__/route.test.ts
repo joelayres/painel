@@ -9,6 +9,8 @@ vi.mock('@/lib/supabase/servidor', () => ({ criarClienteServidor: async () => ({
 const usuarioDoPortal = vi.fn()
 const registrarUso = vi.fn()
 vi.mock('@/lib/portal/entrada', () => ({ usuarioDoPortal, registrarUso }))
+const cookieSet = vi.fn()
+vi.mock('next/headers', () => ({ cookies: async () => ({ set: cookieSet }) }))
 const redirect = vi.fn()
 vi.mock('next/navigation', () => ({ redirect: (url: string) => redirect(url) }))
 
@@ -46,6 +48,8 @@ test('token válido cria a sessão e leva ao painel', async () => {
   // Troca a sessão mesmo que o navegador já esteja logado com outra conta.
   expect(verifyOtp).toHaveBeenCalledWith({ token_hash: 'hash1', type: 'email' })
   expect(redirect).toHaveBeenCalledWith('/')
+  // Marca a sessão como vinda do portal, para o sistema mostrar o link de volta.
+  expect(cookieSet).toHaveBeenCalledWith('veio_do_portal', '1', expect.objectContaining({ httpOnly: true, path: '/' }))
 })
 
 test('token já usado vai para o aviso, sem criar sessão', async () => {
@@ -53,6 +57,7 @@ test('token já usado vai para o aviso, sem criar sessão', async () => {
   await chamar(token())
   expect(generateLink).not.toHaveBeenCalled()
   expect(redirect).toHaveBeenCalledWith('/entrar?erro=portal')
+  expect(cookieSet).not.toHaveBeenCalled()
 })
 
 test('token expirado, de outro sistema, adulterado ou de quem não pode entrar vai para o aviso', async () => {

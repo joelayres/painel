@@ -1,7 +1,9 @@
 'use server'
 
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { rotaInicial } from '@/lib/auth/rotas'
+import { COOKIE_PORTAL } from '@/lib/portal/voltar'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
 import type { Perfil } from '@/lib/auth/perfil'
 
@@ -35,5 +37,6 @@ export async function verificarCodigo(
 export async function sair(): Promise<void> {
   const supabase = await criarClienteServidor()
   await supabase.auth.signOut()
+  ;(await cookies()).delete(COOKIE_PORTAL)
   redirect('/entrar')
 }
