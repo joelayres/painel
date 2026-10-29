@@ -98,7 +98,7 @@ export default async function Configurar({ params, searchParams }: { params: Pro
           <OndasProjeto projetoId={id} ondas={ondas} somenteLeitura={somenteLeitura} />
         </Bloco>
       )}
-      <EtapasProjeto projetoId={id} cliente={projeto.cliente.nome} etapas={etapas} temVagas={temVagas} totalVagas={totalVagas} somenteLeitura={somenteLeitura} />
+      <EtapasProjeto alvo={{ tipo: 'projeto', id }} cliente={projeto.cliente.nome} etapas={etapas} temVagas={temVagas} totalVagas={totalVagas} somenteLeitura={somenteLeitura} />
       <Bloco titulo="Vagas">
         <VagasProjeto projetoId={id} organizacao={projeto.organizacao} vagas={linhasVaga} opcoes={{ ondas: ondas.map((o) => ({ id: o.id, nome: o.nome })), gestores }} etapas={efetivas.map((e) => ({ ordem: e.ordem, nome: e.nome }))} somenteLeitura={somenteLeitura} />
       </Bloco>

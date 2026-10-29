@@ -31,6 +31,32 @@ isOneToOne: false
       referencedColumns: ["ordem"]
     }
                   ]
+                },"cliente_etapas": {
+                  Row: {
+                    "cliente_id": string,"duracao": number | null,"fixa": string | null,"id": string,"nome": string,"padrao": number | null,"posicao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "cliente_id": string,"duracao"?: number | null,"fixa"?: string | null,"id"?: string,"nome": string,"padrao"?: number | null,"posicao": number
+                  }
+                  Update: {
+                    "cliente_id"?: string,"duracao"?: number | null,"fixa"?: string | null,"id"?: string,"nome"?: string,"padrao"?: number | null,"posicao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "cliente_etapas_cliente_id_fkey"
+      columns: ["cliente_id"]
+isOneToOne: false
+      referencedRelation: "clientes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "cliente_etapas_padrao_fkey"
+      columns: ["padrao"]
+isOneToOne: false
+      referencedRelation: "etapas"
+      referencedColumns: ["ordem"]
+    }
+                  ]
                 },"clientes": {
                   Row: {
                     "criado_em": string,"id": string,"nome": string
@@ -295,6 +321,9 @@ isOneToOne: false
 "alterar_duracao_etapa":
 { Args: { "p_dias": number,"p_etapa": string }; Returns: undefined
                            },
+"alterar_duracao_etapa_cliente":
+{ Args: { "p_dias": number,"p_etapa": string }; Returns: undefined
+                           },
 "alterar_vagas_em_grupo":
 { Args: { "p_campo": string,"p_vagas": (string)[],"p_valor": string }; Returns: Json
                            },
@@ -350,7 +379,16 @@ isOneToOne: false
 "etapa_na_posicao":
 { Args: { "p_posicao": number,"p_projeto": string }; Returns: string
                            },
+"etapas_padrao_do_cliente":
+{ Args: { "p_cliente": string }; Returns: undefined
+                           },
+"excluir_cliente":
+{ Args: { "p_id": string }; Returns: undefined
+                           },
 "excluir_etapa":
+{ Args: { "p_etapa": string }; Returns: undefined
+                           },
+"excluir_etapa_cliente":
 { Args: { "p_etapa": string }; Returns: undefined
                            },
 "exigir_projeto":
@@ -365,6 +403,9 @@ isOneToOne: false
 "incluir_etapa":
 { Args: { "p_depois_de": string,"p_duracao": number,"p_nome": string,"p_projeto": string }; Returns: string
                            },
+"incluir_etapa_cliente":
+{ Args: { "p_cliente": string,"p_depois_de": string,"p_duracao": number,"p_nome": string }; Returns: string
+                           },
 "meu_nome":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
@@ -372,6 +413,9 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: string
                            },
 "mover_etapa":
+{ Args: { "p_etapa": string,"p_para": number }; Returns: undefined
+                           },
+"mover_etapa_cliente":
 { Args: { "p_etapa": string,"p_para": number }; Returns: undefined
                            },
 "pessoas_do_projeto":
@@ -402,6 +446,9 @@ isOneToOne: false
 "renomear_etapa":
 { Args: { "p_etapa": string,"p_nome": string }; Returns: undefined
                            },
+"renomear_etapa_cliente":
+{ Args: { "p_etapa": string,"p_nome": string }; Returns: undefined
+                           },
 "salvar_cliente":
 { Args: { "p_id": string,"p_nome": string }; Returns: string
                            },
@@ -414,6 +461,22 @@ isOneToOne: false
 "salvar_vaga":
 { Args: { "p": Json,"p_id": string }; Returns: string
                            },
+"travar_etapa_cliente":
+{ Args: { "p_etapa": string }; Returns: {
+              "cliente_id": string,
+"duracao": number | null,
+"fixa": string | null,
+"id": string,
+"nome": string,
+"padrao": number | null,
+"posicao": number
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "cliente_etapas"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "travar_etapa_rh":
 { Args: { "p_etapa": string,"p_vagas": boolean }; Returns: {
               "duracao": number | null,

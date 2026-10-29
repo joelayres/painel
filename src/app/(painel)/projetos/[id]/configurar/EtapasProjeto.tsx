@@ -8,7 +8,23 @@ import { Botao } from '@/components/ui/Botao'
 import { Campo } from '@/components/ui/Campo'
 import { PainelLateral } from '@/components/ui/PainelLateral'
 import { Selecao } from '@/components/ui/Selecao'
-import { alterarDuracaoEtapa, excluirEtapa, incluirEtapa, moverEtapa, renomearEtapa, type RespostaAcao } from './acoesConfigurar'
+import * as doCliente from '@/app/(painel)/cadastros/clientes/[id]/acoesEtapasCliente'
+import * as doProjeto from './acoesConfigurar'
+import type { RespostaAcao } from './acoesConfigurar'
+
+// A mesma lista serve ao projeto (Configurar) e ao padrão do cliente (Cadastros).
+export type AlvoEtapas = { tipo: 'projeto' | 'cliente'; id: string }
+type Acoes = {
+  incluir: (id: string, d: { nome: string; duracao: string; depoisDe: string }) => Promise<RespostaAcao>
+  excluir: (id: string, etapa: string) => Promise<RespostaAcao>
+  renomear: (id: string, etapa: string, d: { nome: string }) => Promise<RespostaAcao>
+  mover: (id: string, etapa: string, para: number) => Promise<RespostaAcao>
+  alterarDuracao: (id: string, etapa: string, d: { duracao: string }) => Promise<RespostaAcao>
+}
+const acoesDe = (alvo: AlvoEtapas): Acoes =>
+  alvo.tipo === 'cliente'
+    ? { incluir: doCliente.incluirEtapaCliente, excluir: doCliente.excluirEtapaCliente, renomear: doCliente.renomearEtapaCliente, mover: doCliente.moverEtapaCliente, alterarDuracao: doCliente.alterarDuracaoEtapaCliente }
+    : { incluir: doProjeto.incluirEtapa, excluir: doProjeto.excluirEtapa, renomear: doProjeto.renomearEtapa, mover: doProjeto.moverEtapa, alterarDuracao: doProjeto.alterarDuracaoEtapa }
 
 export type EtapaConfig = {
   id: string
@@ -23,7 +39,10 @@ export type EtapaConfig = {
 
 type Modo = 'normal' | 'renomear' | 'excluir'
 
-function Linha({ projetoId, etapa, total, temVagas }: { projetoId: string; etapa: EtapaConfig; total: number; temVagas: boolean }) {
+function Linha({ alvo, etapa, total, temVagas }: { alvo: AlvoEtapas; etapa: EtapaConfig; total: number; temVagas: boolean }) {
+  const acoes = acoesDe(alvo)
+  const projetoId = alvo.id
+  const doProjetoMesmo = alvo.tipo === 'projeto'
   const router = useRouter()
   const [modo, setModo] = useState<Modo>('normal')
   const [erro, setErro] = useState<string | null>(null)
@@ -41,12 +60,12 @@ function Linha({ projetoId, etapa, total, temVagas }: { projetoId: string; etapa
   const salvar = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const duracao = String(new FormData(e.currentTarget).get('duracao') ?? '')
-    rodar(() => alterarDuracaoEtapa(projetoId, etapa.id, { duracao }))
+    rodar(() => acoes.alterarDuracao(projetoId, etapa.id, { duracao }))
   }
   const salvarNome = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const nome = String(new FormData(e.currentTarget).get('nome') ?? '')
-    rodar(() => renomearEtapa(projetoId, etapa.id, { nome }), () => setModo('normal'))
+    rodar(() => acoes.renomear(projetoId, etapa.id, { nome }), () => setModo('normal'))
   }
 
   const ajustada = etapa.padraoCliente !== null && etapa.duracao !== null
@@ -67,20 +86,20 @@ function Linha({ projetoId, etapa, total, temVagas }: { projetoId: string; etapa
           </>
         )}
       </td>
-      <td className="px-4 py-3">{etapa.padraoCliente !== null ? `${etapa.padraoCliente} dias úteis` : ''}</td>
+      {doProjetoMesmo && <td className="px-4 py-3">{etapa.padraoCliente !== null ? `${etapa.padraoCliente} dias úteis` : ''}</td>}
       <td className="px-4 py-3">
         <form onSubmit={salvar} className="flex flex-wrap items-center gap-2">
           <input
             key={String(etapa.duracao ?? '')}
             name="duracao" type="number" min={0} max={60} defaultValue={etapa.duracao ?? ''} placeholder={etapa.padraoCliente !== null ? String(etapa.padraoCliente) : ''}
-            aria-label={`Duração de ${etapa.nome} neste projeto`}
+            aria-label={doProjetoMesmo ? `Duração de ${etapa.nome} neste projeto` : `Duração de ${etapa.nome}`}
             className="min-h-11 w-20 rounded-lg border border-borda bg-superficie px-3 text-texto"
           />
           <Botao type="submit" variante="secundario" disabled={pendente}>Salvar{' '}{nome}</Botao>
           {ajustada && (
             <>
               <span className="text-sm font-medium text-texto-suave">ajustado</span>
-              <Botao type="button" variante="fantasma" disabled={pendente} onClick={() => rodar(() => alterarDuracaoEtapa(projetoId, etapa.id, { duracao: '' }))}>Voltar ao padrão{' '}{nome}</Botao>
+              <Botao type="button" variante="fantasma" disabled={pendente} onClick={() => rodar(() => acoes.alterarDuracao(projetoId, etapa.id, { duracao: '' }))}>Voltar ao padrão{' '}{nome}</Botao>
             </>
           )}
         </form>
@@ -88,12 +107,12 @@ function Linha({ projetoId, etapa, total, temVagas }: { projetoId: string; etapa
           <div role="group" aria-label={`Confirmar exclusão de ${etapa.nome}`} className="mt-3 flex flex-col gap-2 rounded-lg border border-borda bg-superficie-2 p-3 text-sm">
             <p>
               Excluir {etapa.nome}?{' '}
-              {etapa.concluidasPor === 1
+              {!doProjetoMesmo ? 'Os projetos que já existem não mudam.' : etapa.concluidasPor === 1
                 ? '1 vaga já concluiu esta etapa; essa data fica no histórico da vaga.'
                 : `${etapa.concluidasPor} vagas já concluíram esta etapa; essas datas ficam no histórico de cada vaga.`}
             </p>
             <div className="flex flex-wrap gap-2">
-              <Botao type="button" disabled={pendente} onClick={() => rodar(() => excluirEtapa(projetoId, etapa.id), () => setModo('normal'))}>Excluir etapa</Botao>
+              <Botao type="button" disabled={pendente} onClick={() => rodar(() => acoes.excluir(projetoId, etapa.id), () => setModo('normal'))}>Excluir etapa</Botao>
               <Botao type="button" variante="fantasma" disabled={pendente} onClick={() => { setModo('normal'); setErro(null) }}>Cancelar</Botao>
             </div>
           </div>
@@ -102,8 +121,8 @@ function Linha({ projetoId, etapa, total, temVagas }: { projetoId: string; etapa
       </td>
       <td className="px-4 py-3">
         <div className="flex flex-wrap gap-1">
-          {!temVagas && etapa.ordem > 1 && <Botao type="button" variante="fantasma" disabled={pendente} onClick={() => rodar(() => moverEtapa(projetoId, etapa.id, etapa.ordem - 1))}>Subir{' '}{nome}</Botao>}
-          {!temVagas && etapa.ordem < total && <Botao type="button" variante="fantasma" disabled={pendente} onClick={() => rodar(() => moverEtapa(projetoId, etapa.id, etapa.ordem + 1))}>Descer{' '}{nome}</Botao>}
+          {!temVagas && etapa.ordem > 1 && <Botao type="button" variante="fantasma" disabled={pendente} onClick={() => rodar(() => acoes.mover(projetoId, etapa.id, etapa.ordem - 1))}>Subir{' '}{nome}</Botao>}
+          {!temVagas && etapa.ordem < total && <Botao type="button" variante="fantasma" disabled={pendente} onClick={() => rodar(() => acoes.mover(projetoId, etapa.id, etapa.ordem + 1))}>Descer{' '}{nome}</Botao>}
           {!etapa.fixa && <Botao type="button" variante="fantasma" disabled={pendente} onClick={() => { setModo('renomear'); setErro(null) }}>Renomear{' '}{nome}</Botao>}
           {!etapa.fixa && <Botao type="button" variante="fantasma" disabled={pendente} onClick={() => { setModo('excluir'); setErro(null) }}>Excluir{' '}{nome}</Botao>}
         </div>
@@ -112,11 +131,11 @@ function Linha({ projetoId, etapa, total, temVagas }: { projetoId: string; etapa
   )
 }
 
-function FormInclusao({ projetoId, etapas, temVagas, totalVagas, fechar }: { projetoId: string; etapas: EtapaConfig[]; temVagas: boolean; totalVagas: number; fechar: () => void }) {
+function FormInclusao({ alvo, etapas, temVagas, totalVagas, fechar }: { alvo: AlvoEtapas; etapas: EtapaConfig[]; temVagas: boolean; totalVagas: number; fechar: () => void }) {
   const router = useRouter()
   const [depoisDe, setDepoisDe] = useState('')
   const { erros, pendente, enviar } = useEnvio(
-    (d) => incluirEtapa(projetoId, d as { nome: string; duracao: string; depoisDe: string }),
+    (d) => acoesDe(alvo).incluir(alvo.id, d as { nome: string; duracao: string; depoisDe: string }),
     () => { fechar(); router.refresh() },
   )
   // No início, toda vaga já passou do ponto; depois de uma etapa, só quem a concluiu.
@@ -142,8 +161,10 @@ function FormInclusao({ projetoId, etapas, temVagas, totalVagas, fechar }: { pro
   )
 }
 
-// A lista de etapas do projeto: duração, nome, ordem (antes de haver vagas) e inclusão.
-export function EtapasProjeto({ projetoId, cliente, etapas, temVagas, totalVagas, somenteLeitura }: { projetoId: string; cliente: string; etapas: EtapaConfig[]; temVagas: boolean; totalVagas: number; somenteLeitura: boolean }) {
+// A lista de etapas: duração, nome, ordem (no projeto, antes de haver vagas) e inclusão.
+// No cliente (alvo cliente), a duração é uma coluna só e a ordem muda sempre (cliente não tem vagas).
+export function EtapasProjeto({ alvo, cliente, etapas, temVagas, totalVagas, somenteLeitura }: { alvo: AlvoEtapas; cliente: string; etapas: EtapaConfig[]; temVagas: boolean; totalVagas: number; somenteLeitura: boolean }) {
+  const doProjetoMesmo = alvo.tipo === 'projeto'
   const [aberto, setAberto] = useState(false)
   return (
     <section className="flex flex-col gap-3">
@@ -153,8 +174,8 @@ export function EtapasProjeto({ projetoId, cliente, etapas, temVagas, totalVagas
           <thead>
             <tr className="border-b border-borda bg-superficie-2 text-sm text-texto-suave">
               <th className="px-4 py-2.5 font-medium">Etapa</th>
-              <th className="px-4 py-2.5 font-medium">Padrão {cliente}</th>
-              <th className="px-4 py-2.5 font-medium">Neste projeto</th>
+              {doProjetoMesmo && <th className="px-4 py-2.5 font-medium">Padrão {cliente}</th>}
+              <th className="px-4 py-2.5 font-medium">{doProjetoMesmo ? 'Neste projeto' : 'Duração'}</th>
               {!somenteLeitura && <th className="px-4 py-2.5 font-medium">Ações</th>}
             </tr>
           </thead>
@@ -166,11 +187,11 @@ export function EtapasProjeto({ projetoId, cliente, etapas, temVagas, totalVagas
                     {e.ordem}. {e.nome}
                     {e.fixa && <span className="ml-2 rounded-full bg-superficie-2 px-2 py-0.5 text-xs font-medium text-texto-suave">obrigatória</span>}
                   </td>
-                  <td className="px-4 py-3">{e.padraoCliente !== null ? `${e.padraoCliente} dias úteis` : ''}</td>
+                  {doProjetoMesmo && <td className="px-4 py-3">{e.padraoCliente !== null ? `${e.padraoCliente} dias úteis` : ''}</td>}
                   <td className="px-4 py-3">{e.duracao !== null ? `${e.duracao} dias úteis${e.padraoCliente !== null ? ' (ajustado)' : ''}` : '—'}</td>
                 </tr>
               ) : (
-                <Linha key={e.id} projetoId={projetoId} etapa={e} total={etapas.length} temVagas={temVagas} />
+                <Linha key={e.id} alvo={alvo} etapa={e} total={etapas.length} temVagas={temVagas} />
               ),
             )}
           </tbody>
@@ -180,7 +201,7 @@ export function EtapasProjeto({ projetoId, cliente, etapas, temVagas, totalVagas
         <>
           <div><Botao type="button" variante="secundario" onClick={() => setAberto(true)}>+ Incluir etapa</Botao></div>
           <PainelLateral titulo="Incluir etapa" aberto={aberto} aoFechar={() => setAberto(false)}>
-            <FormInclusao projetoId={projetoId} etapas={etapas} temVagas={temVagas} totalVagas={totalVagas} fechar={() => setAberto(false)} />
+            <FormInclusao alvo={alvo} etapas={etapas} temVagas={temVagas} totalVagas={totalVagas} fechar={() => setAberto(false)} />
           </PainelLateral>
         </>
       )}

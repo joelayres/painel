@@ -10,6 +10,14 @@ const acoes = {
   alterarDuracaoEtapa: vi.fn(),
 }
 vi.mock('../acoesConfigurar', () => acoes)
+const acoesCliente = vi.hoisted(() => ({
+  incluirEtapaCliente: vi.fn(),
+  excluirEtapaCliente: vi.fn(),
+  renomearEtapaCliente: vi.fn(),
+  moverEtapaCliente: vi.fn(),
+  alterarDuracaoEtapaCliente: vi.fn(),
+}))
+vi.mock('@/app/(painel)/cadastros/clientes/[id]/acoesEtapasCliente', () => acoesCliente)
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }))
 const { EtapasProjeto } = await import('../EtapasProjeto')
 
@@ -22,7 +30,7 @@ const etapas = [
   { id: 'e6', ordem: 6, nome: 'Treinamento', fixa: null, padraoCliente: 5, duracao: null, concluidasPor: 3, chegaramAoPonto: 3 },
   { id: 'e7', ordem: 7, nome: 'Cadastro extra', fixa: null, padraoCliente: null, duracao: 2, concluidasPor: 0, chegaramAoPonto: 0 },
 ]
-const props = { projetoId: 'p1', cliente: 'Acme', etapas, temVagas: false, totalVagas: 0, somenteLeitura: false }
+const props = { alvo: { tipo: 'projeto' as const, id: 'p1' }, cliente: 'Acme', etapas, temVagas: false, totalVagas: 0, somenteLeitura: false }
 
 beforeEach(() => Object.values(acoes).forEach((f) => f.mockReset().mockResolvedValue({ ok: true })))
 
@@ -119,4 +127,18 @@ test('a confirmação de exclusão usa o singular para uma vaga', async () => {
   render(<EtapasProjeto {...props} etapas={etapas.map((e) => (e.id === 'e6' ? { ...e, concluidasPor: 1 } : e))} />)
   await userEvent.click(screen.getByRole('button', { name: 'Excluir Treinamento' }))
   expect(screen.getByText(/1 vaga já concluiu esta etapa; essa data fica no histórico da vaga\./)).toBeInTheDocument()
+})
+
+
+test('no cliente não há coluna de padrão e as ações são as do cliente', async () => {
+  acoesCliente.alterarDuracaoEtapaCliente.mockResolvedValue({ ok: true })
+  acoesCliente.moverEtapaCliente.mockResolvedValue({ ok: true })
+  const doCliente = etapas.map((e) => ({ ...e, padraoCliente: null, duracao: e.padraoCliente }))
+  render(<EtapasProjeto alvo={{ tipo: 'cliente', id: 'c1' }} cliente="Braskem" etapas={doCliente} temVagas={false} totalVagas={0} somenteLeitura={false} />)
+  expect(screen.queryByText('Padrão Braskem')).toBeNull()
+  expect(screen.getByText('Duração')).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /Voltar ao padrão/ })).toBeNull()
+  await userEvent.click(screen.getByRole('button', { name: 'Descer Abertura de vaga' }))
+  expect(acoesCliente.moverEtapaCliente).toHaveBeenCalledWith('c1', 'e1', 2)
+  expect(acoes.moverEtapa).not.toHaveBeenCalled()
 })

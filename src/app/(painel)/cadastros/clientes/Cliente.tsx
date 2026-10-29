@@ -2,14 +2,41 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
 import { ErroGeral } from '@/components/rh/ErroGeral'
 import { TabelaCadastro } from '@/components/rh/TabelaCadastro'
 import { useEnvio } from '@/components/rh/useEnvio'
 import { Botao } from '@/components/ui/Botao'
 import { Campo } from '@/components/ui/Campo'
-import { salvarCliente } from '../acoesCadastros'
+import { excluirCliente, salvarCliente } from '../acoesCadastros'
 
 type Cliente = { id: string; nome: string; projetos: number }
+
+// Só cliente sem projetos e sem usuários ligados pode sair; o banco confere e a tela mostra o motivo.
+export function ExcluirCliente({ cliente, aoExcluir }: { cliente: Cliente; aoExcluir: () => void }) {
+  const router = useRouter()
+  const [confirmando, setConfirmando] = useState(false)
+  const [erro, setErro] = useState<string | null>(null)
+  const [pendente, iniciar] = useTransition()
+  const excluir = () =>
+    iniciar(async () => {
+      const r = await excluirCliente(cliente.id)
+      if (!r.ok) return setErro(r.erros._ ?? 'Não foi possível excluir. Tente de novo.')
+      aoExcluir()
+      router.refresh()
+    })
+  if (!confirmando) return <Botao type="button" variante="perigo" onClick={() => { setConfirmando(true); setErro(null) }}>Excluir cliente{' '}<span className="sr-only">{cliente.nome}</span></Botao>
+  return (
+    <div role="group" aria-label={`Confirmar exclusão de ${cliente.nome}`} className="flex flex-col gap-2 rounded-lg border border-borda bg-superficie-2 p-3 text-sm">
+      <p>Excluir {cliente.nome}? Os gestores e as etapas do cliente também serão apagados.</p>
+      <div className="flex flex-wrap gap-2">
+        <Botao type="button" variante="perigo" disabled={pendente} onClick={excluir}>Confirmar exclusão</Botao>
+        <Botao type="button" variante="fantasma" disabled={pendente} onClick={() => setConfirmando(false)}>Cancelar</Botao>
+      </div>
+      {erro && <p role="alert" className="text-[var(--st-reprovada-texto)]">{erro}</p>}
+    </div>
+  )
+}
 
 function Form({ cliente, fechar }: { cliente: Cliente | null; fechar: () => void }) {
   const router = useRouter()
@@ -17,10 +44,11 @@ function Form({ cliente, fechar }: { cliente: Cliente | null; fechar: () => void
   return (
     <form onSubmit={enviar} className="flex flex-col gap-4">
       <Campo rotulo="Nome" name="nome" defaultValue={cliente?.nome} erro={erros.nome} required />
-      {!cliente && <p className="text-sm text-texto-suave">As durações das etapas começam com o padrão e podem ser ajustadas depois.</p>}
+      {!cliente && <p className="text-sm text-texto-suave">As etapas começam com as 13 padrão e podem ser ajustadas depois.</p>}
       <ErroGeral mensagem={erros._} />
       <Botao type="submit" disabled={pendente}>Salvar</Botao>
-      {cliente && <Link href={`/cadastros/clientes/${cliente.id}`} className="text-center font-medium text-primaria hover:underline">Durações e gestores</Link>}
+      {cliente && <Link href={`/cadastros/clientes/${cliente.id}`} className="text-center font-medium text-primaria hover:underline">Etapas e gestores</Link>}
+      {cliente && <ExcluirCliente cliente={cliente} aoExcluir={fechar} />}
     </form>
   )
 }

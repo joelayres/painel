@@ -31,16 +31,6 @@ export async function salvarCliente(id: string | null, entrada: unknown): Promis
   return error ? FALHA : pronto()
 }
 
-export async function alterarDuracaoCliente(clienteId: string, ordem: number, entrada: { duracao: string }): Promise<RespostaAcao> {
-  await exigirAdmin()
-  if (!ehUuid(clienteId)) return FALHA
-  const r = validar(z.object({ duracao: z.coerce.number({ error: 'Informe os dias.' }).int('Só dias inteiros.').min(0, 'Não pode ser negativo.').max(60, 'Máximo de 60 dias.') }), entrada)
-  if (!r.ok) return r
-  const sb = await criarClienteServidor()
-  const { error } = await sb.rpc('alterar_duracao_cliente', { p_cliente: clienteId, p_ordem: ordem, p_dias: r.dados.duracao })
-  return error ? FALHA : pronto()
-}
-
 const esquemaGestor = z.object({
   nome: z.string().trim().min(1, 'Informe o nome.'),
   email: z.string().trim().toLowerCase().transform((v) => v || null).pipe(z.email('E-mail inválido.').nullable()),
@@ -107,4 +97,14 @@ export async function removerAcessoUsuario(projetoId: string, usuarioId: string)
   const r = await removerAcesso(await criarClienteServidor(), projetoId, usuarioId)
   if (r.ok) revalidatePath('/', 'layout')
   return r
+}
+
+export async function excluirCliente(id: string): Promise<RespostaAcao> {
+  await exigirAdmin()
+  if (!ehUuid(id)) return FALHA
+  const sb = await criarClienteServidor()
+  const { error } = await sb.rpc('excluir_cliente', { p_id: id })
+  if (error?.message.includes('cliente tem projetos')) return { ok: false, erros: { _: 'Este cliente tem projetos e não pode ser excluído.' } }
+  if (error?.message.includes('cliente tem usuários')) return { ok: false, erros: { _: 'Há usuários ligados a este cliente. Mude o perfil ou o cliente deles antes.' } }
+  return error ? FALHA : pronto()
 }
