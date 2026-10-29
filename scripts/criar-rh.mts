@@ -1,4 +1,4 @@
-// Cria o primeiro usuário do RH: npm run criar-rh -- <email> "<nome>"
+// Cria o primeiro Administrador: npm run criar-rh -- <email> "<nome>"
 import { createClient } from '@supabase/supabase-js'
 
 const [email, nome] = process.argv.slice(2)
@@ -19,4 +19,4 @@ if (e1) {
   await admin.auth.admin.deleteUser(data.user.id)
   throw e1
 }
-console.log(`RH criado: ${nome} <${emailNormalizado}>`)
+console.log(`Administrador criado: ${nome} <${emailNormalizado}>`)

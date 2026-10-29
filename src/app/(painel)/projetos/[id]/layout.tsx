@@ -30,7 +30,7 @@ export default async function LayoutProjeto({ children, params }: { children: Re
         <h2 className="font-titulo text-2xl font-semibold">{projeto.nome}</h2>
         {subtitulo && <p className="text-texto-suave">{subtitulo}</p>}
       </div>
-      <AbasProjeto projetoId={projeto.id} rh={equipe} />
+      <AbasProjeto projetoId={projeto.id} equipe={equipe} />
       {children}
     </div>
   )

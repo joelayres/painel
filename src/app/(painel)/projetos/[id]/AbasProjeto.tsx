@@ -4,13 +4,13 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 // As abas do projeto; a ativa vem do endereço. O Resumo vem primeiro: é por onde se entra no projeto.
-export function AbasProjeto({ projetoId, rh }: { projetoId: string; rh: boolean }) {
+export function AbasProjeto({ projetoId, equipe }: { projetoId: string; equipe: boolean }) {
   const caminho = usePathname()
   const base = `/projetos/${projetoId}`
   const abas = [
     { href: `${base}/resumo`, rotulo: 'Resumo' },
     { href: base, rotulo: 'Painel' },
-    ...(rh ? [{ href: `${base}/configurar`, rotulo: 'Configurar' }] : []),
+    ...(equipe ? [{ href: `${base}/configurar`, rotulo: 'Configurar' }] : []),
   ]
   return (
     <nav aria-label="Abas do projeto" className="flex gap-1 border-b border-borda">

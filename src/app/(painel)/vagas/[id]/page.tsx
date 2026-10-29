@@ -54,7 +54,7 @@ export default async function DetalheVaga({ params }: { params: Promise<{ id: st
         )}
       </div>
 
-      {podeEditar && <Acoes vagaId={id} perfil="rh" etapaAtual={atual ? { ordem: atual.ordem, nome: atual.nome } : null} ultimaConcluida={ultima} admitida={vaga.situacao.admitida} hoje={hoje} />}
+      {podeEditar && <Acoes vagaId={id} perfil={sessao.perfil} etapaAtual={atual ? { ordem: atual.ordem, nome: atual.nome } : null} ultimaConcluida={ultima} admitida={vaga.situacao.admitida} hoje={hoje} />}
 
       <div className="overflow-x-auto rounded-xl border border-borda bg-superficie">
         <table className="w-full text-left text-[15px]">

@@ -7,10 +7,10 @@ Acompanhamento de projetos de mobilização: cada cliente tem seus projetos, e c
   - **Analista de RH**: opera como o Administrador só nos projetos liberados para ele e pode criar projetos.
   - **Gestor Timenow**: só lê os projetos liberados.
   - **Cliente**: só lê os projetos do próprio cliente que foram liberados.
-- Os projetos são liberados em Cadastros → Usuários. O usuário Cliente pertence a um cliente e só recebe projetos dele; com um único projeto liberado, cai direto no painel.
+- Os projetos são liberados em Cadastros → Usuários (Administrador) e em Configurar → "Quem vê este projeto" (Administrador e Analista de RH). O Analista libera só Gestores Timenow e Clientes. O usuário Cliente pertence a um cliente e só recebe projetos dele; com um único projeto liberado, cai direto no painel.
 - Projeto encerrado não aceita alteração até ser reaberto.
-- Etapas por projeto: cada projeto tem a própria lista de etapas, que o RH edita na aba Configurar (incluir, renomear, mover, excluir e ajustar a duração); Captura e Admissão são obrigatórias. No quadro, o RH avança as vagas arrastando o cartão para a etapa.
-- Importação: em cada projeto o RH baixa o modelo Excel, preenche as vagas (e as etapas já concluídas) e envia a planilha; o painel mostra a prévia com os erros por linha e só grava se estiver tudo certo.
+- Etapas por projeto: cada projeto tem a própria lista de etapas, que a equipe (Administrador ou Analista de RH) edita na aba Configurar (incluir, renomear, mover, excluir e ajustar a duração); Captura e Admissão são obrigatórias. No quadro, a equipe avança as vagas arrastando o cartão para a etapa.
+- Importação: em cada projeto a equipe baixa o modelo Excel, preenche as vagas (e as etapas já concluídas) e envia a planilha; o painel mostra a prévia com os erros por linha e só grava se estiver tudo certo.
 - O banco guarda só fatos (cadastros e datas reais de conclusão). Previsões e cores são calculadas em `src/dominio` a cada leitura.
 - Desenho: `docs/superpowers/specs/2026-10-27-painel-mobilizacao-design.md` e, para os projetos de mobilização, `docs/superpowers/specs/2026-10-28-projetos-de-mobilizacao-design.md`. Plano: `docs/superpowers/plans/2026-10-27-plano-1-painel-mobilizacao.md` e `docs/superpowers/plans/2026-10-28-plano-2-projetos-de-mobilizacao.md`.
 
@@ -38,4 +38,4 @@ Variáveis (`.env.local` e Vercel): `NEXT_PUBLIC_SUPABASE_URL` (sem `/rest/v1/` 
 
 ## Primeiro acesso
 
-`npm run criar-rh -- <email> "<nome>"` cria o primeiro usuário do RH. Os demais são cadastrados em Cadastros → Usuários.
+`npm run criar-rh -- <email> "<nome>"` cria o primeiro Administrador. Os demais são cadastrados em Cadastros → Usuários.

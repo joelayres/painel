@@ -11,7 +11,7 @@ export function FormularioEntrada({ semAcesso }: { semAcesso: boolean }) {
   const [etapa, setEtapa] = useState<'email' | 'codigo'>('email')
   const [email, setEmail] = useState('')
   const [codigo, setCodigo] = useState('')
-  const [erro, setErro] = useState<string | null>(semAcesso ? 'Seu acesso não está ativo. Fale com o RH.' : null)
+  const [erro, setErro] = useState<string | null>(semAcesso ? 'Seu acesso não está ativo. Fale com o Administrador.' : null)
   const [pendente, iniciar] = useTransition()
 
   function pedirCodigo(e: React.FormEvent) {

@@ -45,3 +45,12 @@ test('carregarPessoasDoProjeto tira das liberáveis quem já tem acesso', async 
     liberaveis: [{ id: 'b', nome: 'Beto', perfil: 'cliente', clienteId: 'c1' }],
   })
 })
+
+test('removerAcesso traduz analista não libera este perfil', async () => {
+  expect(await removerAcesso(sb('analista não libera este perfil'), 'p', 'u')).toEqual({ ok: false, erro: 'Você não pode liberar nem remover o acesso de um Analista de RH ou de um Administrador.' })
+})
+
+test('carregarPessoasDoProjeto falha com erro claro quando uma RPC falha', async () => {
+  const cli = { rpc: async (nome: string) => (nome === 'pessoas_liberaveis' ? { data: null, error: { message: 'x' } } : { data: [], error: null }) } as unknown as SupabaseClient
+  await expect(carregarPessoasDoProjeto(cli, 'p')).rejects.toThrow('Não foi possível carregar as pessoas do projeto.')
+})

@@ -20,7 +20,7 @@ export async function liberarAcesso(sb: SupabaseClient, projetoId: string, usuar
 
 export async function removerAcesso(sb: SupabaseClient, projetoId: string, usuarioId: string): Promise<Resultado> {
   const { error } = await sb.from('projeto_acessos').delete().eq('projeto_id', projetoId).eq('usuario_id', usuarioId)
-  return error ? { ok: false, erro: GENERICO } : { ok: true }
+  return error ? { ok: false, erro: traduzir(error.message) } : { ok: true }
 }
 
 export type PessoaProjeto = { id: string; nome: string; perfil: Perfil }
@@ -32,6 +32,7 @@ export async function carregarPessoasDoProjeto(sb: SupabaseClient, projetoId: st
     sb.rpc('pessoas_do_projeto', { p_projeto: projetoId }),
     sb.rpc('pessoas_liberaveis', { p_projeto: projetoId }),
   ])
+  if (doProjeto.error || liberaveis.error) throw new Error('Não foi possível carregar as pessoas do projeto.')
   const liberadas = ((doProjeto.data ?? []) as { id: string; nome: string; perfil: string }[]).map((p) => ({ id: p.id, nome: p.nome, perfil: p.perfil as Perfil }))
   const comAcesso = new Set(liberadas.map((p) => p.id))
   return {
