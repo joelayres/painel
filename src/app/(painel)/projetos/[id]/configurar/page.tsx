@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { etapasDoProjeto } from '@/dominio/etapas'
+import { ETAPAS_PADRAO } from '@/dominio/etapas'
 import { hojeSP } from '@/dominio/tempo'
 import { exigirRh } from '@/lib/auth/perfil'
 import { usuariosLiberaveis } from '@/lib/cadastros/acessos'
@@ -8,8 +8,8 @@ import { criarClienteServidor } from '@/lib/supabase/servidor'
 import { ehUuid } from '@/lib/validacao/vaga'
 import { AcessosProjeto } from './AcessosProjeto'
 import { DadosProjeto } from './DadosProjeto'
-import { DuracoesProjeto } from './DuracoesProjeto'
 import { EncerrarProjeto } from './EncerrarProjeto'
+import { EtapasProjeto } from './EtapasProjeto'
 import { OndasProjeto } from './OndasProjeto'
 import { VagasProjeto } from './VagasProjeto'
 
@@ -36,17 +36,17 @@ export default async function Configurar({ params, searchParams }: { params: Pro
   const sb = await criarClienteServidor()
   const painel = await carregarPainel(sb, hojeSP(), id)
   if (!painel) notFound()
-  const { projeto, ondas, gestores } = painel
+  const { projeto, ondas, gestores, etapas: efetivas } = painel
 
-  const [vagas, base, duracoesCliente, duracoesProjeto, usuarios, acessos] = await Promise.all([
+  const [vagas, duracoesCliente, linhasEtapa, conclusoes, usuarios, acessos] = await Promise.all([
     sb.from('vagas').select('id, funcao, disciplina, area, onda_id, meta, gestor_id, candidato, data_inicio, cancelada_em').eq('projeto_id', id).order('criado_em'),
-    sb.from('etapas').select('ordem, nome, duracao').order('ordem'),
     sb.from('cliente_duracoes').select('ordem, duracao').eq('cliente_id', projeto.cliente.id),
-    sb.from('projeto_duracoes').select('ordem, duracao').eq('projeto_id', id),
+    sb.from('projeto_etapas').select('id, padrao, duracao').eq('projeto_id', id),
+    sb.from('vaga_conclusoes').select('etapa_id, vagas!inner(projeto_id)').eq('vagas.projeto_id', id),
     sb.from('usuarios').select('id, nome, perfil, cliente_id, ativo').order('nome'),
     sb.from('projeto_acessos').select('usuario_id').eq('projeto_id', id),
   ])
-  for (const r of [vagas, base, duracoesCliente, duracoesProjeto, usuarios, acessos]) {
+  for (const r of [vagas, duracoesCliente, linhasEtapa, conclusoes, usuarios, acessos]) {
     if (r.error) throw new Error(`Não foi possível ler a configuração do projeto: ${r.error.message}`)
   }
 
@@ -62,9 +62,21 @@ export default async function Configurar({ params, searchParams }: { params: Pro
   }))
 
   const doCliente = new Map((duracoesCliente.data ?? []).map((d) => [d.ordem, d.duracao]))
-  const doProjeto = new Map((duracoesProjeto.data ?? []).map((d) => [d.ordem, d.duracao]))
-  const padraoCliente = etapasDoProjeto(base.data ?? [], doCliente, new Map())
-  const etapas = padraoCliente.map((e) => ({ ordem: e.ordem, nome: e.nome, padrao: e.duracao, ajuste: doProjeto.get(e.ordem) ?? null }))
+  const linhaDe = new Map((linhasEtapa.data ?? []).map((l) => [l.id, l]))
+  const concluidas = new Map<string, number>()
+  for (const c of conclusoes.data ?? []) concluidas.set(c.etapa_id, (concluidas.get(c.etapa_id) ?? 0) + 1)
+  const etapas = efetivas.map((e) => {
+    const linha = linhaDe.get(e.id)
+    const padrao = linha?.padrao ?? null
+    const n = concluidas.get(e.id) ?? 0
+    return {
+      id: e.id, ordem: e.ordem, nome: e.nome, fixa: e.fixa,
+      padraoCliente: padrao !== null ? (doCliente.get(padrao) ?? ETAPAS_PADRAO[padrao - 1].duracao) : null,
+      duracao: linha?.duracao ?? null,
+      concluidasPor: n, chegaramAoPonto: n,
+    }
+  })
+  const temVagas = linhasVaga.some((v) => v.canceladaEm === null)
 
   const todos = (usuarios.data ?? []).map((u) => ({ id: u.id, nome: u.nome, perfil: u.perfil as PerfilUsuario, clienteId: u.cliente_id, ativo: u.ativo }))
   const comAcesso = new Set((acessos.data ?? []).map((a) => a.usuario_id))
@@ -87,9 +99,7 @@ export default async function Configurar({ params, searchParams }: { params: Pro
           <OndasProjeto projetoId={id} ondas={ondas} somenteLeitura={somenteLeitura} />
         </Bloco>
       )}
-      <Bloco titulo="Duração das etapas">
-        <DuracoesProjeto projetoId={id} cliente={projeto.cliente.nome} etapas={etapas} somenteLeitura={somenteLeitura} />
-      </Bloco>
+      <EtapasProjeto projetoId={id} cliente={projeto.cliente.nome} etapas={etapas} temVagas={temVagas} somenteLeitura={somenteLeitura} />
       <Bloco titulo="Vagas">
         <VagasProjeto projetoId={id} organizacao={projeto.organizacao} vagas={linhasVaga} opcoes={{ ondas: ondas.map((o) => ({ id: o.id, nome: o.nome })), gestores }} somenteLeitura={somenteLeitura} />
       </Bloco>

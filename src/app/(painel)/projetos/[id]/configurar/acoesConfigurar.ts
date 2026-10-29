@@ -62,15 +62,86 @@ const esquemaDuracao = z.object({
     }),
 })
 
-export async function alterarDuracaoProjeto(projetoId: string, ordem: number, entrada: { duracao: string }): Promise<RespostaAcao> {
+// Traduz as mensagens do banco para o campo certo da tela.
+function erroDeEtapa(mensagem: string): RespostaAcao {
+  if (mensagem.includes('projeto encerrado')) return ENCERRADO
+  const texto = (m: string, campo = '_'): RespostaAcao => ({ ok: false, erros: { [campo]: m } })
+  if (mensagem.includes('etapa obrigatória')) return texto('Esta etapa é obrigatória e não pode ser excluída nem renomeada.')
+  if (mensagem.includes('etapa repetida')) return texto('Já existe uma etapa com este nome no projeto.', 'nome')
+  if (mensagem.includes('projeto tem vagas')) return texto('A ordem das etapas só muda antes de o projeto ter vagas.')
+  if (mensagem.includes('ordem das obrigatórias')) return texto('A Captura de Mercado precisa vir antes da Admissão Timenow.')
+  if (mensagem.includes('duração obrigatória')) return texto('Informe a duração desta etapa.', 'duracao')
+  return FALHA
+}
+
+const esquemaNome = z.object({ nome: z.string({ error: 'Informe o nome.' }).trim().min(1, 'Informe o nome.') })
+
+const esquemaInclusao = z.object({
+  nome: z.string({ error: 'Informe o nome.' }).trim().min(1, 'Informe o nome.'),
+  duracao: z
+    .string({ error: 'Informe a duração.' })
+    .trim()
+    .transform((v, ctx) => {
+      const n = Number(v)
+      if (v === '' || !Number.isInteger(n) || n < 0 || n > 60) {
+        ctx.addIssue({ code: 'custom', message: v === '' ? 'Informe a duração.' : 'Use dias inteiros, de 0 a 60.' })
+        return z.NEVER
+      }
+      return n
+    }),
+  depoisDe: z.string().trim(),
+})
+
+export async function incluirEtapa(projetoId: string, entrada: { nome: string; duracao: string; depoisDe: string }): Promise<RespostaAcao> {
   await exigirRh()
   if (!ehUuid(projetoId)) return PROJETO_INVALIDO
+  const r = validar(esquemaInclusao, entrada)
+  if (!r.ok) return r
+  if (r.dados.depoisDe !== '' && !ehUuid(r.dados.depoisDe)) return { ok: false, erros: { depoisDe: 'Escolha uma etapa válida.' } }
+  const sb = await criarClienteServidor()
+  const { error } = await sb.rpc('incluir_etapa', { p_projeto: projetoId, p_nome: r.dados.nome, p_duracao: r.dados.duracao, p_depois_de: (r.dados.depoisDe || null) as string })
+  if (error) return erroDeEtapa(error.message)
+  return pronto()
+}
+
+export async function excluirEtapa(projetoId: string, etapaId: string): Promise<RespostaAcao> {
+  await exigirRh()
+  if (!ehUuid(projetoId) || !ehUuid(etapaId)) return PROJETO_INVALIDO
+  const sb = await criarClienteServidor()
+  const { error } = await sb.rpc('excluir_etapa', { p_etapa: etapaId })
+  if (error) return erroDeEtapa(error.message)
+  return pronto()
+}
+
+export async function renomearEtapa(projetoId: string, etapaId: string, entrada: { nome: string }): Promise<RespostaAcao> {
+  await exigirRh()
+  if (!ehUuid(projetoId) || !ehUuid(etapaId)) return PROJETO_INVALIDO
+  const r = validar(esquemaNome, entrada)
+  if (!r.ok) return r
+  const sb = await criarClienteServidor()
+  const { error } = await sb.rpc('renomear_etapa', { p_etapa: etapaId, p_nome: r.dados.nome })
+  if (error) return erroDeEtapa(error.message)
+  return pronto()
+}
+
+export async function moverEtapa(projetoId: string, etapaId: string, para: number): Promise<RespostaAcao> {
+  await exigirRh()
+  if (!ehUuid(projetoId) || !ehUuid(etapaId) || !Number.isInteger(para) || para < 1) return PROJETO_INVALIDO
+  const sb = await criarClienteServidor()
+  const { error } = await sb.rpc('mover_etapa', { p_etapa: etapaId, p_para: para })
+  if (error) return erroDeEtapa(error.message)
+  return pronto()
+}
+
+export async function alterarDuracaoEtapa(projetoId: string, etapaId: string, entrada: { duracao: string }): Promise<RespostaAcao> {
+  await exigirRh()
+  if (!ehUuid(projetoId) || !ehUuid(etapaId)) return PROJETO_INVALIDO
   const r = validar(esquemaDuracao, entrada)
   if (!r.ok) return r
   const sb = await criarClienteServidor()
-  const { error } = await sb.rpc('alterar_duracao_projeto', { p_projeto: projetoId, p_ordem: ordem, p_dias: r.dados.duracao as number })
-  if (error?.message.includes('projeto encerrado')) return ENCERRADO
-  return error ? FALHA : pronto()
+  const { error } = await sb.rpc('alterar_duracao_etapa', { p_etapa: etapaId, p_dias: r.dados.duracao as number })
+  if (error) return erroDeEtapa(error.message)
+  return pronto()
 }
 
 type Resultado = { ok: true } | { ok: false; erro: string }
