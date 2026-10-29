@@ -185,6 +185,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"projeto_etapas": {
+                  Row: {
+                    "duracao": number | null,"fixa": string | null,"id": string,"nome": string,"padrao": number | null,"posicao": number,"projeto_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "duracao"?: number | null,"fixa"?: string | null,"id"?: string,"nome": string,"padrao"?: number | null,"posicao": number,"projeto_id": string
+                  }
+                  Update: {
+                    "duracao"?: number | null,"fixa"?: string | null,"id"?: string,"nome"?: string,"padrao"?: number | null,"posicao"?: number,"projeto_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "projeto_etapas_padrao_fkey"
+      columns: ["padrao"]
+isOneToOne: false
+      referencedRelation: "etapas"
+      referencedColumns: ["ordem"]
+    },{
+      foreignKeyName: "projeto_etapas_projeto_id_fkey"
+      columns: ["projeto_id"]
+isOneToOne: false
+      referencedRelation: "projetos"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"projetos": {
                   Row: {
                     "area": string | null,"cliente_id": string,"criado_em": string,"encerrado_em": string | null,"id": string,"nome": string,"organizacao": string
@@ -227,17 +253,23 @@ isOneToOne: false
                   ]
                 },"vaga_conclusoes": {
                   Row: {
-                    "concluida_em": string,"ordem": number,"vaga_id": string
+                    "automatica": boolean,"concluida_em": string,"etapa_id": string,"ordem": number | null,"vaga_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "concluida_em": string,"ordem": number,"vaga_id": string
+                    "automatica"?: boolean,"concluida_em": string,"etapa_id": string,"ordem"?: number | null,"vaga_id": string
                   }
                   Update: {
-                    "concluida_em"?: string,"ordem"?: number,"vaga_id"?: string
+                    "automatica"?: boolean,"concluida_em"?: string,"etapa_id"?: string,"ordem"?: number | null,"vaga_id"?: string
                   }
                   Relationships: [
                     {
+      foreignKeyName: "vaga_conclusoes_etapa_id_fkey"
+      columns: ["etapa_id"]
+isOneToOne: false
+      referencedRelation: "projeto_etapas"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "vaga_conclusoes_ordem_fkey"
       columns: ["ordem"]
 isOneToOne: false
@@ -292,6 +324,9 @@ isOneToOne: false
             "alterar_duracao_cliente":
 { Args: { "p_cliente": string,"p_dias": number,"p_ordem": number }; Returns: undefined
                            },
+"alterar_duracao_etapa":
+{ Args: { "p_dias": number,"p_etapa": string }; Returns: undefined
+                           },
 "alterar_duracao_projeto":
 { Args: { "p_dias": number,"p_ordem": number,"p_projeto": string }; Returns: undefined
                            },
@@ -304,8 +339,14 @@ isOneToOne: false
 "concluir_etapa":
 { Args: { "p_data": string,"p_ordem_esperada": number,"p_vaga": string }; Returns: undefined
                            },
+"concluir_etapas":
+{ Args: { "p_ate": number,"p_data": string,"p_ordem_esperada": number,"p_vaga": string }; Returns: undefined
+                           },
 "desfazer_etapa":
 { Args: { "p_ordem_esperada": number,"p_vaga": string }; Returns: undefined
+                           },
+"duracao_efetiva":
+{ Args: { "p_etapa": string }; Returns: number
                            },
 "eh_rh":
 { Args: Record<PropertyKey, never>; Returns: boolean
@@ -316,11 +357,36 @@ isOneToOne: false
 "etapa_atual":
 { Args: { "p_vaga": string }; Returns: number
                            },
+"etapa_fixa":
+{ Args: { "p_fixa": string,"p_projeto": string }; Returns: {
+              "duracao": number | null,
+"fixa": string | null,
+"id": string,
+"nome": string,
+"padrao": number | null,
+"posicao": number,
+"projeto_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "projeto_etapas"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"etapa_na_posicao":
+{ Args: { "p_posicao": number,"p_projeto": string }; Returns: string
+                           },
+"excluir_etapa":
+{ Args: { "p_etapa": string }; Returns: undefined
+                           },
 "hoje_sp":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
 "importar_vagas":
 { Args: { "p_projeto": string,"p_vagas": Json }; Returns: number
+                           },
+"incluir_etapa":
+{ Args: { "p_depois_de": string,"p_duracao": number,"p_nome": string,"p_projeto": string }; Returns: string
                            },
 "meu_nome":
 { Args: Record<PropertyKey, never>; Returns: string
@@ -328,11 +394,20 @@ isOneToOne: false
 "meu_perfil":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"mover_etapa":
+{ Args: { "p_etapa": string,"p_para": number }; Returns: undefined
+                           },
 "pode_ver_projeto":
 { Args: { "p": string }; Returns: boolean
                            },
+"posicao_etapa":
+{ Args: { "p_etapa": string }; Returns: number
+                           },
 "reabrir_projeto":
 { Args: { "p_id": string }; Returns: undefined
+                           },
+"renomear_etapa":
+{ Args: { "p_etapa": string,"p_nome": string }; Returns: undefined
                            },
 "salvar_cliente":
 { Args: { "p_id": string,"p_nome": string }; Returns: string
@@ -346,6 +421,22 @@ isOneToOne: false
 "salvar_vaga":
 { Args: { "p": Json,"p_id": string }; Returns: string
                            },
+"travar_etapa_rh":
+{ Args: { "p_etapa": string,"p_vagas": boolean }; Returns: {
+              "duracao": number | null,
+"fixa": string | null,
+"id": string,
+"nome": string,
+"padrao": number | null,
+"posicao": number,
+"projeto_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "projeto_etapas"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "travar_vaga_rh":
 { Args: { "p_vaga": string }; Returns: undefined
                            }
