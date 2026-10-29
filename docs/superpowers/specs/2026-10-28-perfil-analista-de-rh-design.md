@@ -43,7 +43,7 @@ O Analista vê os encerrados **dos projetos dele**, numa seção da própria lis
 O Analista é da equipe da Timenow. Ele precisa de algumas listas gerais para trabalhar, e nenhuma delas é dado de projeto:
 - **Clientes:** o nome de todos os clientes, para escolher ao criar um projeto. Não vê durações nem gestores de clientes sem projeto dele.
 - **Pessoas que pode liberar:** nome e perfil dos usuários Gestor Timenow e Cliente, e o cliente de cada usuário Cliente, para escolher em "Quem vê este projeto". O e-mail não aparece para o Analista.
-- **Gestores do cliente:** os gestores dos clientes dos projetos dele, para escolher numa vaga.
+- **Gestores do cliente:** os gestores dos clientes dos projetos dele, para escolher numa vaga. O e-mail do gestor não aparece na tela, mas pode ser lido por consulta direta ao banco, como já acontece para gestores e clientes. **[Joel, 28/10: aceito, é contato de trabalho]**
 - **Comum a todos:** os feriados e as 13 etapas padrão, como já é para todos os perfis.
 
 Ele **não** lê projetos, ondas, vagas, conclusões, histórico de vaga, listas de etapas, acessos ou durações de projetos que não são dele, nem o registro geral.
