@@ -1,19 +1,20 @@
 // Cadastro de quem entra no painel: cria o login (sem senha; entra por código no e-mail) e o perfil.
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { z } from 'zod'
+import type { Perfil } from '@/lib/auth/perfil'
 import { validar } from '@/lib/validacao/vaga'
 
 export const esquemaUsuario = z.object({
   nome: z.string({ error: 'Informe o nome.' }).trim().min(1, 'Informe o nome.'),
   email: z.string({ error: 'Informe o e-mail.' }).trim().toLowerCase().pipe(z.email('E-mail inválido.')),
-  perfil: z.enum(['rh', 'gestor', 'cliente'], { error: 'Escolha o perfil.' }),
+  perfil: z.enum(['rh', 'analista', 'gestor', 'cliente'], { error: 'Escolha o perfil.' }),
   clienteId: z.string().nullish().transform((v) => v || null),
 }).superRefine((d, ctx) => {
   if (d.perfil === 'cliente' && !d.clienteId) ctx.addIssue({ code: 'custom', path: ['clienteId'], message: 'Escolha o cliente.' })
 }).transform((d) => ({ ...d, clienteId: d.perfil === 'cliente' ? d.clienteId : null }))
 
-export type PerfilUsuario = 'rh' | 'gestor' | 'cliente'
-export const ROTULO_PERFIL: Record<PerfilUsuario, string> = { rh: 'RH', gestor: 'Gestor Timenow', cliente: 'Cliente' }
+export type PerfilUsuario = Perfil
+export const ROTULO_PERFIL: Record<PerfilUsuario, string> = { rh: 'Administrador', analista: 'Analista de RH', gestor: 'Gestor Timenow', cliente: 'Cliente' }
 
 // Bloqueio longo: o Supabase não tem "para sempre" (mesmo valor do HE Timenow).
 const BLOQUEIO = '876000h'

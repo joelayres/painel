@@ -39,6 +39,13 @@ test('falha no bloqueio do login é avisada', async () => {
   })
 })
 
+test('esquema aceita Analista sem cliente e o rótulo do rh é Administrador', () => {
+  const r = esquemaUsuario.safeParse({ nome: 'A', email: 'a@b.com', perfil: 'analista' })
+  expect(r.success).toBe(true)
+  expect(ROTULO_PERFIL.rh).toBe('Administrador')
+  expect(ROTULO_PERFIL.analista).toBe('Analista de RH')
+})
+
 test('esquema exige cliente para o perfil cliente', () => {
   const r = esquemaUsuario.safeParse({ nome: 'A', email: 'a@b.com', perfil: 'cliente' })
   expect(r.success).toBe(false)

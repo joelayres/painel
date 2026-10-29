@@ -1,7 +1,7 @@
 // @vitest-environment node
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { expect, test } from 'vitest'
-import { liberarAcesso, removerAcesso, usuariosLiberaveis } from '../acessos'
+import { carregarPessoasDoProjeto, liberarAcesso, removerAcesso } from '../acessos'
 
 function sb(mensagem?: string) {
   const r = { error: mensagem ? { message: mensagem } : null }
@@ -18,7 +18,7 @@ test('liberarAcesso traduz cliente diferente', async () => {
 })
 
 test('liberarAcesso traduz perfil sem acesso por projeto', async () => {
-  expect(await liberarAcesso(sb('perfil sem acesso por projeto'), 'p', 'u')).toEqual({ ok: false, erro: 'O RH já vê todos os projetos.' })
+  expect(await liberarAcesso(sb('perfil sem acesso por projeto'), 'p', 'u')).toEqual({ ok: false, erro: 'O Administrador já vê todos os projetos.' })
 })
 
 test('liberarAcesso e removerAcesso ok', async () => {
@@ -27,13 +27,21 @@ test('liberarAcesso e removerAcesso ok', async () => {
   expect(await removerAcesso(sb('x'), 'p', 'u')).toEqual({ ok: false, erro: 'Não foi possível salvar. Tente de novo.' })
 })
 
-test('usuariosLiberaveis: gestores ativos e clientes do cliente do projeto', () => {
-  const us = [
-    { id: 'g', perfil: 'gestor' as const, clienteId: null, ativo: true },
-    { id: 'gi', perfil: 'gestor' as const, clienteId: null, ativo: false },
-    { id: 'cb', perfil: 'cliente' as const, clienteId: 'braskem', ativo: true },
-    { id: 'co', perfil: 'cliente' as const, clienteId: 'outro', ativo: true },
-    { id: 'r', perfil: 'rh' as const, clienteId: null, ativo: true },
-  ]
-  expect(usuariosLiberaveis(us, 'braskem').map((u) => u.id)).toEqual(['g', 'cb'])
+test('liberarAcesso traduz analista não libera este perfil', async () => {
+  expect(await liberarAcesso(sb('analista não libera este perfil'), 'p', 'u')).toEqual({ ok: false, erro: 'Você não pode liberar nem remover o acesso de um Analista de RH ou de um Administrador.' })
+})
+
+test('carregarPessoasDoProjeto tira das liberáveis quem já tem acesso', async () => {
+  const dados: Record<string, unknown[]> = {
+    pessoas_do_projeto: [{ id: 'a', nome: 'Ana', perfil: 'gestor' }],
+    pessoas_liberaveis: [
+      { id: 'a', nome: 'Ana', perfil: 'gestor', cliente_id: null },
+      { id: 'b', nome: 'Beto', perfil: 'cliente', cliente_id: 'c1' },
+    ],
+  }
+  const cli = { rpc: async (nome: string, args: unknown) => (expect(args).toEqual({ p_projeto: 'p' }), { data: dados[nome], error: null }) } as unknown as SupabaseClient
+  expect(await carregarPessoasDoProjeto(cli, 'p')).toEqual({
+    liberadas: [{ id: 'a', nome: 'Ana', perfil: 'gestor' }],
+    liberaveis: [{ id: 'b', nome: 'Beto', perfil: 'cliente', clienteId: 'c1' }],
+  })
 })

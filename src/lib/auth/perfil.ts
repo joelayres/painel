@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { cache } from 'react'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
 
-export type Perfil = 'rh' | 'gestor' | 'cliente'
+export type Perfil = 'rh' | 'analista' | 'gestor' | 'cliente'
 // usuarioId é o do login (auth); usuarioRegistroId é o usuarios.id (usado em projeto_acessos).
 export type Sessao = { usuarioId: string; usuarioRegistroId: string; perfil: Perfil; nome: string; clienteId: string | null }
 
@@ -23,8 +23,23 @@ export async function exigirSessao(): Promise<Sessao> {
   return sessao
 }
 
-export async function exigirRh(): Promise<Sessao> {
+// Quem é da equipe (Administrador ou Analista de RH) opera projetos; a permissão por projeto fica com o banco.
+export function ehEquipe(perfil: Perfil): boolean {
+  return perfil === 'rh' || perfil === 'analista'
+}
+
+// Só o Administrador (perfil rh): cadastros gerais, usuários, feriados e encerrados.
+export async function exigirAdmin(): Promise<Sessao> {
   const sessao = await exigirSessao()
   if (sessao.perfil !== 'rh') redirect('/')
   return sessao
 }
+
+export async function exigirEquipe(): Promise<Sessao> {
+  const sessao = await exigirSessao()
+  if (!ehEquipe(sessao.perfil)) redirect('/')
+  return sessao
+}
+
+/** @deprecated Alias de exigirAdmin até a Task 3 trocar as páginas e actions de projeto por exigirEquipe. */
+export const exigirRh = exigirAdmin

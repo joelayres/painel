@@ -1,10 +1,10 @@
-import { exigirRh } from '@/lib/auth/perfil'
+import { exigirAdmin } from '@/lib/auth/perfil'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
 import { Voltar } from '../Voltar'
 import { CadastroClientes } from './Cliente'
 
 export default async function Clientes() {
-  await exigirRh()
+  await exigirAdmin()
   const sb = await criarClienteServidor()
   const [{ data: clientes }, { data: projetos }] = await Promise.all([
     sb.from('clientes').select('id, nome').order('nome'),

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { hojeSP } from '@/dominio/tempo'
-import { exigirRh } from '@/lib/auth/perfil'
+import { exigirAdmin } from '@/lib/auth/perfil'
 import { carregarProjetos } from '@/lib/painel/dados'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
 import { GruposPorCliente } from '../GruposPorCliente'
@@ -8,7 +8,7 @@ import { GruposPorCliente } from '../GruposPorCliente'
 export const metadata = { title: 'Encerrados · Painel de Mobilização' }
 
 export default async function Encerrados() {
-  await exigirRh()
+  await exigirAdmin()
   const projetos = (await carregarProjetos(await criarClienteServidor(), hojeSP())).filter((p) => p.encerrado)
   return (
     <div className="flex flex-col gap-5">

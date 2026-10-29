@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
-import { exigirRh } from '@/lib/auth/perfil'
+import { exigirAdmin } from '@/lib/auth/perfil'
 import { liberarAcesso, removerAcesso } from '@/lib/cadastros/acessos'
 import { alterarUsuario, cadastrarUsuario } from '@/lib/cadastros/usuarios'
 import { criarClienteAdmin } from '@/lib/supabase/admin'
@@ -21,7 +21,7 @@ function pronto(): RespostaAcao {
 }
 
 export async function salvarCliente(id: string | null, entrada: unknown): Promise<RespostaAcao> {
-  await exigirRh()
+  await exigirAdmin()
   if (id !== null && !ehUuid(id)) return FALHA
   const r = validar(z.object({ nome: z.string({ error: 'Informe o nome.' }).trim().min(1, 'Informe o nome.') }), entrada)
   if (!r.ok) return r
@@ -32,7 +32,7 @@ export async function salvarCliente(id: string | null, entrada: unknown): Promis
 }
 
 export async function alterarDuracaoCliente(clienteId: string, ordem: number, entrada: { duracao: string }): Promise<RespostaAcao> {
-  await exigirRh()
+  await exigirAdmin()
   if (!ehUuid(clienteId)) return FALHA
   const r = validar(z.object({ duracao: z.coerce.number({ error: 'Informe os dias.' }).int('Só dias inteiros.').min(0, 'Não pode ser negativo.').max(60, 'Máximo de 60 dias.') }), entrada)
   if (!r.ok) return r
@@ -47,7 +47,7 @@ const esquemaGestor = z.object({
 })
 
 export async function salvarGestor(clienteId: string, id: string | null, entrada: Dados): Promise<RespostaAcao> {
-  await exigirRh()
+  await exigirAdmin()
   if (!ehUuid(clienteId)) return FALHA
   const r = validar(esquemaGestor, entrada)
   if (!r.ok) return r
@@ -57,7 +57,7 @@ export async function salvarGestor(clienteId: string, id: string | null, entrada
 }
 
 export async function salvarFeriado(entrada: Dados): Promise<RespostaAcao> {
-  await exigirRh()
+  await exigirAdmin()
   const r = validar(z.object({ data: data('Informe a data.'), nome: z.string().trim().min(1, 'Informe o nome.') }), entrada)
   if (!r.ok) return r
   const sb = await criarClienteServidor()
@@ -66,14 +66,14 @@ export async function salvarFeriado(entrada: Dados): Promise<RespostaAcao> {
 }
 
 export async function removerFeriado(dia: string): Promise<RespostaAcao> {
-  await exigirRh()
+  await exigirAdmin()
   const sb = await criarClienteServidor()
   const { error } = await sb.from('feriados').delete().eq('data', dia)
   return error ? FALHA : pronto()
 }
 
 export async function salvarUsuario(id: string | null, entrada: Dados): Promise<RespostaAcao> {
-  const rh = await exigirRh()
+  const rh = await exigirAdmin()
   const admin = criarClienteAdmin()
   if (!id) {
     const r = await cadastrarUsuario(admin, entrada)
@@ -94,7 +94,7 @@ type Resultado = { ok: true } | { ok: false; erro: string }
 const FALHA_ACESSO = { ok: false as const, erro: 'Não foi possível salvar. Tente de novo.' }
 
 export async function liberarAcessoUsuario(projetoId: string, usuarioId: string): Promise<Resultado> {
-  await exigirRh()
+  await exigirAdmin()
   if (!ehUuid(projetoId) || !ehUuid(usuarioId)) return FALHA_ACESSO
   const r = await liberarAcesso(await criarClienteServidor(), projetoId, usuarioId)
   if (r.ok) revalidatePath('/', 'layout')
@@ -102,7 +102,7 @@ export async function liberarAcessoUsuario(projetoId: string, usuarioId: string)
 }
 
 export async function removerAcessoUsuario(projetoId: string, usuarioId: string): Promise<Resultado> {
-  await exigirRh()
+  await exigirAdmin()
   if (!ehUuid(projetoId) || !ehUuid(usuarioId)) return FALHA_ACESSO
   const r = await removerAcesso(await criarClienteServidor(), projetoId, usuarioId)
   if (r.ok) revalidatePath('/', 'layout')

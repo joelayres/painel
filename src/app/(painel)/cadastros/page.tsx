@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { exigirRh } from '@/lib/auth/perfil'
+import { exigirAdmin } from '@/lib/auth/perfil'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
 import { RegistroGeral } from './RegistroGeral'
 
@@ -10,7 +10,7 @@ const ITENS = [
 ]
 
 export default async function Cadastros() {
-  await exigirRh()
+  await exigirAdmin()
   // Mudanças gerais (feriados, clientes) ficam no histórico sem vaga.
   const { data: registro } = await (await criarClienteServidor())
     .from('historico').select('id, acao, nome_usuario, em, detalhe').is('vaga_id', null).order('em', { ascending: false }).limit(50)
