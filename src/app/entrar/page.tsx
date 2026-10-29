@@ -39,7 +39,7 @@ export default async function Entrar({ searchParams }: { searchParams: Promise<{
           <div className="mx-auto w-full max-w-sm">
             <h1 className="font-titulo text-4xl font-semibold tracking-tight">Entrar</h1>
             <p className="mt-2 mb-8 text-texto-suave">Você recebe um código no seu e-mail. Não precisa de senha.</p>
-            <FormularioEntrada semAcesso={erro === 'sem-acesso'} />
+            <FormularioEntrada aviso={erro === 'sem-acesso' || erro === 'portal' ? erro : null} />
           </div>
         </div>
       </main>

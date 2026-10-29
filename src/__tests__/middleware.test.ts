@@ -20,3 +20,10 @@ test('o detalhe da vaga exige login', async () => {
   const r = await middleware(new NextRequest('https://app/vagas/abc'))
   expect(r.headers.get('location')).toBe('https://app/entrar')
 })
+
+test('rotas do Portal da Gestão não exigem login (resumo tem segredo; entrada tem token)', async () => {
+  const resumo = await middleware(new NextRequest('https://app/api/portal/resumo?email=a@x.com'))
+  expect(resumo.headers.get('location')).toBeNull()
+  const entrada = await middleware(new NextRequest('https://app/entrar/portal?t=abc'))
+  expect(entrada.headers.get('location')).toBeNull()
+})
