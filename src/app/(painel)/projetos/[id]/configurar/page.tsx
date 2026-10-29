@@ -52,11 +52,16 @@ export default async function Configurar({ params, searchParams }: { params: Pro
   const porOndas = projeto.organizacao === 'ondas'
   const nomeOnda = new Map(ondas.map((o) => [o.id, o.nome]))
   const nomeGestor = new Map(gestores.map((g) => [g.id, g.nome]))
+  // Etapa atual de cada vaga, da previsão já calculada pelo painel (as canceladas não estão nele).
+  const previsaoDe = new Map(painel.vagas.map((v) => [v.id, v.previsao]))
   const linhasVaga = (vagas.data ?? []).map((v) => ({
     id: v.id, funcao: v.funcao, disciplina: v.disciplina, area: v.area,
     ondaNome: v.onda_id ? (nomeOnda.get(v.onda_id) ?? null) : null, ondaId: v.onda_id, meta: v.meta,
     gestor: v.gestor_id ? (nomeGestor.get(v.gestor_id) ?? null) : null, gestorId: v.gestor_id,
     candidato: v.candidato, dataInicio: v.data_inicio, canceladaEm: v.cancelada_em,
+    etapaAtual: previsaoDe.get(v.id)?.etapaAtual ?? null,
+    etapaNome: previsaoDe.get(v.id)?.etapas.find((e) => e.ordem === previsaoDe.get(v.id)?.etapaAtual)?.nome ?? null,
+    concluiuAlguma: previsaoDe.get(v.id)?.etapas.some((e) => e.concluidaEm !== null) ?? false,
   }))
 
   const doCliente = new Map((duracoesCliente.data ?? []).map((d) => [d.ordem, d.duracao]))
@@ -95,7 +100,7 @@ export default async function Configurar({ params, searchParams }: { params: Pro
       )}
       <EtapasProjeto projetoId={id} cliente={projeto.cliente.nome} etapas={etapas} temVagas={temVagas} totalVagas={totalVagas} somenteLeitura={somenteLeitura} />
       <Bloco titulo="Vagas">
-        <VagasProjeto projetoId={id} organizacao={projeto.organizacao} vagas={linhasVaga} opcoes={{ ondas: ondas.map((o) => ({ id: o.id, nome: o.nome })), gestores }} somenteLeitura={somenteLeitura} />
+        <VagasProjeto projetoId={id} organizacao={projeto.organizacao} vagas={linhasVaga} opcoes={{ ondas: ondas.map((o) => ({ id: o.id, nome: o.nome })), gestores }} etapas={efetivas.map((e) => ({ ordem: e.ordem, nome: e.nome }))} somenteLeitura={somenteLeitura} />
       </Bloco>
       <Bloco titulo="Quem vê este projeto">
         <AcessosProjeto perfil={sessao.perfil} projetoId={id} cliente={projeto.cliente.nome} pessoas={pessoas.liberadas} liberaveis={pessoas.liberaveis} />
