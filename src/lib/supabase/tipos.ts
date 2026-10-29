@@ -295,6 +295,9 @@ isOneToOne: false
 "alterar_duracao_etapa":
 { Args: { "p_dias": number,"p_etapa": string }; Returns: undefined
                            },
+"alterar_vagas_em_grupo":
+{ Args: { "p_campo": string,"p_vagas": (string)[],"p_valor": string }; Returns: Json
+                           },
 "cancelar_vaga":
 { Args: { "p_id": string }; Returns: undefined
                            },
@@ -303,6 +306,9 @@ isOneToOne: false
                            },
 "concluir_etapa":
 { Args: { "p_data": string,"p_ordem_esperada": number,"p_vaga": string }; Returns: undefined
+                           },
+"concluir_etapa_em_grupo":
+{ Args: { "p_data": string,"p_ordem_esperada": number,"p_vagas": (string)[] }; Returns: number
                            },
 "concluir_etapas":
 { Args: { "p_ate": number,"p_data": string,"p_ordem_esperada": number,"p_vaga": string }; Returns: undefined
@@ -386,6 +392,9 @@ isOneToOne: false
                            },
 "posicao_etapa":
 { Args: { "p_etapa": string }; Returns: number
+                           },
+"projeto_do_grupo":
+{ Args: { "p_vagas": (string)[] }; Returns: string
                            },
 "reabrir_projeto":
 { Args: { "p_id": string }; Returns: undefined
