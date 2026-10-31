@@ -1,8 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-// /api/portal tem segredo próprio (chamada pelo servidor do Portal da Gestão, sem sessão).
-const PUBLICAS = ['/entrar', '/api/portal', '/icon', '/apple-icon']
+// /api/portal e /api/financeiro têm segredo próprio (chamadas pelos servidores do Portal e do Financeiro, sem sessão).
+const PUBLICAS = ['/entrar', '/api/portal', '/api/financeiro', '/icon', '/apple-icon']
 
 // Renova a sessão do Supabase e manda quem não entrou para /entrar.
 // O perfil (rh, analista, gestor ou cliente) é conferido nas páginas e ações (exigirSessao, exigirAdmin, exigirEquipe).

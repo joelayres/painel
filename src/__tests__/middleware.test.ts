@@ -27,3 +27,8 @@ test('rotas do Portal da Gestão não exigem login (resumo tem segredo; entrada 
   const entrada = await middleware(new NextRequest('https://app/entrar/portal?t=abc'))
   expect(entrada.headers.get('location')).toBeNull()
 })
+
+test('leitura do Financeiro não exige login (tem segredo próprio)', async () => {
+  const r = await middleware(new NextRequest('https://app/api/financeiro/vagas'))
+  expect(r.headers.get('location')).toBeNull()
+})
