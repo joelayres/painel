@@ -31,6 +31,7 @@ const linhas: LinhasPainel = {
     { id: 'pM', cliente_id: 'c1', nome: 'Contratação', area: null, organizacao: 'meta', encerrado_em: '2026-10-01T00:00:00Z' },
   ],
   clienteDuracoes: [],
+  motivos: [],
   projetoEtapas: [...listaDe('pA'), ...listaDe('pB', { 2: 1 }), ...listaDe('pM')],
   ondas: [
     { id: 'o1', nome: 'Onda 1', inicio: '2026-10-22', fim: '2026-11-18', projeto_id: 'pA' },
@@ -47,6 +48,33 @@ const linhas: LinhasPainel = {
   ],
   conclusoes: [{ vaga_id: 'vA', etapa_id: 'pA-1', automatica: false, concluida_em: '2026-10-22' }, { vaga_id: 'vM', etapa_id: 'pM-1', automatica: false, concluida_em: '2026-10-22' }],
 }
+
+describe('montarPainel: motivo do atraso', () => {
+  const comMotivos: LinhasPainel = {
+    ...linhas,
+    motivos: [
+      { vaga_id: 'vA', etapa_id: 'pA-1', texto: 'Motivo da abertura', nome_usuario: 'Bia', atualizado_em: '2026-10-22T12:00:00Z' },
+      { vaga_id: 'vA', etapa_id: 'pA-2', texto: 'Poucos currículos', nome_usuario: 'Bia', atualizado_em: '2026-10-30T12:00:00Z' },
+    ],
+  }
+
+  it('mostra o motivo da etapa atual na vaga atrasada', () => {
+    const a = montarPainel(comMotivos, '2026-12-15').find((v) => v.id === 'vA')!
+    expect(a.situacao.cor).toBe('vermelho')
+    expect(a.motivo).toEqual({ texto: 'Poucos currículos', nomeUsuario: 'Bia', em: '2026-10-30T12:00:00Z' })
+  })
+
+  it('não mostra motivo em vaga que não está atrasada', () => {
+    const a = montarPainel(comMotivos, '2026-10-27').find((v) => v.id === 'vA')!
+    expect(a.situacao.cor).not.toBe('vermelho')
+    expect(a.motivo).toBeNull()
+  })
+
+  it('o motivo de uma etapa já concluída não aparece', () => {
+    const soDaAbertura = { ...comMotivos, motivos: comMotivos.motivos.slice(0, 1) }
+    expect(montarPainel(soDaAbertura, '2026-12-15').find((v) => v.id === 'vA')!.motivo).toBeNull()
+  })
+})
 
 describe('montarPainel', () => {
   it('monta as vagas ativas com previsão e cor, sem as canceladas', () => {

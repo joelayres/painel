@@ -31,6 +31,14 @@ export async function concluirEtapa(vagaId: string, ordemEsperada: number, data:
   return concluirEtapas(vagaId, ordemEsperada, ordemEsperada, data)
 }
 
+// Texto vazio apaga o motivo. `ordemEsperada` é a etapa atual que a tela mostrava.
+export async function salvarMotivoAtraso(vagaId: string, ordemEsperada: number, texto: string): Promise<Resposta> {
+  await exigirEquipe()
+  const sb = await criarClienteServidor()
+  const { error } = await sb.rpc('salvar_motivo_atraso', { p_vaga: vagaId, p_ordem_esperada: ordemEsperada, p_texto: texto })
+  return resposta(error)
+}
+
 export async function desfazerEtapa(vagaId: string, ordemEsperada: number): Promise<Resposta> {
   await exigirEquipe()
   const sb = await criarClienteServidor()

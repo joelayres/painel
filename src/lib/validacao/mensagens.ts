@@ -13,6 +13,7 @@ export const MENSAGENS: [string, string][] = [
   ['onda de outro projeto', 'Esta onda não é deste projeto.'],
   ['meta obrigatória', 'Informe a meta.'],
   ['onda obrigatória', 'Escolha a onda.'],
+  ['motivo longo demais', 'O motivo pode ter até 500 caracteres.'],
 ]
 
 export function traduzirErro(mensagem: string, padrao: string): string {

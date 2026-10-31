@@ -33,6 +33,7 @@ export type LinhasPainel = {
   projetos: LinhaProjeto[]
   clientes: { id: string; nome: string }[]
   clienteDuracoes: { cliente_id: string; ordem: number; duracao: number }[]
+  motivos: { vaga_id: string; etapa_id: string; texto: string; nome_usuario: string; atualizado_em: string }[]
 }
 
 export type ProjetoInfo = { id: string; nome: string; area: string | null; organizacao: Organizacao; encerrado: boolean; cliente: { id: string; nome: string } }
@@ -69,6 +70,7 @@ export function montarPainel(l: LinhasPainel, hoje: string): VagaPainel[] {
     if (ordem === undefined) throw new Error('Uma etapa concluída aponta para uma etapa que não existe no projeto.')
     conclusoes.set(c.vaga_id, [...(conclusoes.get(c.vaga_id) ?? []), { ordem, concluidaEm: c.concluida_em, automatica: c.automatica }])
   }
+  const motivos = new Map(l.motivos.map((m) => [`${m.vaga_id}|${m.etapa_id}`, m]))
 
   return l.vagas
     .filter((v) => v.cancelada_em === null)
@@ -87,6 +89,9 @@ export function montarPainel(l: LinhasPainel, hoje: string): VagaPainel[] {
       }
       const previsao = preverVaga({ dataInicio: v.data_inicio, retomadaEm: v.retomada_em, etapas: etapasDe(projeto), conclusoes: conclusoes.get(v.id) ?? [], feriados })
       const g = v.gestor_id ? gestores.get(v.gestor_id) : undefined
+      const situacao = situacaoVaga(previsao, meta, hoje, feriados)
+      const etapaAtual = etapasDe(projeto).find((e) => e.ordem === previsao.etapaAtual)
+      const m = situacao.cor === 'vermelho' && etapaAtual ? motivos.get(`${v.id}|${etapaAtual.id}`) : undefined
       return {
         id: v.id,
         projetoId: projeto.id,
@@ -98,7 +103,8 @@ export function montarPainel(l: LinhasPainel, hoje: string): VagaPainel[] {
         gestor: g ? { id: g.id, nome: g.nome } : null,
         candidato: v.candidato,
         previsao,
-        situacao: situacaoVaga(previsao, meta, hoje, feriados),
+        situacao,
+        motivo: m ? { texto: m.texto, nomeUsuario: m.nome_usuario, em: m.atualizado_em } : null,
       }
     })
 }
@@ -147,7 +153,7 @@ export async function carregarPainel(sb: SupabaseClient<Database>, hoje: string,
   const projeto = projetos[0]
   if (!projeto) return null
 
-  const [vagas, conclusoes, projetoEtapas, feriados, ondas, gestores, clientes, clienteDuracoes] = await Promise.all([
+  const [vagas, conclusoes, projetoEtapas, feriados, ondas, gestores, clientes, clienteDuracoes, motivos] = await Promise.all([
     lerTodas((de, ate) => sb.from('vagas').select(COLUNAS_VAGA).eq('projeto_id', projetoId).order('criado_em').order('id').range(de, ate)).then((r) => exigir(r, 'as vagas')),
     lerTodas((de, ate) => sb.from('vaga_conclusoes').select('vaga_id, etapa_id, automatica, concluida_em, vagas!inner(projeto_id)').eq('vagas.projeto_id', projetoId).order('vaga_id').order('etapa_id').range(de, ate)).then((r) => exigir(r, 'as etapas concluídas')),
     sb.from('projeto_etapas').select(COLUNAS_ETAPA).eq('projeto_id', projetoId).order('posicao').then((r) => exigir(r, 'as etapas')),
@@ -156,6 +162,7 @@ export async function carregarPainel(sb: SupabaseClient<Database>, hoje: string,
     sb.from('gestores').select('id, nome').eq('cliente_id', projeto.cliente_id).order('nome').then((r) => exigir(r, 'os gestores')),
     sb.from('clientes').select('id, nome').eq('id', projeto.cliente_id).then((r) => exigir(r, 'o cliente')),
     sb.from('cliente_duracoes').select('cliente_id, ordem, duracao').eq('cliente_id', projeto.cliente_id).then((r) => exigir(r, 'as durações do cliente')),
+    lerTodas((de, ate) => sb.from('vaga_motivos').select('vaga_id, etapa_id, texto, nome_usuario, atualizado_em, vagas!inner(projeto_id)').eq('vagas.projeto_id', projetoId).order('vaga_id').order('etapa_id').range(de, ate)).then((r) => exigir(r, 'os motivos de atraso')),
   ])
   const cliente = clientes[0]
   if (!cliente) return null
@@ -169,6 +176,7 @@ export async function carregarPainel(sb: SupabaseClient<Database>, hoje: string,
     projetos: lerProjetos(projetos),
     clientes,
     clienteDuracoes,
+    motivos: motivos.map(({ vaga_id, etapa_id, texto, nome_usuario, atualizado_em }) => ({ vaga_id, etapa_id, texto, nome_usuario, atualizado_em })),
   }
   const info: ProjetoInfo = {
     id: projeto.id,
@@ -202,7 +210,7 @@ export async function carregarProjetos(sb: SupabaseClient<Database>, hoje: strin
     sb.from('clientes').select('id, nome').then((r) => exigir(r, 'os clientes')),
     sb.from('cliente_duracoes').select('cliente_id, ordem, duracao').then((r) => exigir(r, 'as durações dos clientes')),
   ])
-  return montarProjetos({ vagas, conclusoes, projetoEtapas: lerEtapas(projetoEtapas), feriados, ondas: lerOndas(ondas), gestores, projetos: lerProjetos(projetos), clientes, clienteDuracoes }, hoje)
+  return montarProjetos({ vagas, conclusoes, projetoEtapas: lerEtapas(projetoEtapas), feriados, ondas: lerOndas(ondas), gestores, projetos: lerProjetos(projetos), clientes, clienteDuracoes, motivos: [] }, hoje)
 }
 
 export async function carregarVaga(sb: SupabaseClient<Database>, hoje: string, vagaId: string): Promise<{ painel: PainelProjeto; vaga: VagaPainel } | null> {

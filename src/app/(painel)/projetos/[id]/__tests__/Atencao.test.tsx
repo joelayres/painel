@@ -20,3 +20,10 @@ test('mostra a meta da vaga junto da admissão prevista', () => {
   render(<Atencao vagas={[{ ...vagaExemplo('v', { cor: 'vermelho', etapaAtual: 3 }), meta: '2026-11-18' }]} />)
   expect(screen.getByRole('listitem')).toHaveTextContent('(meta 18/11)')
 })
+
+test('mostra o motivo do atraso quando a equipe escreveu um', () => {
+  render(<Atencao vagas={[vagaExemplo('v', { cor: 'vermelho', etapaAtual: 3, motivo: 'Gestor em viagem até 04/11.' }), vagaExemplo('s', { cor: 'vermelho', etapaAtual: 4 })]} />)
+  const itens = screen.getAllByRole('listitem')
+  expect(itens[0]).toHaveTextContent('Motivo: Gestor em viagem até 04/11.')
+  expect(itens[1]).not.toHaveTextContent('Motivo')
+})

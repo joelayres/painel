@@ -10,6 +10,13 @@ function dataConclusao(detalhe: unknown): string | null {
   return typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null
 }
 
+// O texto do motivo do atraso vem no detalhe como `motivo`.
+function motivoDe(detalhe: unknown): string | null {
+  if (typeof detalhe !== 'object' || detalhe === null) return null
+  const v = (detalhe as Record<string, unknown>).motivo
+  return typeof v === 'string' ? v : null
+}
+
 export function HistoricoVaga({ historico }: { historico: EntradaHistorico[] }) {
   return (
     <section className="rounded-xl border border-borda bg-superficie p-4">
@@ -18,10 +25,12 @@ export function HistoricoVaga({ historico }: { historico: EntradaHistorico[] }) 
         <ul className="mt-2 flex flex-col gap-1 text-sm">
           {historico.map((h) => {
             const concluida = dataConclusao(h.detalhe)
+            const motivo = motivoDe(h.detalhe)
             return (
               <li key={h.id}>
                 <span className="text-texto-suave">{new Date(h.em).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' })}</span> · {h.acao}
                 {concluida && ` · concluída em ${dataBR(concluida)}`} · {h.nome_usuario}
+                {motivo && <span className="block pl-4 text-texto-suave">“{motivo}”</span>}
               </li>
             )
           })}
