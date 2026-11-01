@@ -13,6 +13,7 @@ export const MENSAGENS: [string, string][] = [
   ['onda de outro projeto', 'Esta onda não é deste projeto.'],
   ['meta obrigatória', 'Informe a meta.'],
   ['onda obrigatória', 'Escolha a onda.'],
+  ['vaga mobilizada', 'A vaga já foi mobilizada; não há etapa para adiar.'],
   ['motivo longo demais', 'O motivo pode ter até 500 caracteres.'],
 ]
 

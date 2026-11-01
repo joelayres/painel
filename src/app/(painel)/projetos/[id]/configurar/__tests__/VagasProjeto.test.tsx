@@ -10,7 +10,7 @@ vi.mock('../acoesConfigurar', () => ({ avancarEmGrupo, alterarEmGrupo: vi.fn() }
 const { VagasProjeto } = await import('../VagasProjeto')
 
 const vaga = { id: 'v1', funcao: 'Técnico', disciplina: 'NR-13', area: 'Caldeiraria', ondaNome: '1ª Onda', ondaId: 'o1', meta: null, gestor: null, gestorId: null, candidato: null, dataInicio: '2026-10-22', canceladaEm: null, etapaAtual: 2, etapaNome: 'Captura de Mercado', concluiuAlguma: true }
-const opcoes = { ondas: [{ id: 'o1', nome: '1ª Onda' }], gestores: [{ id: 'g1', nome: 'Ana' }] }
+const opcoes = { ondas: [{ id: 'o1', nome: '1ª Onda', inicio: '2026-10-22' }], gestores: [{ id: 'g1', nome: 'Ana' }] }
 const etapas = [{ ordem: 1, nome: 'Abertura de vaga' }, { ordem: 2, nome: 'Captura de Mercado' }, { ordem: 3, nome: 'Triagem de Candidatos' }]
 const base = { projetoId: 'p1', organizacao: 'ondas' as const, opcoes, somenteLeitura: false, etapas }
 

@@ -13,7 +13,7 @@ import { AcoesEmGrupo } from './AcoesEmGrupo'
 import { selecionaveis, type FiltroSelecao } from './selecao'
 
 export type VagaProjeto = { id: string; funcao: string; disciplina: string; area: string; ondaNome: string | null; ondaId: string | null; meta: string | null; gestor: string | null; gestorId: string | null; candidato: string | null; dataInicio: string; canceladaEm: string | null; etapaAtual: number | null; etapaNome: string | null; concluiuAlguma: boolean }
-type Opcoes = { ondas: { id: string; nome: string }[]; gestores: { id: string; nome: string }[] }
+type Opcoes = { ondas: { id: string; nome: string; inicio: string }[]; gestores: { id: string; nome: string }[] }
 
 const estiloLink = 'inline-flex min-h-11 items-center justify-center rounded-lg border border-primaria bg-superficie px-4 font-semibold text-primaria transition-colors hover:bg-primaria-suave focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco'
 

@@ -5,15 +5,17 @@ import { diasUteisEntre, type Feriados } from './calendario'
 import type { PrevisaoVaga } from './previsao'
 
 export type Cor = 'verde' | 'amarelo' | 'vermelho'
-export type Situacao = { cor: Cor | null; admitida: boolean; mobilizada: boolean; diasNaEtapa: number }
+// comecaEm: a etapa atual ainda não começou (adiada); até lá, não há dias parados nela.
+export type Situacao = { cor: Cor | null; admitida: boolean; mobilizada: boolean; diasNaEtapa: number; comecaEm: string | null }
 
 export function situacaoVaga(prev: PrevisaoVaga, meta: string, hoje: string, f: Feriados): Situacao {
   const admitida = prev.etapas.some((e) => e.fixa === 'admissao' && e.concluidaEm !== null)
-  if (prev.etapaAtual === null) return { cor: null, admitida: true, mobilizada: true, diasNaEtapa: 0 }
+  if (prev.etapaAtual === null) return { cor: null, admitida: true, mobilizada: true, diasNaEtapa: 0, comecaEm: null }
   const atual = prev.etapas.find((e) => e.ordem === prev.etapaAtual)!
   const diasNaEtapa = prev.inicioEtapaAtual ? diasUteisEntre(prev.inicioEtapaAtual, hoje, f) : 0
   const cor: Cor = hoje > atual.fim ? 'vermelho' : !admitida && prev.admissaoEstimada > meta ? 'amarelo' : 'verde'
-  return { cor, admitida, mobilizada: false, diasNaEtapa }
+  const comecaEm = prev.inicioEtapaAtual && prev.inicioEtapaAtual > hoje ? prev.inicioEtapaAtual : null
+  return { cor, admitida, mobilizada: false, diasNaEtapa, comecaEm }
 }
 
 export function avisoMeta(prev: PrevisaoVaga, meta: string): string | null {

@@ -17,6 +17,8 @@ export type PrevisaoVaga = {
 export function preverVaga(p: {
   dataInicio: string
   retomadaEm?: string | null
+  // A etapa `etapaId` só começa em `ate` (só pesa enquanto ela está aberta).
+  adiamento?: { etapaId: string; ate: string } | null
   etapas: EtapaDef[]
   conclusoes: Conclusao[]
   feriados: Feriados
@@ -31,6 +33,10 @@ export function preverVaga(p: {
     if (e.fixa === 'captura' && p.retomadaEm && !concluidas.has(e.ordem)) {
       const retomada = proximoDiaUtil(p.retomadaEm, f)
       if (retomada > inicio) inicio = retomada
+    }
+    if (p.adiamento && e.id === p.adiamento.etapaId && !concluidas.has(e.ordem)) {
+      const adiada = proximoDiaUtil(p.adiamento.ate, f)
+      if (adiada > inicio) inicio = adiada
     }
     const concluidaEm = concluidas.get(e.ordem) ?? null
     // A conclusão automática é transparente: a próxima etapa começa como se ela não estivesse na lista.

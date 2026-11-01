@@ -39,6 +39,14 @@ export async function salvarMotivoAtraso(vagaId: string, ordemEsperada: number, 
   return resposta(error)
 }
 
+// Data de hoje ou do passado tira o adiamento.
+export async function adiarEtapa(vagaId: string, data: string): Promise<Resposta> {
+  await exigirEquipe()
+  const sb = await criarClienteServidor()
+  const { error } = await sb.rpc('adiar_etapa', { p_vaga: vagaId, p_data: data })
+  return resposta(error)
+}
+
 export async function desfazerEtapa(vagaId: string, ordemEsperada: number): Promise<Resposta> {
   await exigirEquipe()
   const sb = await criarClienteServidor()

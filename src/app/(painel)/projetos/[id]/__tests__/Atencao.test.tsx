@@ -27,3 +27,8 @@ test('mostra o motivo do atraso quando a equipe escreveu um', () => {
   expect(itens[0]).toHaveTextContent('Motivo: Gestor em viagem até 04/11.')
   expect(itens[1]).not.toHaveTextContent('Motivo')
 })
+
+test('vaga em risco com etapa adiada diz quando a etapa começa', () => {
+  render(<Atencao vagas={[vagaExemplo('a', { cor: 'amarelo', etapaAtual: 2, comecaEm: '2026-11-16' })]} />)
+  expect(screen.getByRole('listitem')).toHaveTextContent('Captura de Mercado começa em 16/11')
+})

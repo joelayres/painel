@@ -4,14 +4,15 @@ import { beforeEach, expect, test, vi } from 'vitest'
 
 const avancarEmGrupo = vi.fn()
 const alterarEmGrupo = vi.fn()
-vi.mock('../acoesConfigurar', () => ({ avancarEmGrupo, alterarEmGrupo }))
+const adiarEmGrupo = vi.fn()
+vi.mock('../acoesConfigurar', () => ({ avancarEmGrupo, alterarEmGrupo, adiarEmGrupo }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }))
 vi.mock('@/dominio/tempo', () => ({ hojeSP: () => '2026-10-29' }))
 const { AcoesEmGrupo } = await import('../AcoesEmGrupo')
 
 const sel = (id: string, etapaAtual = 2, concluiuAlguma = false) => ({ id, funcao: 'Técnico de Campo', ondaId: 'o1', etapaAtual, concluiuAlguma, cancelada: false })
 const base = {
-  projetoId: 'p1', organizacao: 'meta' as const, ondas: [{ id: 'o2', nome: '2ª Onda' }],
+  projetoId: 'p1', organizacao: 'meta' as const, ondas: [{ id: 'o1', nome: '1ª Onda', inicio: '2026-10-22' }, { id: 'o2', nome: '2ª Onda', inicio: '2026-11-16' }],
   etapas: [{ ordem: 2, nome: 'Captura de Mercado' }], rotuloDe: (id: string) => `Técnico de Campo ${id}`, aoTerminar: vi.fn(),
 }
 
@@ -51,4 +52,24 @@ test('erro de uma vaga mostra qual vaga travou', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Avançar etapa' }))
   await userEvent.click(screen.getByRole('button', { name: 'Concluir' }))
   expect(await screen.findByRole('alert')).toHaveTextContent('Técnico de Campo v2: A data não pode ser no futuro.')
+})
+
+test('adiar já vem com o início da onda das vagas e adia na data escolhida', async () => {
+  adiarEmGrupo.mockResolvedValue({ ok: true, alteradas: 2, puladas: 0, foraDaMeta: 0 })
+  const daOnda2 = (id: string) => ({ ...sel(id), ondaId: 'o2' })
+  render(<AcoesEmGrupo {...base} organizacao="ondas" selecionadas={[daOnda2('v1'), daOnda2('v2')]} />)
+  await userEvent.click(screen.getByRole('button', { name: 'Adiar próxima etapa' }))
+  const campo = screen.getByLabelText('Começa em')
+  expect(campo).toHaveValue('2026-11-16')
+  await userEvent.clear(campo)
+  await userEvent.type(campo, '2026-11-23')
+  await userEvent.click(screen.getByRole('button', { name: 'Aplicar' }))
+  expect(adiarEmGrupo).toHaveBeenCalledWith('p1', ['v1', 'v2'], '2026-11-23')
+  expect(await screen.findByRole('status')).toHaveTextContent('2 vagas alteradas.')
+})
+
+test('adiar vagas de ondas diferentes deixa a data em branco', async () => {
+  render(<AcoesEmGrupo {...base} organizacao="ondas" selecionadas={[sel('v1'), { ...sel('v2'), ondaId: 'o2' }]} />)
+  await userEvent.click(screen.getByRole('button', { name: 'Adiar próxima etapa' }))
+  expect(screen.getByLabelText('Começa em')).toHaveValue('')
 })

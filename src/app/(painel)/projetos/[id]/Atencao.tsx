@@ -24,7 +24,7 @@ export function Atencao({ vagas }: { vagas: VagaPainel[] }) {
                   <span className="font-medium">{v.funcao} · {v.disciplina}</span>
                   <span className="text-texto-suave"> · {v.gestor?.nome ?? 'Sem gestor'}{v.candidato ? ` · ${v.candidato}` : ''}</span>
                   <span className="block text-sm text-texto-suave">
-                    parada em {etapa?.nome} há {dias(v.situacao.diasNaEtapa)} · admissão prevista {ddmm(v.previsao.admissaoEstimada)} (meta {ddmm(v.meta)})
+                    {v.situacao.comecaEm ? `${etapa?.nome} começa em ${ddmm(v.situacao.comecaEm)}` : `parada em ${etapa?.nome} há ${dias(v.situacao.diasNaEtapa)}`} · admissão prevista {ddmm(v.previsao.admissaoEstimada)} (meta {ddmm(v.meta)})
                   </span>
                   {v.motivo && (
                     <span className="mt-1 block text-sm" style={{ color: 'var(--st-reprovada-texto)' }}>

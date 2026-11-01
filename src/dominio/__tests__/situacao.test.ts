@@ -61,4 +61,11 @@ describe('admissão em outra posição', () => {
     expect(situacaoVaga(prev(12), '2026-11-10', '2026-11-20', F).admitida).toBe(true)
     expect(avisoMeta(prev(12), '2026-11-10')).toBeNull()
   })
+
+  it('etapa adiada: não fica vermelha antes de começar e diz quando começa', () => {
+    const p = preverVaga({ dataInicio: '2026-10-22', adiamento: { etapaId: 'padrao-2', ate: '2026-11-16' }, etapas: ETAPAS_PADRAO, conclusoes: ate(1, DATAS), feriados: F })
+    const s = situacaoVaga(p, '2026-12-31', '2026-11-05', F)
+    expect(s).toMatchObject({ cor: 'verde', diasNaEtapa: 0, comecaEm: '2026-11-16' })
+    expect(situacaoVaga(p, '2026-12-31', '2026-11-16', F).comecaEm).toBeNull()
+  })
 })

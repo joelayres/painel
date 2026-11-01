@@ -19,7 +19,7 @@ export function CartaoVaga({ vaga, arrastavel = false, aoArrastar, aoSoltar }: {
       {vaga.candidato && <span className="mt-1 block font-medium">{vaga.candidato}</span>}
       <span className="mt-1 block text-xs text-texto-suave">{vaga.gestor?.nome ?? 'Sem gestor'}</span>
       <span className="mt-1 block text-xs">
-        {d} {d === 1 ? 'dia' : 'dias'} nesta etapa · Admissão prevista {ddmm(vaga.previsao.admissaoEstimada)}
+        {vaga.situacao.comecaEm ? `Etapa começa em ${ddmm(vaga.situacao.comecaEm)}` : `${d} ${d === 1 ? 'dia' : 'dias'} nesta etapa`} · Admissão prevista {ddmm(vaga.previsao.admissaoEstimada)}
       </span>
       {vaga.motivo && (
         <span className="mt-1.5 line-clamp-2 rounded-md px-2 py-1 text-xs" style={{ background: 'var(--st-reprovada-fundo)', color: 'var(--st-reprovada-texto)' }} title={vaga.motivo.texto}>

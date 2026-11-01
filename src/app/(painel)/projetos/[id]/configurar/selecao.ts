@@ -23,6 +23,13 @@ export function etapaComum(selecionadas: VagaSelecionavel[]): number | null {
   return etapas.size === 1 ? [...etapas][0] : null
 }
 
+// Data sugerida para adiar a etapa: o início da onda, quando todas as selecionadas são da mesma onda.
+export function inicioDaOndaComum(selecionadas: VagaSelecionavel[], ondas: { id: string; inicio: string }[]): string {
+  const ids = new Set(selecionadas.map((v) => v.ondaId))
+  const [id] = [...ids]
+  return ids.size === 1 && id ? (ondas.find((o) => o.id === id)?.inicio ?? '') : ''
+}
+
 export function puladasNoInicio(selecionadas: VagaSelecionavel[]): number {
   return selecionadas.filter((v) => v.concluiuAlguma).length
 }
