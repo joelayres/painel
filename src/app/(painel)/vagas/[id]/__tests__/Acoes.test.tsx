@@ -5,7 +5,8 @@ import { beforeEach, expect, test, vi } from 'vitest'
 const concluirEtapa = vi.fn()
 const desfazerEtapa = vi.fn()
 const candidatoDesistiu = vi.fn()
-vi.mock('../acoesVaga', () => ({ concluirEtapa, desfazerEtapa, candidatoDesistiu }))
+const adiarEtapa = vi.fn()
+vi.mock('../acoesVaga', () => ({ concluirEtapa, desfazerEtapa, candidatoDesistiu, adiarEtapa }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }))
 const { Acoes } = await import('../Acoes')
 
@@ -16,6 +17,7 @@ beforeEach(() => {
   concluirEtapa.mockResolvedValue({ ok: true })
   desfazerEtapa.mockResolvedValue({ ok: true })
   candidatoDesistiu.mockResolvedValue({ ok: true })
+  adiarEtapa.mockResolvedValue({ ok: true })
 })
 
 test('gestor não vê as ações', () => {
@@ -69,4 +71,12 @@ test('a data padrão acompanha o dia quando a aba volta ao foco', async () => {
   window.dispatchEvent(new Event('focus'))
   expect(await screen.findByDisplayValue('2026-10-28')).toBeInTheDocument()
   vi.useRealTimers()
+})
+
+test('adiar a próxima etapa já sugere o início da onda', async () => {
+  render(<Acoes {...base} perfil="analista" inicioDaOnda="2026-11-16" />)
+  await userEvent.click(screen.getByRole('button', { name: 'Adiar próxima etapa' }))
+  expect(screen.getByLabelText('Triagem de Candidatos começa em')).toHaveValue('2026-11-16')
+  await userEvent.click(screen.getByRole('button', { name: 'Adiar' }))
+  expect(adiarEtapa).toHaveBeenCalledWith('v1', '2026-11-16')
 })

@@ -100,7 +100,7 @@ export default async function Configurar({ params, searchParams }: { params: Pro
       )}
       <EtapasProjeto alvo={{ tipo: 'projeto', id }} cliente={projeto.cliente.nome} etapas={etapas} temVagas={temVagas} totalVagas={totalVagas} somenteLeitura={somenteLeitura} />
       <Bloco titulo="Vagas">
-        <VagasProjeto projetoId={id} organizacao={projeto.organizacao} vagas={linhasVaga} opcoes={{ ondas: ondas.map((o) => ({ id: o.id, nome: o.nome })), gestores }} etapas={efetivas.map((e) => ({ ordem: e.ordem, nome: e.nome }))} somenteLeitura={somenteLeitura} />
+        <VagasProjeto projetoId={id} organizacao={projeto.organizacao} vagas={linhasVaga} opcoes={{ ondas: ondas.map((o) => ({ id: o.id, nome: o.nome, inicio: o.inicio })), gestores }} etapas={efetivas.map((e) => ({ ordem: e.ordem, nome: e.nome }))} somenteLeitura={somenteLeitura} />
       </Bloco>
       <Bloco titulo="Quem vê este projeto">
         <AcessosProjeto perfil={sessao.perfil} projetoId={id} cliente={projeto.cliente.nome} pessoas={pessoas.liberadas} liberaveis={pessoas.liberaveis} />

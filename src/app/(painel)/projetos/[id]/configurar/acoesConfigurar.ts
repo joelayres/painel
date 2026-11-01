@@ -221,3 +221,16 @@ export async function alterarEmGrupo(projetoId: string, vagaIds: string[], campo
   const { alteradas, puladas } = r as { alteradas: number; puladas: number }
   return { ok: true, alteradas, puladas, foraDaMeta: await contarForaDaMeta(sb, projetoId, vagaIds) }
 }
+
+export async function adiarEmGrupo(projetoId: string, vagaIds: string[], data: string): Promise<RespostaGrupo> {
+  await exigirEquipe()
+  const invalido = grupoInvalido(projetoId, vagaIds)
+  if (invalido) return invalido
+  if (!dataValida(data)) return { ok: false, vagaId: null, erro: 'Informe uma data válida.' }
+  const sb = await criarClienteServidor()
+  const { data: r, error } = await sb.rpc('adiar_etapa_em_grupo', { p_vagas: vagaIds, p_data: data })
+  if (error) return erroDoGrupo(error.message)
+  revalidatePath('/', 'layout')
+  const { alteradas, puladas } = r as { alteradas: number; puladas: number }
+  return { ok: true, alteradas, puladas, foraDaMeta: await contarForaDaMeta(sb, projetoId, vagaIds) }
+}

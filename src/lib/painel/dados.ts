@@ -20,6 +20,8 @@ type LinhaVaga = {
   data_inicio: string
   retomada_em: string | null
   cancelada_em: string | null
+  adiada_ate: string | null
+  adiada_etapa_id: string | null
 }
 type Organizacao = 'ondas' | 'meta'
 type LinhaProjeto = { id: string; nome: string; area: string | null; organizacao: Organizacao; encerrado_em: string | null; cliente_id: string }
@@ -87,7 +89,14 @@ export function montarPainel(l: LinhasPainel, hoje: string): VagaPainel[] {
         if (!v.meta) throw new Error(`A vaga ${v.funcao} não tem meta.`)
         meta = v.meta
       }
-      const previsao = preverVaga({ dataInicio: v.data_inicio, retomadaEm: v.retomada_em, etapas: etapasDe(projeto), conclusoes: conclusoes.get(v.id) ?? [], feriados })
+      const previsao = preverVaga({
+        dataInicio: v.data_inicio,
+        retomadaEm: v.retomada_em,
+        adiamento: v.adiada_ate && v.adiada_etapa_id ? { etapaId: v.adiada_etapa_id, ate: v.adiada_ate } : null,
+        etapas: etapasDe(projeto),
+        conclusoes: conclusoes.get(v.id) ?? [],
+        feriados,
+      })
       const g = v.gestor_id ? gestores.get(v.gestor_id) : undefined
       const situacao = situacaoVaga(previsao, meta, hoje, feriados)
       const etapaAtual = etapasDe(projeto).find((e) => e.ordem === previsao.etapaAtual)
@@ -143,7 +152,7 @@ const lerEtapas = (etapas: { id: string; projeto_id: string; posicao: number; no
 const lerProjetos = (projetos: { id: string; cliente_id: string; nome: string; area: string | null; organizacao: string; encerrado_em: string | null }[]): LinhaProjeto[] =>
   projetos.map((p) => ({ ...p, organizacao: p.organizacao === 'meta' ? 'meta' : 'ondas' }))
 
-const COLUNAS_VAGA = 'id, projeto_id, meta, funcao, disciplina, area, onda_id, gestor_id, candidato, data_inicio, retomada_em, cancelada_em'
+const COLUNAS_VAGA = 'id, projeto_id, meta, funcao, disciplina, area, onda_id, gestor_id, candidato, data_inicio, retomada_em, cancelada_em, adiada_ate, adiada_etapa_id'
 const COLUNAS_ETAPA = 'id, projeto_id, posicao, nome, duracao, padrao, fixa'
 const COLUNAS_PROJETO = 'id, cliente_id, nome, area, organizacao, encerrado_em'
 

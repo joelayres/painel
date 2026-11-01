@@ -41,6 +41,7 @@ export default async function DetalheVaga({ params }: { params: Promise<{ id: st
           <p className="mt-1">Gestor: {vaga.gestor?.nome ?? 'Sem gestor'} · Candidato: {vaga.candidato ?? 'ainda não definido'}</p>
           <p className="mt-2 text-sm">
             {cor && <span className="mr-2 font-semibold" style={{ color: COR_PRAZO[cor] }}>{ROTULO_PRAZO[cor]}</span>}
+            {vaga.situacao.comecaEm && atual && `${atual.nome} começa em ${dataBR(vaga.situacao.comecaEm)} · `}
             Admissão prevista {dataBR(p.admissaoEstimada)} · Conclusão prevista {dataBR(p.conclusaoEstimada)}
           </p>
         </div>
@@ -57,7 +58,7 @@ export default async function DetalheVaga({ params }: { params: Promise<{ id: st
 
       {cor === 'vermelho' && atual && <MotivoAtraso vagaId={id} etapa={{ ordem: atual.ordem, nome: atual.nome }} motivo={vaga.motivo} podeEditar={podeEditar} />}
 
-      {podeEditar && <Acoes vagaId={id} perfil={sessao.perfil} etapaAtual={atual ? { ordem: atual.ordem, nome: atual.nome } : null} ultimaConcluida={ultima} admitida={vaga.situacao.admitida} hoje={hoje} />}
+      {podeEditar && <Acoes vagaId={id} perfil={sessao.perfil} etapaAtual={atual ? { ordem: atual.ordem, nome: atual.nome } : null} ultimaConcluida={ultima} admitida={vaga.situacao.admitida} hoje={hoje} inicioDaOnda={vaga.onda?.inicio ?? null} />}
 
       <div className="overflow-x-auto rounded-xl border border-borda bg-superficie">
         <table className="w-full text-left text-[15px]">

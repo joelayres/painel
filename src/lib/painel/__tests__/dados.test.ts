@@ -20,7 +20,7 @@ const listaDe = (projeto_id: string, duracoes: Record<number, number> = {}): Lin
   }))
 const vaga = (id: string, projeto_id: string, extra: Partial<LinhasPainel['vagas'][number]> = {}): LinhasPainel['vagas'][number] => ({
   id, projeto_id, meta: null, funcao: 'Técnico de Campo', disciplina: 'NR-13', area: 'Caldeiraria', onda_id: 'o1', gestor_id: null,
-  candidato: null, data_inicio: '2026-10-22', retomada_em: null, cancelada_em: null, ...extra,
+  candidato: null, data_inicio: '2026-10-22', retomada_em: null, cancelada_em: null, adiada_ate: null, adiada_etapa_id: null, ...extra,
 })
 
 const linhas: LinhasPainel = {

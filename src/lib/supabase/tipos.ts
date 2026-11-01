@@ -319,14 +319,14 @@ isOneToOne: false
                   ]
                 },"vagas": {
                   Row: {
-                    "area": string,"cancelada_em": string | null,"candidato": string | null,"criado_em": string,"data_inicio": string,"disciplina": string,"funcao": string,"gestor_id": string | null,"id": string,"meta": string | null,"onda_id": string | null,"projeto_id": string,"retomada_em": string | null
+                    "adiada_ate": string | null,"adiada_etapa_id": string | null,"area": string,"cancelada_em": string | null,"candidato": string | null,"criado_em": string,"data_inicio": string,"disciplina": string,"funcao": string,"gestor_id": string | null,"id": string,"meta": string | null,"onda_id": string | null,"projeto_id": string,"retomada_em": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "area": string,"cancelada_em"?: string | null,"candidato"?: string | null,"criado_em"?: string,"data_inicio": string,"disciplina": string,"funcao": string,"gestor_id"?: string | null,"id"?: string,"meta"?: string | null,"onda_id"?: string | null,"projeto_id": string,"retomada_em"?: string | null
+                    "adiada_ate"?: string | null,"adiada_etapa_id"?: string | null,"area": string,"cancelada_em"?: string | null,"candidato"?: string | null,"criado_em"?: string,"data_inicio": string,"disciplina": string,"funcao": string,"gestor_id"?: string | null,"id"?: string,"meta"?: string | null,"onda_id"?: string | null,"projeto_id": string,"retomada_em"?: string | null
                   }
                   Update: {
-                    "area"?: string,"cancelada_em"?: string | null,"candidato"?: string | null,"criado_em"?: string,"data_inicio"?: string,"disciplina"?: string,"funcao"?: string,"gestor_id"?: string | null,"id"?: string,"meta"?: string | null,"onda_id"?: string | null,"projeto_id"?: string,"retomada_em"?: string | null
+                    "adiada_ate"?: string | null,"adiada_etapa_id"?: string | null,"area"?: string,"cancelada_em"?: string | null,"candidato"?: string | null,"criado_em"?: string,"data_inicio"?: string,"disciplina"?: string,"funcao"?: string,"gestor_id"?: string | null,"id"?: string,"meta"?: string | null,"onda_id"?: string | null,"projeto_id"?: string,"retomada_em"?: string | null
                   }
                   Relationships: [
                     {
@@ -363,6 +363,12 @@ isOneToOne: false
                            },
 "alterar_duracao_etapa_cliente":
 { Args: { "p_dias": number,"p_etapa": string }; Returns: undefined
+                           },
+"adiar_etapa":
+{ Args: { "p_data": string,"p_vaga": string }; Returns: undefined
+                           },
+"adiar_etapa_em_grupo":
+{ Args: { "p_data": string,"p_vagas": string[] }; Returns: Json
                            },
 "alterar_vagas_em_grupo":
 { Args: { "p_campo": string,"p_vagas": (string)[],"p_valor": string }; Returns: Json

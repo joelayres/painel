@@ -5,7 +5,7 @@ import type { Cor } from '@/dominio/situacao'
 
 export const ONDA1 = { id: 'o1', nome: 'Onda 1', inicio: '2026-10-22', fim: '2026-11-26' }
 
-export function vagaExemplo(id: string, c: { cor: Cor | null; etapaAtual: number | null; fimAtual?: string; candidato?: string; dias?: number; admitida?: boolean; funcao?: string; motivo?: string }): VagaPainel {
+export function vagaExemplo(id: string, c: { cor: Cor | null; etapaAtual: number | null; fimAtual?: string; candidato?: string; dias?: number; admitida?: boolean; funcao?: string; motivo?: string; comecaEm?: string }): VagaPainel {
   const mobilizada = c.cor === null
   return {
     id,
@@ -31,7 +31,7 @@ export function vagaExemplo(id: string, c: { cor: Cor | null; etapaAtual: number
       admissaoEstimada: '2026-11-19',
       conclusaoEstimada: '2026-12-01',
     },
-    situacao: { cor: c.cor, admitida: c.admitida ?? mobilizada, mobilizada, diasNaEtapa: c.dias ?? 1 },
+    situacao: { cor: c.cor, admitida: c.admitida ?? mobilizada, mobilizada, diasNaEtapa: c.dias ?? 1, comecaEm: c.comecaEm ?? null },
     motivo: c.motivo ? { texto: c.motivo, nomeUsuario: 'Bia Lima', em: '2026-10-30T17:20:00Z' } : null,
   }
 }

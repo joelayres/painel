@@ -42,13 +42,14 @@ describe('motivo do atraso', () => {
       expect(await motivos(c, vaga)).toEqual(['Triagem remarcada para 04/11.'])
       await salvar(c, vaga, 3, '   ')
       expect(await motivos(c, vaga)).toEqual([])
+      // Na mesma transação todas as entradas têm o mesmo `em`: compara sem depender da ordem.
       const h = await acoes(c, vaga)
-      expect(h.map((r) => r.acao)).toEqual([
-        'Escreveu o motivo do atraso em Triagem de Candidatos',
+      expect(h.map((r) => r.acao).sort()).toEqual([
         'Alterou o motivo do atraso em Triagem de Candidatos',
         'Apagou o motivo do atraso em Triagem de Candidatos',
+        'Escreveu o motivo do atraso em Triagem de Candidatos',
       ])
-      expect(h[1].detalhe).toEqual({ motivo: 'Triagem remarcada para 04/11.' })
+      expect(h.find((r) => r.acao.startsWith('Alterou')).detalhe).toEqual({ motivo: 'Triagem remarcada para 04/11.' })
     }))
 
   it('recusa etapa que não é a atual e texto longo demais', () =>

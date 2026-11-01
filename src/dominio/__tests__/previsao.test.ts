@@ -108,4 +108,32 @@ describe('previsão das etapas', () => {
     const p = preverVaga({ dataInicio: '2026-10-22', etapas: ETAPAS_PADRAO.slice(0, 12), conclusoes: [], feriados: F })
     expect(p.conclusaoEstimada).toBe('2026-11-24')
   })
+
+  describe('etapa adiada', () => {
+    const abertura = [{ ordem: 1, concluidaEm: '2026-10-22' }]
+    const adiar = (conclusoes: Conclusao[], ate: string) =>
+      preverVaga({ dataInicio: '2026-10-22', adiamento: { etapaId: 'padrao-2', ate }, etapas: ETAPAS_PADRAO, conclusoes, feriados: F })
+
+    it('a etapa adiada começa na data do adiamento, e as seguintes andam junto', () => {
+      const p = adiar(abertura, '2026-11-16')
+      expect(p.etapaAtual).toBe(2)
+      expect(p.inicioEtapaAtual).toBe('2026-11-16')
+      expect(p.etapas[1].fim).toBe('2026-11-19')
+      expect(p.admissaoEstimada > prever('2026-10-22', abertura).admissaoEstimada).toBe(true)
+    })
+
+    it('adiamento para fim de semana começa no próximo dia útil', () => {
+      expect(adiar(abertura, '2026-11-14').inicioEtapaAtual).toBe('2026-11-16')
+    })
+
+    it('concluída antes da data, vale a conclusão real', () => {
+      const p = adiar([...abertura, { ordem: 2, concluidaEm: '2026-11-05' }], '2026-11-16')
+      expect(p.etapaAtual).toBe(3)
+      expect(p.inicioEtapaAtual).toBe('2026-11-06')
+    })
+
+    it('data já passada não muda nada', () => {
+      expect(adiar(abertura, '2026-10-01')).toEqual(prever('2026-10-22', abertura))
+    })
+  })
 })

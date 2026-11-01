@@ -6,10 +6,10 @@ import { Botao } from '@/components/ui/Botao'
 import { Campo } from '@/components/ui/Campo'
 import { Selecao } from '@/components/ui/Selecao'
 import { hojeSP } from '@/dominio/tempo'
-import { alterarEmGrupo, avancarEmGrupo, type RespostaGrupo } from './acoesConfigurar'
-import { etapaComum, puladasNoInicio, type VagaSelecionavel } from './selecao'
+import { adiarEmGrupo, alterarEmGrupo, avancarEmGrupo, type RespostaGrupo } from './acoesConfigurar'
+import { etapaComum, inicioDaOndaComum, puladasNoInicio, type VagaSelecionavel } from './selecao'
 
-type Acao = 'avancar' | 'meta' | 'onda' | 'inicio'
+type Acao = 'avancar' | 'meta' | 'onda' | 'inicio' | 'adiar'
 
 const plural = (n: number, um: string, varios: string) => (n === 1 ? `1 ${um}` : `${n} ${varios}`)
 
@@ -33,7 +33,7 @@ export function AcoesEmGrupo({
   projetoId: string
   organizacao: 'ondas' | 'meta'
   selecionadas: VagaSelecionavel[]
-  ondas: { id: string; nome: string }[]
+  ondas: { id: string; nome: string; inicio: string }[]
   etapas: { ordem: number; nome: string }[]
   rotuloDe: (vagaId: string) => string
   aoTerminar: () => void
@@ -51,7 +51,7 @@ export function AcoesEmGrupo({
 
   const abrir = (a: Acao) => {
     setAcao(a)
-    setValor(a === 'avancar' ? hojeSP() : '')
+    setValor(a === 'avancar' ? hojeSP() : a === 'adiar' ? inicioDaOndaComum(selecionadas, ondas) : '')
     setErro(null)
     setResultado(null)
   }
@@ -62,7 +62,9 @@ export function AcoesEmGrupo({
       const r =
         acao === 'avancar' && comum !== null
           ? await avancarEmGrupo(projetoId, ids, comum, valor)
-          : await alterarEmGrupo(projetoId, ids, acao === 'onda' ? 'onda_id' : acao === 'meta' ? 'meta' : 'data_inicio', valor)
+          : acao === 'adiar'
+            ? await adiarEmGrupo(projetoId, ids, valor)
+            : await alterarEmGrupo(projetoId, ids, acao === 'onda' ? 'onda_id' : acao === 'meta' ? 'meta' : 'data_inicio', valor)
       if (!r.ok) return setErro(r.vagaId ? `${rotuloDe(r.vagaId)}: ${r.erro}` : r.erro)
       setResultado(textoResultado(r))
       setAcao(null)
@@ -85,12 +87,16 @@ export function AcoesEmGrupo({
           <Botao variante="secundario" disabled={pendente} onClick={() => abrir('onda')}>Trocar onda</Botao>
         )}
         <Botao variante="secundario" disabled={pendente} onClick={() => abrir('inicio')}>Trocar início</Botao>
+        <Botao variante="secundario" disabled={pendente} onClick={() => abrir('adiar')}>Adiar próxima etapa</Botao>
       </div>
       {comum === null && <p className="text-sm text-texto-suave">Para avançar juntas, as vagas precisam estar na mesma etapa.</p>}
 
       {acao && (
         <div className="flex flex-wrap items-end gap-3">
           {acao === 'avancar' && <p className="w-full font-medium">Concluir {nomeEtapa} em {plural(selecionadas.length, 'vaga', 'vagas')}</p>}
+          {acao === 'adiar' && (
+            <p className="w-full text-sm">A etapa em que cada vaga está passa a contar a partir desta data. Uma data de hoje ou do passado tira o adiamento.</p>
+          )}
           {acao === 'inicio' && puladas > 0 && (
             <p className="w-full text-sm">
               {puladas === 1 ? '1 das vagas selecionadas já passou da primeira etapa e fica de fora.' : `${puladas} das vagas selecionadas já passaram da primeira etapa e ficam de fora.`}
@@ -100,7 +106,7 @@ export function AcoesEmGrupo({
             <Selecao rotulo="Nova onda" value={valor} onChange={(e) => setValor(e.target.value)} opcoes={[{ valor: '', rotulo: 'Escolha a onda' }, ...ondas.map((o) => ({ valor: o.id, rotulo: o.nome }))]} />
           ) : (
             <Campo
-              rotulo={acao === 'avancar' ? 'Data de conclusão' : acao === 'meta' ? 'Nova meta' : 'Novo início'}
+              rotulo={acao === 'avancar' ? 'Data de conclusão' : acao === 'meta' ? 'Nova meta' : acao === 'adiar' ? 'Começa em' : 'Novo início'}
               type="date"
               value={valor}
               onChange={(e) => setValor(e.target.value)}

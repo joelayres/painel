@@ -25,7 +25,7 @@ function vaga(id: string, c: { cor: Cor | null; etapaAtual: number | null; fimAt
       admissaoEstimada: c.admissao ?? '2026-11-19',
       conclusaoEstimada: '2026-12-01',
     },
-    situacao: { cor: c.cor, admitida: c.admitida ?? mobilizada, mobilizada, diasNaEtapa: 1 },
+    situacao: { cor: c.cor, admitida: c.admitida ?? mobilizada, mobilizada, diasNaEtapa: 1, comecaEm: null },
     motivo: null,
   }
 }
