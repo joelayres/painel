@@ -30,3 +30,8 @@ test('sem data no detalhe, só ação e nome; sem registros, avisa', () => {
   rerender(<HistoricoVaga historico={[]} />)
   expect(screen.getByText('Nada registrado ainda.')).toBeInTheDocument()
 })
+
+test('mostra o texto do motivo do atraso', () => {
+  render(<HistoricoVaga historico={[entrada('1', 'Escreveu o motivo do atraso em Triagem', { motivo: 'Gestor em viagem.' })]} />)
+  expect(screen.getByRole('listitem')).toHaveTextContent('“Gestor em viagem.”')
+})

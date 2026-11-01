@@ -10,6 +10,7 @@ import { COR_PRAZO, ROTULO_PRAZO } from '../../cores'
 import { ehUuid } from '@/lib/validacao/vaga'
 import { Acoes } from './Acoes'
 import { HistoricoVaga } from './HistoricoVaga'
+import { MotivoAtraso } from './MotivoAtraso'
 
 export default async function DetalheVaga({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -53,6 +54,8 @@ export default async function DetalheVaga({ params }: { params: Promise<{ id: st
           />
         )}
       </div>
+
+      {cor === 'vermelho' && atual && <MotivoAtraso vagaId={id} etapa={{ ordem: atual.ordem, nome: atual.nome }} motivo={vaga.motivo} podeEditar={podeEditar} />}
 
       {podeEditar && <Acoes vagaId={id} perfil={sessao.perfil} etapaAtual={atual ? { ordem: atual.ordem, nome: atual.nome } : null} ultimaConcluida={ultima} admitida={vaga.situacao.admitida} hoje={hoje} />}
 

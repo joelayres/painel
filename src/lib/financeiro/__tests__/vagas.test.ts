@@ -8,7 +8,7 @@ const etapa = (ordem: number, fixa: 'captura' | 'admissao' | null, fim: string, 
 const vaga = (previsao: VagaPainel['previsao'], admitida: boolean, mobilizada: boolean): VagaPainel => ({
   id: 'v1', projetoId: 'p1', funcao: 'Técnico de campo', disciplina: 'Mecânica', area: 'Q3', meta: '2026-12-15',
   onda: { id: 'o1', nome: '1ª Onda', inicio: '2026-10-01', fim: '2026-12-15' }, gestor: null, candidato: 'Fulano',
-  previsao, situacao: { cor: null, admitida, mobilizada, diasNaEtapa: 0 },
+  previsao, situacao: { cor: null, admitida, mobilizada, diasNaEtapa: 0 }, motivo: null,
 })
 
 test('vaga mobilizada: data da última etapa concluída, admitida e mobilizada', () => {

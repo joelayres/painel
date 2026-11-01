@@ -26,6 +26,11 @@ export function Atencao({ vagas }: { vagas: VagaPainel[] }) {
                   <span className="block text-sm text-texto-suave">
                     parada em {etapa?.nome} há {dias(v.situacao.diasNaEtapa)} · admissão prevista {ddmm(v.previsao.admissaoEstimada)} (meta {ddmm(v.meta)})
                   </span>
+                  {v.motivo && (
+                    <span className="mt-1 block text-sm" style={{ color: 'var(--st-reprovada-texto)' }}>
+                      <strong className="font-semibold">Motivo:</strong> {v.motivo.texto}
+                    </span>
+                  )}
                 </Link>
               </li>
             )

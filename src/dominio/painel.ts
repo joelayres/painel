@@ -4,6 +4,8 @@ import type { PrevisaoVaga } from './previsao'
 import type { Situacao } from './situacao'
 
 export type OndaVaga = { id: string; nome: string; inicio: string; fim: string }
+// Motivo que a equipe escreveu para o atraso da etapa atual; `em` é quando foi escrito ou alterado.
+export type MotivoAtraso = { texto: string; nomeUsuario: string; em: string }
 export type VagaPainel = {
   id: string
   projetoId: string
@@ -16,6 +18,8 @@ export type VagaPainel = {
   candidato: string | null
   previsao: PrevisaoVaga
   situacao: Situacao
+  // Só nas vagas atrasadas (vermelhas); nas outras fica nulo mesmo que haja motivo guardado.
+  motivo: MotivoAtraso | null
 }
 export type Filtro = { onda?: string; funcao?: string; area?: string; gestorId?: string; candidato?: string }
 export type ResumoGrupo = {

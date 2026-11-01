@@ -291,6 +291,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"vaga_motivos": {
+                  Row: {
+                    "atualizado_em": string,"etapa_id": string,"nome_usuario": string,"texto": string,"vaga_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "atualizado_em"?: string,"etapa_id": string,"nome_usuario": string,"texto": string,"vaga_id": string
+                  }
+                  Update: {
+                    "atualizado_em"?: string,"etapa_id"?: string,"nome_usuario"?: string,"texto"?: string,"vaga_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "vaga_motivos_etapa_id_fkey"
+      columns: ["etapa_id"]
+isOneToOne: false
+      referencedRelation: "projeto_etapas"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "vaga_motivos_vaga_id_fkey"
+      columns: ["vaga_id"]
+isOneToOne: false
+      referencedRelation: "vagas"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"vagas": {
                   Row: {
                     "area": string,"cancelada_em": string | null,"candidato": string | null,"criado_em": string,"data_inicio": string,"disciplina": string,"funcao": string,"gestor_id": string | null,"id": string,"meta": string | null,"onda_id": string | null,"projeto_id": string,"retomada_em": string | null
@@ -465,6 +491,9 @@ isOneToOne: false
                            },
 "salvar_cliente":
 { Args: { "p_id": string,"p_nome": string }; Returns: string
+                           },
+"salvar_motivo_atraso":
+{ Args: { "p_ordem_esperada": number,"p_texto": string,"p_vaga": string }; Returns: undefined
                            },
 "salvar_onda_projeto":
 { Args: { "p_fim": string,"p_id": string,"p_inicio": string,"p_nome": string,"p_projeto": string }; Returns: string
