@@ -492,11 +492,11 @@ isOneToOne: false
 "salvar_cliente":
 { Args: { "p_id": string,"p_nome": string }; Returns: string
                            },
-"salvar_onda_projeto":
-{ Args: { "p_fim": string,"p_id": string,"p_inicio": string,"p_nome": string,"p_projeto": string }; Returns: string
-                           },
 "salvar_motivo_atraso":
 { Args: { "p_ordem_esperada": number,"p_texto": string,"p_vaga": string }; Returns: undefined
+                           },
+"salvar_onda_projeto":
+{ Args: { "p_fim": string,"p_id": string,"p_inicio": string,"p_nome": string,"p_projeto": string }; Returns: string
                            },
 "salvar_projeto":
 { Args: { "p": Json,"p_id": string }; Returns: string
