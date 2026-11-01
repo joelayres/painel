@@ -330,6 +330,12 @@ isOneToOne: false
                   }
                   Relationships: [
                     {
+      foreignKeyName: "vagas_adiada_etapa_id_fkey"
+      columns: ["adiada_etapa_id"]
+isOneToOne: false
+      referencedRelation: "projeto_etapas"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "vagas_gestor_id_fkey"
       columns: ["gestor_id"]
 isOneToOne: false
@@ -355,7 +361,13 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "alterar_duracao_cliente":
+            "adiar_etapa":
+{ Args: { "p_data": string,"p_vaga": string }; Returns: undefined
+                           },
+"adiar_etapa_em_grupo":
+{ Args: { "p_data": string,"p_vagas": (string)[] }; Returns: Json
+                           },
+"alterar_duracao_cliente":
 { Args: { "p_cliente": string,"p_dias": number,"p_ordem": number }; Returns: undefined
                            },
 "alterar_duracao_etapa":
@@ -363,12 +375,6 @@ isOneToOne: false
                            },
 "alterar_duracao_etapa_cliente":
 { Args: { "p_dias": number,"p_etapa": string }; Returns: undefined
-                           },
-"adiar_etapa":
-{ Args: { "p_data": string,"p_vaga": string }; Returns: undefined
-                           },
-"adiar_etapa_em_grupo":
-{ Args: { "p_data": string,"p_vagas": string[] }; Returns: Json
                            },
 "alterar_vagas_em_grupo":
 { Args: { "p_campo": string,"p_vagas": (string)[],"p_valor": string }; Returns: Json
