@@ -1,5 +1,6 @@
 import { Logo } from '@/components/layout/Logo'
 import { FundoRede } from '@/components/marca/FundoRede'
+import { PlantaIndustrial } from '@/components/marca/PlantaIndustrial'
 import { AlternadorTema } from '@/components/tema/AlternadorTema'
 import { FormularioEntrada } from './FormularioEntrada'
 
@@ -11,8 +12,9 @@ export default async function Entrar({ searchParams }: { searchParams: Promise<{
     <div className="grid min-h-dvh lg:grid-cols-[1.1fr_1fr]">
       <aside className="relative hidden flex-col justify-between overflow-hidden bg-[#072b33] p-10 text-white lg:flex">
         <FundoRede />
+        <PlantaIndustrial className="absolute inset-x-0 -bottom-[10%] h-[70%]" />
         <Logo className="relative" />
-        <div className="relative max-w-md [text-shadow:0_1px_12px_rgba(0,0,0,0.45)]">
+        <div className="relative mb-[45vh] max-w-md [text-shadow:0_1px_12px_rgba(0,0,0,0.45)]">
           <p className="font-titulo text-5xl leading-[1.05] font-semibold tracking-tight">Painel de Mobilização</p>
           <p className="mt-4 text-lg opacity-80">Acompanhamento das contratações</p>
         </div>
