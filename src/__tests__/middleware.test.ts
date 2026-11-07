@@ -32,3 +32,8 @@ test('leitura do Financeiro não exige login (tem segredo próprio)', async () =
   const r = await middleware(new NextRequest('https://app/api/financeiro/vagas'))
   expect(r.headers.get('location')).toBeNull()
 })
+
+test('leitura do Efetivo (Portal) não exige login (tem segredo próprio)', async () => {
+  const r = await middleware(new NextRequest('https://app/api/efetivo/vagas'))
+  expect(r.headers.get('location')).toBeNull()
+})
