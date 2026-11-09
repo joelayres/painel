@@ -28,6 +28,12 @@ describe('previsão das etapas', () => {
     expect(p.etapas[1]).toMatchObject({ fim: '2026-10-30', concluidaEm: '2026-10-30' })
   })
 
+  it('etapa concluída antes do início da vaga começa na própria conclusão', () => {
+    const p = prever('2026-10-30', [{ ordem: 1, concluidaEm: '2026-10-22' }])
+    expect(p.etapas[0]).toMatchObject({ inicio: '2026-10-22', fim: '2026-10-22' })
+    expect(p.inicioEtapaAtual).toBe('2026-10-23')
+  })
+
   it('início num sábado começa no próximo dia útil', () => {
     const p = prever('2026-10-24')
     expect(p.etapas[0]).toMatchObject({ inicio: '2026-10-26', fim: '2026-10-26' })

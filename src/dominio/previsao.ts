@@ -44,6 +44,8 @@ export function preverVaga(p: {
       etapas.push({ ordem: e.ordem, nome: e.nome, fixa: e.fixa, inicio: concluidaEm, fim: concluidaEm, concluidaEm })
       continue
     }
+    // Concluída antes do início previsto (ex.: data de início alterada depois): o início é a própria conclusão.
+    if (concluidaEm && concluidaEm < inicio) inicio = concluidaEm
     const fim = concluidaEm ?? fimDaEtapa(inicio, e.duracao, f)
     etapas.push({ ordem: e.ordem, nome: e.nome, fixa: e.fixa, inicio, fim, concluidaEm })
     // Depois de um marco (0 dias) a próxima começa no mesmo dia útil; depois das outras, no dia útil seguinte.
