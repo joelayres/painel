@@ -24,7 +24,7 @@ type LinhaVaga = {
   adiada_etapa_id: string | null
 }
 type Organizacao = 'ondas' | 'meta'
-type LinhaProjeto = { id: string; nome: string; area: string | null; organizacao: Organizacao; encerrado_em: string | null; cliente_id: string }
+type LinhaProjeto = { id: string; nome: string; area: string | null; organizacao: Organizacao; encerrado_em: string | null; cliente_id: string; folga_minima: number }
 export type LinhasPainel = {
   vagas: LinhaVaga[]
   conclusoes: { vaga_id: string; etapa_id: string; automatica: boolean; concluida_em: string }[]
@@ -38,7 +38,7 @@ export type LinhasPainel = {
   motivos: { vaga_id: string; etapa_id: string; texto: string; nome_usuario: string; atualizado_em: string }[]
 }
 
-export type ProjetoInfo = { id: string; nome: string; area: string | null; organizacao: Organizacao; encerrado: boolean; cliente: { id: string; nome: string } }
+export type ProjetoInfo = { id: string; nome: string; area: string | null; organizacao: Organizacao; folgaMinima: number; encerrado: boolean; cliente: { id: string; nome: string } }
 export type CartaoProjeto = ProjetoInfo & { ondas: number; resumo: ResumoGrupo }
 
 function duracoesDoCliente(linhas: LinhasPainel['clienteDuracoes'], clienteId: string): Map<number, number> {
@@ -99,7 +99,7 @@ export function montarPainel(l: LinhasPainel, hoje: string): VagaPainel[] {
         hoje,
       })
       const g = v.gestor_id ? gestores.get(v.gestor_id) : undefined
-      const situacao = situacaoVaga(previsao, meta, hoje, feriados)
+      const situacao = situacaoVaga(previsao, meta, hoje, feriados, projeto.folga_minima)
       const etapaAtual = etapasDe(projeto).find((e) => e.ordem === previsao.etapaAtual)
       const m = situacao.etapaAtrasada > 0 && etapaAtual ? motivos.get(`${v.id}|${etapaAtual.id}`) : undefined
       return {
@@ -131,6 +131,7 @@ export function montarProjetos(l: LinhasPainel, hoje: string): CartaoProjeto[] {
         nome: p.nome,
         area: p.area,
         organizacao: p.organizacao,
+        folgaMinima: p.folga_minima,
         encerrado: p.encerrado_em !== null,
         cliente: { id: cliente.id, nome: cliente.nome },
         ondas: p.organizacao === 'ondas' ? l.ondas.filter((o) => o.projeto_id === p.id).length : 0,
@@ -150,12 +151,12 @@ const lerOndas = (ondas: { id: string; nome: string | null; inicio: string; fim:
   ondas.map((o) => ({ id: o.id, nome: o.nome ?? '', inicio: o.inicio, fim: o.fim, projeto_id: o.projeto_id ?? '' }))
 const lerEtapas = (etapas: { id: string; projeto_id: string; posicao: number; nome: string; duracao: number | null; padrao: number | null; fixa: string | null }[]): LinhasPainel['projetoEtapas'] =>
   etapas.map((e) => ({ ...e, fixa: e.fixa === 'captura' || e.fixa === 'admissao' ? e.fixa : null }))
-const lerProjetos = (projetos: { id: string; cliente_id: string; nome: string; area: string | null; organizacao: string; encerrado_em: string | null }[]): LinhaProjeto[] =>
+const lerProjetos = (projetos: { id: string; cliente_id: string; nome: string; area: string | null; organizacao: string; encerrado_em: string | null; folga_minima: number }[]): LinhaProjeto[] =>
   projetos.map((p) => ({ ...p, organizacao: p.organizacao === 'meta' ? 'meta' : 'ondas' }))
 
 const COLUNAS_VAGA = 'id, projeto_id, meta, funcao, disciplina, area, onda_id, gestor_id, candidato, data_inicio, retomada_em, cancelada_em, adiada_ate, adiada_etapa_id'
 const COLUNAS_ETAPA = 'id, projeto_id, posicao, nome, duracao, padrao, fixa'
-const COLUNAS_PROJETO = 'id, cliente_id, nome, area, organizacao, encerrado_em'
+const COLUNAS_PROJETO = 'id, cliente_id, nome, area, organizacao, encerrado_em, folga_minima'
 
 export async function carregarPainel(sb: SupabaseClient<Database>, hoje: string, projetoId: string) {
   // O RLS só devolve o projeto a quem pode vê-lo; sem linha, não há painel.
@@ -193,6 +194,7 @@ export async function carregarPainel(sb: SupabaseClient<Database>, hoje: string,
     nome: projeto.nome,
     area: projeto.area,
     organizacao: projeto.organizacao === 'meta' ? 'meta' : 'ondas',
+    folgaMinima: projeto.folga_minima,
     encerrado: projeto.encerrado_em !== null,
     cliente: { id: cliente.id, nome: cliente.nome },
   }

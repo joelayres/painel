@@ -1,7 +1,8 @@
 import { dataBR } from '@/lib/formato/datas'
 
 export type ItemRegistro = { id: string; acao: string; nome: string; em: string; detalhe: unknown }
-type Periodo = { inicio: string; fim: string }
+// Ondas gravam o período; a edição do projeto grava a folga mínima.
+type Periodo = { inicio?: string; fim?: string; folga_minima?: number }
 
 // Complemento legível do detalhe gravado pelas funções do banco (durações e ondas).
 function complemento(d: unknown): string {
@@ -16,8 +17,10 @@ function complemento(d: unknown): string {
     const a = antes as Periodo
     const b = depois as Periodo
     const partes = [
-      a.inicio !== b.inicio && `início de ${dataBR(a.inicio)} para ${dataBR(b.inicio)}`,
-      a.fim !== b.fim && `fim de ${dataBR(a.fim)} para ${dataBR(b.fim)}`,
+      a.inicio && b.inicio && a.inicio !== b.inicio && `início de ${dataBR(a.inicio)} para ${dataBR(b.inicio)}`,
+      a.fim && b.fim && a.fim !== b.fim && `fim de ${dataBR(a.fim)} para ${dataBR(b.fim)}`,
+      a.folga_minima !== undefined && b.folga_minima !== undefined && a.folga_minima !== b.folga_minima &&
+        `folga mínima de ${a.folga_minima} para ${b.folga_minima} dias úteis`,
     ].filter(Boolean)
     return partes.length ? `: ${partes.join(', ')}` : ''
   }

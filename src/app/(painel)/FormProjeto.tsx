@@ -4,11 +4,12 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { Botao } from '@/components/ui/Botao'
 import { Campo } from '@/components/ui/Campo'
+import { FOLGA_MINIMA } from '@/dominio/situacao'
 import { PainelLateral } from '@/components/ui/PainelLateral'
 import { Selecao } from '@/components/ui/Selecao'
 import { salvarProjeto } from './acoesProjeto'
 
-export type ProjetoEditavel = { id: string; clienteId: string; clienteNome: string; nome: string; area: string | null; organizacao: 'ondas' | 'meta' }
+export type ProjetoEditavel = { id: string; clienteId: string; clienteNome: string; nome: string; area: string | null; organizacao: 'ondas' | 'meta'; folgaMinima: number }
 
 // Novo projeto num painel lateral; ao salvar, vai para a configuração do projeto.
 // Com `projeto`, edita esse projeto (o cliente aparece só para leitura) e fica na página.
@@ -43,6 +44,9 @@ export function FormProjeto({ clientes = [], projeto = null }: { clientes?: { id
           <Campo rotulo="Área" name="area" defaultValue={projeto?.area ?? ''} dica="Opcional." />
           <Selecao rotulo="Organização" name="organizacao" defaultValue={projeto?.organizacao ?? 'ondas'} erro={erros.organizacao}
             opcoes={[{ valor: 'ondas', rotulo: 'Por ondas' }, { valor: 'meta', rotulo: 'Por meta' }]} />
+          <Campo rotulo="Folga mínima (dias úteis)" name="folgaMinima" type="number" min={0} max={30} step={1} required
+            defaultValue={projeto?.folgaMinima ?? FOLGA_MINIMA} erro={erros.folgaMinima}
+            dica="Com esta folga até a meta, ou menos, a vaga fica em Atenção." />
           {erros._ && <p role="alert" className="text-[var(--st-reprovada-texto)]">{erros._}</p>}
           <Botao type="submit" disabled={pendente}>{pendente ? 'Salvando…' : 'Salvar'}</Botao>
         </form>

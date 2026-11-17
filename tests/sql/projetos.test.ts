@@ -381,3 +381,20 @@ describe('vagas e organização do projeto', () => {
       expect(await contar(c, "select count(*) as n from historico where vaga_id is null and acao like 'Importou 2 vagas em %'")).toBe(1)
     }))
 })
+
+describe('folga mínima por projeto', () => {
+  it('começa em 3, salva o valor enviado e mantém quando o campo não vem', () =>
+    emTransacao(async (c) => {
+      const cli = await novoCliente(c)
+      await comoUsuario(c, 'rh')
+      const folga = async (id: string) => (await c.query('select folga_minima from projetos where id = $1', [id])).rows[0].folga_minima
+      const { rows } = await c.query('select salvar_projeto(null, $1) as id', [{ cliente_id: cli, nome: 'teste-sql folga', organizacao: 'meta' }])
+      const id = rows[0].id
+      expect(await folga(id)).toBe(3)
+      await c.query('select salvar_projeto($1, $2)', [id, { cliente_id: cli, nome: 'teste-sql folga', organizacao: 'meta', folga_minima: 5 }])
+      expect(await folga(id)).toBe(5)
+      await c.query('select salvar_projeto($1, $2)', [id, { cliente_id: cli, nome: 'teste-sql folga 2', organizacao: 'meta' }])
+      expect(await folga(id)).toBe(5)
+      expect(await erroSalvo(c, () => c.query('select salvar_projeto($1, $2)', [id, { cliente_id: cli, nome: 'x', organizacao: 'meta', folga_minima: 31 }]))).toMatch(/check/)
+    }))
+})

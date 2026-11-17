@@ -4,7 +4,7 @@ import type { CartaoProjeto as Projeto } from '@/lib/painel/dados'
 import { CartaoProjeto } from '../CartaoProjeto'
 
 const base: Projeto = {
-  id: 'p1', nome: 'Parada 2027', area: 'Manutenção', organizacao: 'ondas', ondas: 4, encerrado: false,
+  id: 'p1', nome: 'Parada 2027', area: 'Manutenção', organizacao: 'ondas', folgaMinima: 3, ondas: 4, encerrado: false,
   cliente: { id: 'c1', nome: 'Braskem' },
   resumo: { id: 'p1', nome: 'Parada 2027', inicio: null, fim: null, total: 50, admitidas: 12, mobilizadas: 20, verde: 30, amarelo: 5, vermelho: 3, proximaMeta: '2026-12-10' },
 }

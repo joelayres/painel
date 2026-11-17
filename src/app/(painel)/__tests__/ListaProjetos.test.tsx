@@ -8,7 +8,7 @@ vi.mock('../acoesProjeto', () => ({}))
 const { ListaProjetos } = await import('../ListaProjetos')
 
 const proj = (id: string, nome: string, cliente: string): Projeto => ({
-  id, nome, area: null, organizacao: 'ondas', ondas: 2, encerrado: false,
+  id, nome, area: null, organizacao: 'ondas', folgaMinima: 3, ondas: 2, encerrado: false,
   cliente: { id: cliente, nome: cliente },
   resumo: { id, nome, inicio: null, fim: null, total: 5, admitidas: 1, mobilizadas: 1, verde: 3, amarelo: 1, vermelho: 1, proximaMeta: null },
 })
