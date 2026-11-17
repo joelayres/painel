@@ -6,6 +6,7 @@ import { ehEquipe, exigirSessao } from '@/lib/auth/perfil'
 import { dataBR, ddmm } from '@/lib/formato/datas'
 import { carregarVaga } from '@/lib/painel/dados'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
+import { textoEtapaAtrasada, textoFolga } from '@/dominio/situacao'
 import { COR_PRAZO, ROTULO_PRAZO } from '../../cores'
 import { ehUuid } from '@/lib/validacao/vaga'
 import { Acoes } from './Acoes'
@@ -30,6 +31,7 @@ export default async function DetalheVaga({ params }: { params: Promise<{ id: st
   const atual = p.etapas.find((e) => e.ordem === p.etapaAtual) ?? null
   const ultima = [...p.etapas].reverse().find((e) => e.concluidaEm !== null)?.ordem ?? null
   const cor = vaga.situacao.cor
+  const prazo = [textoFolga(vaga.situacao.folga), vaga.situacao.etapaAtrasada > 0 && atual && textoEtapaAtrasada(vaga.situacao.etapaAtrasada).replace('etapa', atual.nome)].filter(Boolean).join(' · ')
 
   return (
     <div className="flex flex-col gap-5">
@@ -43,6 +45,7 @@ export default async function DetalheVaga({ params }: { params: Promise<{ id: st
             {cor && <span className="mr-2 font-semibold" style={{ color: COR_PRAZO[cor] }}>{ROTULO_PRAZO[cor]}</span>}
             {vaga.situacao.comecaEm && atual && `${atual.nome} começa em ${dataBR(vaga.situacao.comecaEm)} · `}
             Admissão prevista {dataBR(p.admissaoEstimada)} · Conclusão prevista {dataBR(p.conclusaoEstimada)}
+            {prazo && <span className="block font-medium">{prazo.charAt(0).toUpperCase() + prazo.slice(1)}</span>}
           </p>
         </div>
         {podeEditar && bruta && (
@@ -56,7 +59,7 @@ export default async function DetalheVaga({ params }: { params: Promise<{ id: st
         )}
       </div>
 
-      {cor === 'vermelho' && atual && <MotivoAtraso vagaId={id} etapa={{ ordem: atual.ordem, nome: atual.nome }} motivo={vaga.motivo} podeEditar={podeEditar} />}
+      {vaga.situacao.etapaAtrasada > 0 && atual && <MotivoAtraso vagaId={id} etapa={{ ordem: atual.ordem, nome: atual.nome }} motivo={vaga.motivo} podeEditar={podeEditar} />}
 
       {podeEditar && <Acoes vagaId={id} perfil={sessao.perfil} etapaAtual={atual ? { ordem: atual.ordem, nome: atual.nome } : null} ultimaConcluida={ultima} admitida={vaga.situacao.admitida} hoje={hoje} inicioDaOnda={vaga.onda?.inicio ?? null} />}
 

@@ -30,7 +30,7 @@ export function CartaoProjeto({ projeto }: { projeto: Projeto }) {
       <p className="mt-3 text-sm">
         <span style={{ color: COR_PRAZO.verde }} className="font-semibold">{r.verde} no prazo</span>
         {' · '}
-        <span style={{ color: COR_PRAZO.amarelo }} className="font-semibold">{r.amarelo} em risco</span>
+        <span style={{ color: COR_PRAZO.amarelo }} className="font-semibold">{r.amarelo} em atenção</span>
         {' · '}
         <span style={{ color: COR_PRAZO.vermelho }} className="font-semibold">{r.vermelho} atrasadas</span>
       </p>

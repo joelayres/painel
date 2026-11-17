@@ -96,11 +96,12 @@ export function montarPainel(l: LinhasPainel, hoje: string): VagaPainel[] {
         etapas: etapasDe(projeto),
         conclusoes: conclusoes.get(v.id) ?? [],
         feriados,
+        hoje,
       })
       const g = v.gestor_id ? gestores.get(v.gestor_id) : undefined
       const situacao = situacaoVaga(previsao, meta, hoje, feriados)
       const etapaAtual = etapasDe(projeto).find((e) => e.ordem === previsao.etapaAtual)
-      const m = situacao.cor === 'vermelho' && etapaAtual ? motivos.get(`${v.id}|${etapaAtual.id}`) : undefined
+      const m = situacao.etapaAtrasada > 0 && etapaAtual ? motivos.get(`${v.id}|${etapaAtual.id}`) : undefined
       return {
         id: v.id,
         projetoId: projeto.id,

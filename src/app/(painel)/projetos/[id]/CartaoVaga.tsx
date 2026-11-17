@@ -1,11 +1,13 @@
 import Link from 'next/link'
 import type { VagaPainel } from '@/dominio/painel'
+import { textoEtapaAtrasada, textoFolga } from '@/dominio/situacao'
 import { ddmm } from '@/lib/formato/datas'
 import { COR_PRAZO, ROTULO_PRAZO } from '../../cores'
 
 export function CartaoVaga({ vaga, arrastavel = false, aoArrastar, aoSoltar }: { vaga: VagaPainel; arrastavel?: boolean; aoArrastar?: () => void; aoSoltar?: () => void }) {
   const cor = vaga.situacao.cor ?? 'verde'
   const d = vaga.situacao.diasNaEtapa
+  const prazo = [textoFolga(vaga.situacao.folga), vaga.situacao.etapaAtrasada > 0 && textoEtapaAtrasada(vaga.situacao.etapaAtrasada)].filter(Boolean).join(' · ')
   return (
     <Link
       href={`/vagas/${vaga.id}`}
@@ -21,6 +23,11 @@ export function CartaoVaga({ vaga, arrastavel = false, aoArrastar, aoSoltar }: {
       <span className="mt-1 block text-xs">
         {vaga.situacao.comecaEm ? `Etapa começa em ${ddmm(vaga.situacao.comecaEm)}` : `${d} ${d === 1 ? 'dia' : 'dias'} nesta etapa`} · Admissão prevista {ddmm(vaga.previsao.admissaoEstimada)}
       </span>
+      {prazo && (
+        <span className="mt-0.5 block text-xs font-semibold" style={cor === 'verde' ? undefined : { color: COR_PRAZO[cor] }}>
+          {prazo.charAt(0).toUpperCase() + prazo.slice(1)}
+        </span>
+      )}
       {vaga.motivo && (
         <span className="mt-1.5 line-clamp-2 rounded-md px-2 py-1 text-xs" style={{ background: 'var(--st-reprovada-fundo)', color: 'var(--st-reprovada-texto)' }} title={vaga.motivo.texto}>
           <strong className="font-semibold">Motivo do atraso:</strong> {vaga.motivo.texto}

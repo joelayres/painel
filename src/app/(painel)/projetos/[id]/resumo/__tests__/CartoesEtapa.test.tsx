@@ -38,10 +38,10 @@ test('etapa sem vagas fica apagada com aviso', () => {
   expect(cartao).toHaveClass('opacity-60')
 })
 
-test('mostra atrasadas e em risco quando houver', () => {
+test('mostra atrasadas e em atenção quando houver', () => {
   render(<CartoesEtapa cartoes={cartoes} hrefFuncao={href} />)
   expect(screen.getByText('2 atrasadas')).toBeInTheDocument()
-  expect(screen.getByText('1 em risco')).toBeInTheDocument()
+  expect(screen.getByText('1 em atenção')).toBeInTheDocument()
   expect(screen.queryByText('0 atrasadas')).not.toBeInTheDocument()
 })
 

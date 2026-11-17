@@ -20,6 +20,18 @@ describe('previsão das etapas', () => {
     expect(p.inicioEtapaAtual).toBe('2026-10-22')
   })
 
+  it('etapa atual vencida: as seguintes partem de hoje, sem mexer no prazo dela', () => {
+    const p = preverVaga({ dataInicio: '2026-10-22', etapas: ETAPAS_PADRAO, conclusoes: [], feriados: F, hoje: '2026-10-27' })
+    expect(p.etapas[0]).toMatchObject({ inicio: '2026-10-22', fim: '2026-10-22' })
+    expect(p.etapas[1]).toMatchObject({ inicio: '2026-10-28', fim: '2026-11-03' })
+    expect(p.admissaoEstimada).toBe('2026-11-25')
+  })
+
+  it('etapa atual no prazo: hoje não muda nada', () => {
+    const p = preverVaga({ dataInicio: '2026-10-22', etapas: ETAPAS_PADRAO, conclusoes: [], feriados: F, hoje: '2026-10-22' })
+    expect(p.admissaoEstimada).toBe('2026-11-19')
+  })
+
   it('conclusão atrasada desloca as seguintes', () => {
     const p = prever('2026-10-22', [{ ordem: 1, concluidaEm: '2026-10-22' }, { ordem: 2, concluidaEm: '2026-10-30' }])
     expect(p.etapaAtual).toBe(3)

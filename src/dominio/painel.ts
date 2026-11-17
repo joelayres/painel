@@ -18,7 +18,7 @@ export type VagaPainel = {
   candidato: string | null
   previsao: PrevisaoVaga
   situacao: Situacao
-  // Só nas vagas atrasadas (vermelhas); nas outras fica nulo mesmo que haja motivo guardado.
+  // Só quando a etapa atual passou do prazo; nas outras fica nulo mesmo que haja motivo guardado.
   motivo: MotivoAtraso | null
 }
 export type Filtro = { onda?: string; funcao?: string; area?: string; gestorId?: string; candidato?: string }
@@ -98,15 +98,12 @@ export function resumoPorEtapa(vagas: VagaPainel[], etapas: EtapaDef[]): CartaoE
   ]
 }
 
-const fimAtual = (v: VagaPainel) => v.previsao.etapas.find((e) => e.ordem === v.previsao.etapaAtual)?.fim ?? ''
+const folga = (v: VagaPainel) => v.situacao.folga ?? Infinity
 
-// Vermelhas primeiro, as que venceram há mais tempo no topo; depois amarelas, a admissão mais tardia no topo.
+// Vermelhas primeiro, depois amarelas; em cada cor, a menor folga até a meta no topo.
 export function vagasEmAtencao(vagas: VagaPainel[]): VagaPainel[] {
-  const vermelhas = vagas.filter((v) => v.situacao.cor === 'vermelho').sort((a, b) => fimAtual(a).localeCompare(fimAtual(b)))
-  const amarelas = vagas
-    .filter((v) => v.situacao.cor === 'amarelo')
-    .sort((a, b) => b.previsao.admissaoEstimada.localeCompare(a.previsao.admissaoEstimada))
-  return [...vermelhas, ...amarelas]
+  const daCor = (cor: 'vermelho' | 'amarelo') => vagas.filter((v) => v.situacao.cor === cor).sort((a, b) => folga(a) - folga(b))
+  return [...daCor('vermelho'), ...daCor('amarelo')]
 }
 
 export function porEtapa(vagas: VagaPainel[]): Map<number, VagaPainel[]> {

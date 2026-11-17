@@ -6,7 +6,7 @@ import type { Cor } from '../situacao'
 const ONDA1 = { id: 'o1', nome: 'Onda 1', inicio: '2026-10-22', fim: '2026-11-26' }
 const ONDA2 = { id: 'o2', nome: 'Onda 2', inicio: '2026-11-01', fim: '2026-12-18' }
 
-function vaga(id: string, c: { cor: Cor | null; etapaAtual: number | null; fimAtual?: string; admissao?: string; admitida?: boolean; candidato?: string; onda?: typeof ONDA1; funcao?: string; meta?: string }): VagaPainel {
+function vaga(id: string, c: { cor: Cor | null; etapaAtual: number | null; fimAtual?: string; admissao?: string; admitida?: boolean; candidato?: string; onda?: typeof ONDA1; funcao?: string; meta?: string; folga?: number }): VagaPainel {
   const mobilizada = c.cor === null
   return {
     id,
@@ -25,7 +25,7 @@ function vaga(id: string, c: { cor: Cor | null; etapaAtual: number | null; fimAt
       admissaoEstimada: c.admissao ?? '2026-11-19',
       conclusaoEstimada: '2026-12-01',
     },
-    situacao: { cor: c.cor, admitida: c.admitida ?? mobilizada, mobilizada, diasNaEtapa: 1, comecaEm: null },
+    situacao: { cor: c.cor, admitida: c.admitida ?? mobilizada, mobilizada, diasNaEtapa: 1, comecaEm: null, folga: c.folga ?? 10, etapaAtrasada: 0 },
     motivo: null,
   }
 }
@@ -90,14 +90,15 @@ describe('painel', () => {
     expect(filtrarVagas(vagas, { funcao: 'eletricista' }).map((v) => v.id)).toEqual(['a'])
   })
 
-  it('lista em atenção as vermelhas antes das amarelas, as mais atrasadas primeiro', () => {
+  it('lista em atenção as vermelhas antes das amarelas, as de menor folga primeiro', () => {
     const vagas = [
-      vaga('amarela', { cor: 'amarelo', etapaAtual: 2 }),
-      vaga('vermelha-recente', { cor: 'vermelho', etapaAtual: 2, fimAtual: '2026-10-28' }),
+      vaga('amarela-folgada', { cor: 'amarelo', etapaAtual: 2, folga: 8 }),
+      vaga('vermelha-pouco', { cor: 'vermelho', etapaAtual: 2, folga: -1 }),
       vaga('verde', { cor: 'verde', etapaAtual: 2 }),
-      vaga('vermelha-antiga', { cor: 'vermelho', etapaAtual: 2, fimAtual: '2026-10-23' }),
+      vaga('amarela-justa', { cor: 'amarelo', etapaAtual: 2, folga: 1 }),
+      vaga('vermelha-muito', { cor: 'vermelho', etapaAtual: 2, folga: -6 }),
     ]
-    expect(vagasEmAtencao(vagas).map((v) => v.id)).toEqual(['vermelha-antiga', 'vermelha-recente', 'amarela'])
+    expect(vagasEmAtencao(vagas).map((v) => v.id)).toEqual(['vermelha-muito', 'vermelha-pouco', 'amarela-justa', 'amarela-folgada'])
   })
 
   it('agrupa por etapa atual, sem as mobilizadas', () => {

@@ -19,6 +19,8 @@ export function preverVaga(p: {
   retomadaEm?: string | null
   // A etapa `etapaId` só começa em `ate` (só pesa enquanto ela está aberta).
   adiamento?: { etapaId: string; ate: string } | null
+  // Com `hoje`, a etapa atual vencida termina no mínimo hoje e as seguintes partem daí (o prazo dela não muda).
+  hoje?: string
   etapas: EtapaDef[]
   conclusoes: Conclusao[]
   feriados: Feriados
@@ -28,6 +30,7 @@ export function preverVaga(p: {
   const automaticas = new Set(p.conclusoes.filter((c) => c.automatica).map((c) => c.ordem))
   const etapas: EtapaPrevista[] = []
   let inicio = proximoDiaUtil(p.dataInicio, f)
+  let atualVista = false
   for (const e of [...p.etapas].sort((a, b) => a.ordem - b.ordem)) {
     // Desistência do candidato: a captura recomeça na data da retomada (só pesa enquanto ela está aberta).
     if (e.fixa === 'captura' && p.retomadaEm && !concluidas.has(e.ordem)) {
@@ -48,8 +51,11 @@ export function preverVaga(p: {
     if (concluidaEm && concluidaEm < inicio) inicio = concluidaEm
     const fim = concluidaEm ?? fimDaEtapa(inicio, e.duracao, f)
     etapas.push({ ordem: e.ordem, nome: e.nome, fixa: e.fixa, inicio, fim, concluidaEm })
+    const ehAtual = !concluidaEm && !atualVista
+    if (ehAtual) atualVista = true
+    const fimReal = ehAtual && p.hoje && p.hoje > fim ? p.hoje : fim
     // Depois de um marco (0 dias) a próxima começa no mesmo dia útil; depois das outras, no dia útil seguinte.
-    inicio = e.duracao === 0 ? proximoDiaUtil(fim, f) : diaUtilSeguinte(fim, f)
+    inicio = e.duracao === 0 ? proximoDiaUtil(fimReal, f) : diaUtilSeguinte(fimReal, f)
   }
   const atual = etapas.find((e) => e.concluidaEm === null) ?? null
   const fimDe = (fixa: EtapaFixa) => etapas.find((e) => e.fixa === fixa)?.fim ?? etapas.at(-1)!.fim

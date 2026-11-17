@@ -24,7 +24,7 @@ export function CartoesEtapa({ cartoes, hrefFuncao }: { cartoes: CartaoEtapa[]; 
                       <span className="basis-full text-xs">
                         {f.vermelho > 0 && <span style={{ color: COR_PRAZO.vermelho }} className="font-semibold">{f.vermelho} atrasadas</span>}
                         {f.vermelho > 0 && f.amarelo > 0 && ' · '}
-                        {f.amarelo > 0 && <span style={{ color: COR_PRAZO.amarelo }} className="font-semibold">{f.amarelo} em risco</span>}
+                        {f.amarelo > 0 && <span style={{ color: COR_PRAZO.amarelo }} className="font-semibold">{f.amarelo} em atenção</span>}
                       </span>
                     )}
                   </>
