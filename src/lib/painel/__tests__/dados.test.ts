@@ -58,15 +58,15 @@ describe('montarPainel: motivo do atraso', () => {
     ],
   }
 
-  it('mostra o motivo da etapa atual na vaga atrasada', () => {
+  it('mostra o motivo da etapa atual quando ela passou do prazo', () => {
     const a = montarPainel(comMotivos, '2026-12-15').find((v) => v.id === 'vA')!
     expect(a.situacao.cor).toBe('vermelho')
     expect(a.motivo).toEqual({ texto: 'Poucos currículos', nomeUsuario: 'Bia', em: '2026-10-30T12:00:00Z' })
   })
 
-  it('não mostra motivo em vaga que não está atrasada', () => {
+  it('não mostra motivo quando a etapa atual está no prazo, mesmo além da meta', () => {
     const a = montarPainel(comMotivos, '2026-10-27').find((v) => v.id === 'vA')!
-    expect(a.situacao.cor).not.toBe('vermelho')
+    expect(a.situacao).toMatchObject({ cor: 'vermelho', etapaAtrasada: 0 })
     expect(a.motivo).toBeNull()
   })
 
@@ -77,17 +77,25 @@ describe('montarPainel: motivo do atraso', () => {
 })
 
 describe('montarPainel', () => {
+  it('etapa vencida empurra a admissão a partir de hoje', () => {
+    const a = montarPainel(linhas, '2026-11-04').find((v) => v.id === 'vA')!
+    expect(a.previsao.etapas[1].fim).toBe('2026-10-28')
+    expect(a.previsao.admissaoEstimada).toBe('2026-11-26')
+    expect(a.situacao).toMatchObject({ cor: 'vermelho', etapaAtrasada: 4 })
+  })
+
+
   it('monta as vagas ativas com previsão e cor, sem as canceladas', () => {
     const vagas = montarPainel(linhas, '2026-10-27')
     expect(vagas.map((v) => v.id)).toEqual(['vA', 'vB', 'vM'])
     const a = vagas[0]
     expect(a).toMatchObject({ projetoId: 'pA', meta: '2026-11-18', gestor: { id: 'g1', nome: 'Ana' }, onda: { nome: 'Onda 1' } })
     expect(a.previsao.admissaoEstimada).toBe('2026-11-19')
-    expect(a.situacao.cor).toBe('amarelo')
+    expect(a.situacao).toMatchObject({ cor: 'vermelho', folga: -1 })
   })
 
   it('usa as durações do projeto: a etapa 2 do projeto B termina antes da do A', () => {
-    const [a, b] = montarPainel(linhas, '2026-10-27')
+    const [a, b] = montarPainel(linhas, '2026-10-22')
     const fim2 = (v: typeof a) => v.previsao.etapas.find((e) => e.ordem === 2)!.fim
     expect(fim2(b) < fim2(a)).toBe(true)
   })
@@ -122,7 +130,7 @@ describe('montarPainel', () => {
     const m = montarPainel(linhas, '2026-10-27')[2]
     expect(m.onda).toBeNull()
     expect(m.meta).toBe('2026-11-18')
-    expect(m.situacao.cor).toBe('amarelo')
+    expect(m.situacao.cor).toBe('vermelho')
   })
 
   it('usa a data de retomada depois de uma desistência', () => {

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { vagasEmAtencao, type VagaPainel } from '@/dominio/painel'
+import { textoEtapaAtrasada, textoFolga } from '@/dominio/situacao'
 import { ddmm } from '@/lib/formato/datas'
 import { COR_PRAZO, ROTULO_PRAZO } from '../../cores'
 
@@ -11,12 +12,13 @@ export function Atencao({ vagas }: { vagas: VagaPainel[] }) {
     <section aria-labelledby="titulo-atencao" className="rounded-xl border border-borda bg-superficie p-4">
       <h2 id="titulo-atencao" className="font-titulo text-xl font-semibold">Precisa de atenção ({lista.length})</h2>
       {lista.length === 0 ? (
-        <p className="mt-2 text-texto-suave">Nenhuma vaga atrasada ou em risco.</p>
+        <p className="mt-2 text-texto-suave">Nenhuma vaga precisa de atenção.</p>
       ) : (
         <ul className="mt-3 flex flex-col gap-2">
           {lista.map((v) => {
             const cor = v.situacao.cor!
             const etapa = v.previsao.etapas.find((e) => e.ordem === v.previsao.etapaAtual)
+            const prazo = [textoFolga(v.situacao.folga), v.situacao.etapaAtrasada > 0 && textoEtapaAtrasada(v.situacao.etapaAtrasada)].filter(Boolean).join(' · ')
             return (
               <li key={v.id}>
                 <Link href={`/vagas/${v.id}`} className="block rounded-lg border-l-[6px] bg-superficie-2 px-3 py-2 hover:bg-primaria-suave focus-visible:outline-2 focus-visible:outline-foco" style={{ borderColor: COR_PRAZO[cor] }}>
@@ -24,7 +26,7 @@ export function Atencao({ vagas }: { vagas: VagaPainel[] }) {
                   <span className="font-medium">{v.funcao} · {v.disciplina}</span>
                   <span className="text-texto-suave"> · {v.gestor?.nome ?? 'Sem gestor'}{v.candidato ? ` · ${v.candidato}` : ''}</span>
                   <span className="block text-sm text-texto-suave">
-                    {v.situacao.comecaEm ? `${etapa?.nome} começa em ${ddmm(v.situacao.comecaEm)}` : `parada em ${etapa?.nome} há ${dias(v.situacao.diasNaEtapa)}`} · admissão prevista {ddmm(v.previsao.admissaoEstimada)} (meta {ddmm(v.meta)})
+                    {v.situacao.comecaEm ? `${etapa?.nome} começa em ${ddmm(v.situacao.comecaEm)}` : `parada em ${etapa?.nome} há ${dias(v.situacao.diasNaEtapa)}`} · admissão prevista {ddmm(v.previsao.admissaoEstimada)} (meta {ddmm(v.meta)}){prazo && ` · ${prazo}`}
                   </span>
                   {v.motivo && (
                     <span className="mt-1 block text-sm" style={{ color: 'var(--st-reprovada-texto)' }}>

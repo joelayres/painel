@@ -15,7 +15,7 @@ test('projeto com ondas mostra link, área, ondas, vagas, admitidos e cores', ()
   expect(c).toHaveAttribute('href', '/projetos/p1/resumo')
   expect(c).toHaveTextContent('Manutenção · 4 ondas · 50 vagas')
   expect(c).toHaveTextContent('12 admitidos de 50')
-  expect(c).toHaveTextContent('30 no prazo · 5 em risco · 3 atrasadas')
+  expect(c).toHaveTextContent('30 no prazo · 5 em atenção · 3 atrasadas')
   expect(c).not.toHaveTextContent('próxima meta')
 })
 

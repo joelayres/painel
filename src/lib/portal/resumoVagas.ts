@@ -43,12 +43,12 @@ export function resumirVagas(cartoes: CartaoProjeto[], visiveis: Visiveis): Resu
     versao: 1,
     destaques: [
       { rotulo: 'Vagas abertas', valor: total('total'), unidade: 'quantidade', nota: `${admitidas} ${admitidas === 1 ? 'admitida' : 'admitidas'}` },
-      { rotulo: 'Vagas em atraso', valor: total('vermelho'), unidade: 'quantidade', cor: 'vermelho', nota: `+${total('amarelo')} em risco` },
+      { rotulo: 'Vagas em atraso', valor: total('vermelho'), unidade: 'quantidade', cor: 'vermelho', nota: `+${total('amarelo')} em atenção` },
     ],
     secoes: [secao('Total', meus.map((c) => c.resumo)), ...porProjeto],
     alertas: [
       ...(total('vermelho') ? [vagas(total('vermelho'), 'em atraso')] : []),
-      ...(total('amarelo') ? [vagas(total('amarelo'), 'em risco')] : []),
+      ...(total('amarelo') ? [vagas(total('amarelo'), 'em atenção')] : []),
     ],
   }
 }

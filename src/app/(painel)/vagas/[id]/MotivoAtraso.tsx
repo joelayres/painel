@@ -12,7 +12,7 @@ type Props = { vagaId: string; etapa: { ordem: number; nome: string }; motivo: M
 
 const quando = (em: string) => new Date(em).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' })
 
-// Só aparece na vaga atrasada: quem lê vê o motivo da etapa atual; a equipe escreve, troca ou apaga (texto vazio).
+// Só aparece quando a etapa atual passou do prazo: quem lê vê o motivo da etapa atual; a equipe escreve, troca ou apaga (texto vazio).
 export function MotivoAtraso({ vagaId, etapa, motivo, podeEditar }: Props) {
   const router = useRouter()
   const [editando, setEditando] = useState(false)

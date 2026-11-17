@@ -10,21 +10,33 @@ const DATAS = ['2026-10-22', '2026-10-28', '2026-10-29', '2026-10-30', '2026-11-
   '2026-11-06', '2026-11-17', '2026-11-18', '2026-11-19', '2026-11-24', '2026-12-01']
 
 describe('situação da vaga', () => {
-  it('fica vermelha quando a etapa atual passou da data prevista', () => {
-    expect(situacaoVaga(prever(ate(1, DATAS)), '2026-12-31', '2026-10-29', F).cor).toBe('vermelho')
+  const comHoje = (conclusoes: Conclusao[], hoje: string) => preverVaga({ dataInicio: '2026-10-22', etapas: ETAPAS_PADRAO, conclusoes, feriados: F, hoje })
+
+  it('etapa vencida com folga até a meta fica amarela, não vermelha', () => {
+    const s = situacaoVaga(comHoje(ate(1, DATAS), '2026-10-29'), '2026-12-31', '2026-10-29', F)
+    expect(s).toMatchObject({ cor: 'amarelo', etapaAtrasada: 1 })
+    expect(s.folga).toBeGreaterThan(3)
   })
 
-  it('fica amarela quando a admissão estimada passa da meta', () => {
-    expect(situacaoVaga(prever(ate(1, DATAS)), '2026-11-18', '2026-10-27', F).cor).toBe('amarelo')
+  it('fica vermelha quando a admissão estimada passa da meta', () => {
+    expect(situacaoVaga(prever(ate(1, DATAS)), '2026-11-18', '2026-10-27', F)).toMatchObject({ cor: 'vermelho', folga: -1, etapaAtrasada: 0 })
   })
 
-  it('a meta é inclusiva', () => {
-    expect(situacaoVaga(prever(ate(1, DATAS)), '2026-11-19', '2026-10-27', F).cor).toBe('verde')
+  it('folga de até 3 dias úteis fica amarela; a meta é inclusiva', () => {
+    expect(situacaoVaga(prever(ate(1, DATAS)), '2026-11-19', '2026-10-27', F)).toMatchObject({ cor: 'amarelo', folga: 0 })
+    expect(situacaoVaga(prever(ate(1, DATAS)), '2026-11-25', '2026-10-27', F)).toMatchObject({ cor: 'amarelo', folga: 3 })
+    expect(situacaoVaga(prever(ate(1, DATAS)), '2026-11-26', '2026-10-27', F)).toMatchObject({ cor: 'verde', folga: 4 })
   })
 
-  it('depois da admissão nunca fica amarela, mesmo com a meta vencida', () => {
+  it('o atraso da etapa consome a folga até passar da meta', () => {
+    expect(situacaoVaga(comHoje(ate(1, DATAS), '2026-11-04'), '2026-11-26', '2026-11-04', F)).toMatchObject({ cor: 'amarelo', folga: 0, etapaAtrasada: 4 })
+    expect(situacaoVaga(comHoje(ate(1, DATAS), '2026-11-05'), '2026-11-26', '2026-11-05', F)).toMatchObject({ cor: 'vermelho', folga: -1, etapaAtrasada: 5 })
+  })
+
+  it('depois da admissão não há folga; etapa vencida fica amarela', () => {
     const s = situacaoVaga(prever(ate(11, DATAS)), '2026-11-10', '2026-11-20', F)
-    expect(s).toMatchObject({ cor: 'verde', admitida: true, mobilizada: false })
+    expect(s).toMatchObject({ cor: 'verde', admitida: true, mobilizada: false, folga: null })
+    expect(situacaoVaga(prever(ate(11, DATAS)), '2026-11-10', '2026-11-30', F)).toMatchObject({ cor: 'amarelo', etapaAtrasada: 4 })
   })
 
   it('vaga mobilizada não tem cor', () => {
@@ -65,7 +77,7 @@ describe('admissão em outra posição', () => {
   it('etapa adiada: não fica vermelha antes de começar e diz quando começa', () => {
     const p = preverVaga({ dataInicio: '2026-10-22', adiamento: { etapaId: 'padrao-2', ate: '2026-11-16' }, etapas: ETAPAS_PADRAO, conclusoes: ate(1, DATAS), feriados: F })
     const s = situacaoVaga(p, '2026-12-31', '2026-11-05', F)
-    expect(s).toMatchObject({ cor: 'verde', diasNaEtapa: 0, comecaEm: '2026-11-16' })
+    expect(s).toMatchObject({ cor: 'verde', diasNaEtapa: 0, comecaEm: '2026-11-16', etapaAtrasada: 0 })
     expect(situacaoVaga(p, '2026-12-31', '2026-11-16', F).comecaEm).toBeNull()
   })
 })

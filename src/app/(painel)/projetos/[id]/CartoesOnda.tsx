@@ -56,7 +56,7 @@ export function CartoesOnda({
                 style={{ color: COR_PRAZO.amarelo }}
                 className="font-semibold"
               >
-                {r.amarelo} em risco
+                {r.amarelo} em atenção
               </span>
               {" · "}
               <span

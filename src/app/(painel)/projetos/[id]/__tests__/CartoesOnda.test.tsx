@@ -12,7 +12,7 @@ test('mostra a onda com período, admitidos e contagem por cor', () => {
   expect(cartao).toHaveTextContent('22/10 a 26/11')
   expect(cartao).toHaveTextContent('1 admitidos de 3')
   expect(cartao).toHaveTextContent('1 mobilizados')
-  expect(cartao).toHaveTextContent('1 no prazo · 0 em risco · 1 atrasadas')
+  expect(cartao).toHaveTextContent('1 no prazo · 0 em atenção · 1 atrasadas')
 })
 
 test('destaca a onda filtrada', () => {

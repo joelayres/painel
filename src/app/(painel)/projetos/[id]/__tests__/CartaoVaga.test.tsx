@@ -18,3 +18,16 @@ test('etapa adiada mostra quando começa no lugar dos dias parados', () => {
   expect(screen.getByRole('link')).toHaveTextContent('Etapa começa em 16/11')
   expect(screen.getByRole('link')).not.toHaveTextContent('nesta etapa')
 })
+
+test('mostra a folga até a meta e o atraso da etapa', () => {
+  render(<CartaoVaga vaga={vagaExemplo('v', { cor: 'amarelo', etapaAtual: 3, folga: 6, etapaAtrasada: 2 })} />)
+  expect(screen.getByRole('link')).toHaveTextContent('6 dias úteis de folga · etapa 2 dias úteis além do prazo')
+})
+
+test('além da meta e sem folga', () => {
+  const { unmount } = render(<CartaoVaga vaga={vagaExemplo('v', { cor: 'vermelho', etapaAtual: 3, folga: -1 })} />)
+  expect(screen.getByRole('link')).toHaveTextContent('1 dia útil além da meta')
+  unmount()
+  render(<CartaoVaga vaga={vagaExemplo('v', { cor: 'amarelo', etapaAtual: 3, folga: 0 })} />)
+  expect(screen.getByRole('link')).toHaveTextContent('Sem folga')
+})
