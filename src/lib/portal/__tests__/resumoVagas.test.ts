@@ -3,7 +3,7 @@ import type { CartaoProjeto } from '@/lib/painel/dados'
 import { projetosVisiveis, resumirVagas } from '../resumoVagas'
 
 const cartao = (id: string, cliente: string, nome: string, resumo: Partial<CartaoProjeto['resumo']>, encerrado = false): CartaoProjeto => ({
-  id, nome, area: null, organizacao: 'ondas', encerrado, cliente: { id: cliente, nome: cliente }, ondas: 0,
+  id, nome, area: null, organizacao: 'ondas', folgaMinima: 3, encerrado, cliente: { id: cliente, nome: cliente }, ondas: 0,
   resumo: { id: 'projeto', nome: '', inicio: null, fim: null, total: 0, admitidas: 0, mobilizadas: 0, verde: 0, amarelo: 0, vermelho: 0, proximaMeta: null, ...resumo },
 })
 const braskem = cartao('p1', 'Braskem', '2027', { total: 50, admitidas: 20, mobilizadas: 12, vermelho: 3, amarelo: 5 })

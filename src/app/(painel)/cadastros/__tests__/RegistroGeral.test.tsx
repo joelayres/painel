@@ -33,3 +33,9 @@ test('sem registros mostra aviso', () => {
   render(<RegistroGeral itens={[]} />)
   expect(screen.getByText('Nenhuma mudança registrada ainda.')).toBeInTheDocument()
 })
+
+test('mostra a mudança de folga mínima do projeto', () => {
+  const detalhe = { antes: { nome: 'Parada', area: null, organizacao: 'ondas', folga_minima: 3 }, depois: { nome: 'Parada', area: null, organizacao: 'ondas', folga_minima: 5 } }
+  render(<RegistroGeral itens={[{ id: 'h3', acao: 'Alterou o projeto Parada', nome: 'Joel', em: '2026-11-17T18:30:00Z', detalhe }]} />)
+  expect(screen.getByText(/folga mínima de 3 para 5 dias úteis/)).toBeInTheDocument()
+})

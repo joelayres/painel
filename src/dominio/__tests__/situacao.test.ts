@@ -28,6 +28,12 @@ describe('situação da vaga', () => {
     expect(situacaoVaga(prever(ate(1, DATAS)), '2026-11-26', '2026-10-27', F)).toMatchObject({ cor: 'verde', folga: 4 })
   })
 
+  it('usa a folga mínima do projeto', () => {
+    expect(situacaoVaga(prever(ate(1, DATAS)), '2026-11-25', '2026-10-27', F, 2)).toMatchObject({ cor: 'verde', folga: 3 })
+    expect(situacaoVaga(prever(ate(1, DATAS)), '2026-11-19', '2026-10-27', F, 0)).toMatchObject({ cor: 'amarelo', folga: 0 })
+    expect(situacaoVaga(prever(ate(1, DATAS)), '2026-11-26', '2026-10-27', F, 5)).toMatchObject({ cor: 'amarelo', folga: 4 })
+  })
+
   it('o atraso da etapa consome a folga até passar da meta', () => {
     expect(situacaoVaga(comHoje(ate(1, DATAS), '2026-11-04'), '2026-11-26', '2026-11-04', F)).toMatchObject({ cor: 'amarelo', folga: 0, etapaAtrasada: 4 })
     expect(situacaoVaga(comHoje(ate(1, DATAS), '2026-11-05'), '2026-11-26', '2026-11-05', F)).toMatchObject({ cor: 'vermelho', folga: -1, etapaAtrasada: 5 })

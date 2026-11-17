@@ -1,12 +1,13 @@
 // Cor da vaga no painel: responde se a meta (o compromisso é a admissão) vai ser cumprida.
 // Vermelho: a admissão estimada passa da meta. Amarelo: a etapa atual venceu, mas ainda cabe na meta,
-// ou a folga até a meta é de FOLGA_MINIMA dias úteis ou menos. Mobilizada não tem cor.
+// ou a folga até a meta é de `folgaMinima` dias úteis ou menos (configurada por projeto). Mobilizada não tem cor.
 // A previsão deve vir de preverVaga com `hoje`, para o atraso da etapa empurrar a admissão.
 import { ddmm } from '@/lib/formato/datas'
 import { diasUteisEntre, type Feriados } from './calendario'
 import type { PrevisaoVaga } from './previsao'
 
 export type Cor = 'verde' | 'amarelo' | 'vermelho'
+// Folga mínima de um projeto novo (o banco usa o mesmo padrão).
 export const FOLGA_MINIMA = 3
 // comecaEm: a etapa atual ainda não começou (adiada); até lá, não há dias parados nela.
 // folga: dias úteis da admissão estimada até a meta (negativa = além da meta); nula depois da admissão.
@@ -21,7 +22,7 @@ export type Situacao = {
   etapaAtrasada: number
 }
 
-export function situacaoVaga(prev: PrevisaoVaga, meta: string, hoje: string, f: Feriados): Situacao {
+export function situacaoVaga(prev: PrevisaoVaga, meta: string, hoje: string, f: Feriados, folgaMinima = FOLGA_MINIMA): Situacao {
   const admitida = prev.etapas.some((e) => e.fixa === 'admissao' && e.concluidaEm !== null)
   if (prev.etapaAtual === null) return { cor: null, admitida: true, mobilizada: true, diasNaEtapa: 0, comecaEm: null, folga: null, etapaAtrasada: 0 }
   const atual = prev.etapas.find((e) => e.ordem === prev.etapaAtual)!
@@ -29,7 +30,7 @@ export function situacaoVaga(prev: PrevisaoVaga, meta: string, hoje: string, f: 
   const etapaAtrasada = hoje > atual.fim ? diasUteisEntre(atual.fim, hoje, f) : 0
   const a = prev.admissaoEstimada
   const folga = admitida ? null : a <= meta ? diasUteisEntre(a, meta, f) : -diasUteisEntre(meta, a, f)
-  const cor: Cor = folga !== null && folga < 0 ? 'vermelho' : hoje > atual.fim || (folga !== null && folga <= FOLGA_MINIMA) ? 'amarelo' : 'verde'
+  const cor: Cor = folga !== null && folga < 0 ? 'vermelho' : hoje > atual.fim || (folga !== null && folga <= folgaMinima) ? 'amarelo' : 'verde'
   const comecaEm = prev.inicioEtapaAtual && prev.inicioEtapaAtual > hoje ? prev.inicioEtapaAtual : null
   return { cor, admitida, mobilizada: false, diasNaEtapa, comecaEm, folga, etapaAtrasada }
 }

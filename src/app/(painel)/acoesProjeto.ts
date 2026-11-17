@@ -15,6 +15,7 @@ const esquemaProjeto = z.object({
   clienteId: z.uuid('Escolha o cliente.'),
   area: z.string().nullish().transform((v) => (v?.trim() ? v.trim() : null)),
   organizacao: z.enum(['ondas', 'meta'], { error: 'Escolha a organização.' }),
+  folgaMinima: z.coerce.number({ error: 'Informe a folga mínima.' }).int('Use um número inteiro de dias.').min(0, 'Use de 0 a 30 dias úteis.').max(30, 'Use de 0 a 30 dias úteis.'),
 })
 
 export async function salvarProjeto(id: string | null, entrada: unknown): Promise<{ ok: true; id: string } | { ok: false; erros: Record<string, string> }> {
@@ -25,7 +26,7 @@ export async function salvarProjeto(id: string | null, entrada: unknown): Promis
   const sb = await criarClienteServidor()
   const { data, error } = await sb.rpc('salvar_projeto', {
     p_id: id as string,
-    p: { cliente_id: d.clienteId, nome: d.nome, area: d.area, organizacao: d.organizacao },
+    p: { cliente_id: d.clienteId, nome: d.nome, area: d.area, organizacao: d.organizacao, folga_minima: d.folgaMinima },
   })
   if (error || !data) {
     if (error?.message.includes('sem permissão')) return { ok: false, erros: { _: SEM_ACESSO } }

@@ -227,14 +227,14 @@ isOneToOne: false
                   ]
                 },"projetos": {
                   Row: {
-                    "area": string | null,"cliente_id": string,"criado_em": string,"encerrado_em": string | null,"id": string,"nome": string,"organizacao": string
+                    "area": string | null,"cliente_id": string,"criado_em": string,"encerrado_em": string | null,"folga_minima": number,"id": string,"nome": string,"organizacao": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "area"?: string | null,"cliente_id": string,"criado_em"?: string,"encerrado_em"?: string | null,"id"?: string,"nome": string,"organizacao": string
+                    "area"?: string | null,"cliente_id": string,"criado_em"?: string,"encerrado_em"?: string | null,"folga_minima"?: number,"id"?: string,"nome": string,"organizacao": string
                   }
                   Update: {
-                    "area"?: string | null,"cliente_id"?: string,"criado_em"?: string,"encerrado_em"?: string | null,"id"?: string,"nome"?: string,"organizacao"?: string
+                    "area"?: string | null,"cliente_id"?: string,"criado_em"?: string,"encerrado_em"?: string | null,"folga_minima"?: number,"id"?: string,"nome"?: string,"organizacao"?: string
                   }
                   Relationships: [
                     {

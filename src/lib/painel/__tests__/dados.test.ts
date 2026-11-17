@@ -26,9 +26,9 @@ const vaga = (id: string, projeto_id: string, extra: Partial<LinhasPainel['vagas
 const linhas: LinhasPainel = {
   clientes: [{ id: 'c1', nome: 'Braskem' }],
   projetos: [
-    { id: 'pA', cliente_id: 'c1', nome: 'Parada A', area: null, organizacao: 'ondas', encerrado_em: null },
-    { id: 'pB', cliente_id: 'c1', nome: 'Parada B', area: 'Cloro', organizacao: 'ondas', encerrado_em: null },
-    { id: 'pM', cliente_id: 'c1', nome: 'Contratação', area: null, organizacao: 'meta', encerrado_em: '2026-10-01T00:00:00Z' },
+    { id: 'pA', cliente_id: 'c1', nome: 'Parada A', area: null, organizacao: 'ondas', encerrado_em: null, folga_minima: 3 },
+    { id: 'pB', cliente_id: 'c1', nome: 'Parada B', area: 'Cloro', organizacao: 'ondas', encerrado_em: null, folga_minima: 3 },
+    { id: 'pM', cliente_id: 'c1', nome: 'Contratação', area: null, organizacao: 'meta', encerrado_em: '2026-10-01T00:00:00Z', folga_minima: 3 },
   ],
   clienteDuracoes: [],
   motivos: [],
@@ -136,6 +136,17 @@ describe('montarPainel', () => {
   it('usa a data de retomada depois de uma desistência', () => {
     const [v] = montarPainel({ ...linhas, vagas: [vaga('vA', 'pA', { retomada_em: '2026-11-04' })] }, '2026-11-04')
     expect(v.previsao.inicioEtapaAtual).toBe('2026-11-04')
+  })
+})
+
+describe('folga mínima do projeto', () => {
+  it('a cor usa a folga mínima de cada projeto', () => {
+    // vA (projeto A) no dia 27/10: admissão 19/11, meta 18/11 trocada para 24/11 = 2 dias úteis de folga.
+    const l = { ...linhas, ondas: linhas.ondas.map((o) => (o.id === 'o1' ? { ...o, fim: '2026-11-24' } : o)) }
+    const cor = (folga: number) =>
+      montarPainel({ ...l, projetos: l.projetos.map((p) => (p.id === 'pA' ? { ...p, folga_minima: folga } : p)) }, '2026-10-27').find((v) => v.id === 'vA')!.situacao
+    expect(cor(3)).toMatchObject({ cor: 'amarelo', folga: 2 })
+    expect(cor(1)).toMatchObject({ cor: 'verde', folga: 2 })
   })
 })
 
