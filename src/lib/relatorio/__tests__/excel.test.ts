@@ -8,6 +8,7 @@ const linha = (o: Partial<LinhaRelatorio>): LinhaRelatorio => ({
   onda: 'Onda 1', meta: '2027-01-15', cobrada: true, taxa: 24108.83, etapas: ['2026-10-22', null], mobilizada: false, ...o,
 })
 const relatorio = (o: Partial<Relatorio> = {}): Relatorio => ({
+  opcoes: { funcoes: [], disciplinas: [], areas: [] },
   etapas: [{ ordem: 1, nome: 'Captura' }, { ordem: 2, nome: 'Entrevistas' }],
   linhas: [linha({}), linha({ id: 'v2', tipo: 'MOI', cobrada: false, taxa: null }), linha({ id: 'v3', tipo: null, taxa: null })],
   percentuais: [0.75, 0], totalTaxas: 36918.34, totalTaxasMobilizadas: 24108.83, semTarifa: 1, tarifasIndisponiveis: false, ...o,

@@ -35,6 +35,7 @@ export type EtapaConfig = {
   duracao: number | null
   concluidasPor: number
   chegaramAoPonto: number
+  noRelatorio?: boolean // só no projeto; ausente vale true
 }
 
 type Modo = 'normal' | 'renomear' | 'excluir'
@@ -119,6 +120,16 @@ function Linha({ alvo, etapa, total, temVagas }: { alvo: AlvoEtapas; etapa: Etap
         )}
         {erro && <p role="alert" className="mt-2 text-sm text-[var(--st-reprovada-texto)]">{erro}</p>}
       </td>
+      {doProjetoMesmo && (
+        <td className="px-4 py-3">
+          <input
+            type="checkbox" checked={etapa.noRelatorio !== false} disabled={pendente}
+            aria-label={`Mostrar ${etapa.nome} no relatório`}
+            onChange={(e) => { const mostrar = e.currentTarget.checked; rodar(() => doProjeto.mostrarEtapaNoRelatorio(projetoId, etapa.id, mostrar)) }}
+            className="h-5 w-5 accent-primaria"
+          />
+        </td>
+      )}
       <td className="px-4 py-3">
         <div className="flex flex-wrap gap-1">
           {!temVagas && etapa.ordem > 1 && <Botao type="button" variante="fantasma" disabled={pendente} onClick={() => rodar(() => acoes.mover(projetoId, etapa.id, etapa.ordem - 1))}>Subir{' '}{nome}</Botao>}
@@ -176,6 +187,7 @@ export function EtapasProjeto({ alvo, cliente, etapas, temVagas, totalVagas, som
               <th className="px-4 py-2.5 font-medium">Etapa</th>
               {doProjetoMesmo && <th className="px-4 py-2.5 font-medium">Padrão {cliente}</th>}
               <th className="px-4 py-2.5 font-medium">{doProjetoMesmo ? 'Neste projeto' : 'Duração'}</th>
+              {doProjetoMesmo && <th className="px-4 py-2.5 font-medium">No relatório</th>}
               {!somenteLeitura && <th className="px-4 py-2.5 font-medium">Ações</th>}
             </tr>
           </thead>
@@ -189,6 +201,7 @@ export function EtapasProjeto({ alvo, cliente, etapas, temVagas, totalVagas, som
                   </td>
                   {doProjetoMesmo && <td className="px-4 py-3">{e.padraoCliente !== null ? `${e.padraoCliente} dias úteis` : ''}</td>}
                   <td className="px-4 py-3">{e.duracao !== null ? `${e.duracao} dias úteis${e.padraoCliente !== null ? ' (ajustado)' : ''}` : '—'}</td>
+                  {doProjetoMesmo && <td className="px-4 py-3">{e.noRelatorio !== false ? 'Sim' : 'Não'}</td>}
                 </tr>
               ) : (
                 <Linha key={e.id} alvo={alvo} etapa={e} total={etapas.length} temVagas={temVagas} />

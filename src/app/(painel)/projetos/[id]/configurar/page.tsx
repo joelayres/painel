@@ -40,7 +40,7 @@ export default async function Configurar({ params, searchParams }: { params: Pro
   const [vagas, duracoesCliente, linhasEtapa, conclusoes, pessoas] = await Promise.all([
     lerTodas((de, ate) => sb.from('vagas').select('id, funcao, disciplina, area, onda_id, meta, gestor_id, candidato, data_inicio, cancelada_em').eq('projeto_id', id).order('criado_em').order('id').range(de, ate)),
     sb.from('cliente_duracoes').select('ordem, duracao').eq('cliente_id', projeto.cliente.id),
-    sb.from('projeto_etapas').select('id, padrao, duracao').eq('projeto_id', id),
+    sb.from('projeto_etapas').select('id, padrao, duracao, no_relatorio').eq('projeto_id', id),
     lerTodas((de, ate) => sb.from('vaga_conclusoes').select('etapa_id, vagas!inner(projeto_id)').eq('vagas.projeto_id', id).order('vaga_id').order('etapa_id').range(de, ate)),
     carregarPessoasDoProjeto(sb, id),
   ])
@@ -77,6 +77,7 @@ export default async function Configurar({ params, searchParams }: { params: Pro
       padraoCliente: padrao !== null ? (doCliente.get(padrao) ?? ETAPAS_PADRAO[padrao - 1].duracao) : null,
       duracao: linha?.duracao ?? null,
       concluidasPor: n, chegaramAoPonto: n,
+      noRelatorio: linha?.no_relatorio ?? true,
     }
   })
   const totalVagas = linhasVaga.filter((v) => v.canceladaEm === null).length

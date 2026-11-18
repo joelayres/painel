@@ -201,14 +201,14 @@ isOneToOne: false
                   ]
                 },"projeto_etapas": {
                   Row: {
-                    "duracao": number | null,"fixa": string | null,"id": string,"nome": string,"padrao": number | null,"posicao": number,"projeto_id": string
+                    "duracao": number | null,"fixa": string | null,"id": string,"no_relatorio": boolean,"nome": string,"padrao": number | null,"posicao": number,"projeto_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "duracao"?: number | null,"fixa"?: string | null,"id"?: string,"nome": string,"padrao"?: number | null,"posicao": number,"projeto_id": string
+                    "duracao"?: number | null,"fixa"?: string | null,"id"?: string,"no_relatorio"?: boolean,"nome": string,"padrao"?: number | null,"posicao": number,"projeto_id": string
                   }
                   Update: {
-                    "duracao"?: number | null,"fixa"?: string | null,"id"?: string,"nome"?: string,"padrao"?: number | null,"posicao"?: number,"projeto_id"?: string
+                    "duracao"?: number | null,"fixa"?: string | null,"id"?: string,"no_relatorio"?: boolean,"nome"?: string,"padrao"?: number | null,"posicao"?: number,"projeto_id"?: string
                   }
                   Relationships: [
                     {
@@ -417,6 +417,7 @@ isOneToOne: false
               "duracao": number | null,
 "fixa": string | null,
 "id": string,
+"no_relatorio": boolean,
 "nome": string,
 "padrao": number | null,
 "posicao": number,
@@ -463,6 +464,9 @@ isOneToOne: false
                            },
 "meu_perfil":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"mostrar_etapa_no_relatorio":
+{ Args: { "p_etapa": string,"p_mostrar": boolean }; Returns: undefined
                            },
 "mover_etapa":
 { Args: { "p_etapa": string,"p_para": number }; Returns: undefined
@@ -537,6 +541,7 @@ isOneToOne: false
               "duracao": number | null,
 "fixa": string | null,
 "id": string,
+"no_relatorio": boolean,
 "nome": string,
 "padrao": number | null,
 "posicao": number,

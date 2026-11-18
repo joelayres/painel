@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 import { ETAPAS_PADRAO } from '@/dominio/etapas'
 import { vagaExemplo } from '@/test/vagas'
-import { montarRelatorio, type TarifaDaVaga } from '../relatorio'
+import { lerVisao, montarRelatorio, type TarifaDaVaga, type VisaoRelatorio } from '../relatorio'
 
 const emAndamento = (id: string, etapaAtual: number, candidato?: string) => vagaExemplo(id, { cor: 'verde', etapaAtual, candidato })
 const mobilizada = (id: string) => vagaExemplo(id, { cor: null, etapaAtual: null, candidato: 'Ana' })
@@ -51,4 +51,56 @@ test('Financeiro indisponível', () => {
   const r = montarRelatorio([emAndamento('v1', 2), mobilizada('v2')], ETAPAS_PADRAO, null)
   expect(r).toMatchObject({ tarifasIndisponiveis: true, semTarifa: 2, totalTaxas: 0 })
   expect(r.linhas[0]).toMatchObject({ tipo: null, taxa: null })
+})
+
+test('etapas fora do relatório não viram coluna nem percentual', () => {
+  const ocultas = new Set(ETAPAS_PADRAO.filter((e) => e.ordem !== 2 && e.ordem !== 4).map((e) => e.id))
+  const r = montarRelatorio([emAndamento('v1', 3), mobilizada('v2')], ETAPAS_PADRAO, new Map(), { ocultas })
+  expect(r.etapas.map((e) => e.nome)).toEqual(['Captura de Mercado', 'Entrevista - Timenow'])
+  expect(r.linhas[0].etapas).toEqual(['2026-10-22', null])
+  expect(r.percentuais).toEqual([1, 0.5])
+})
+
+const com = (id: string, funcao: string, disciplina: string, area: string, etapaAtual = 2) => ({ ...emAndamento(id, etapaAtual), funcao, disciplina, area })
+const variadas = () => [
+  com('v1', 'Técnico de Campo', 'NR13', 'Q3', 3),
+  com('v2', 'Assistente  Técnico', 'APOIOS', 'Q1'),
+  com('v3', 'técnico de campo', 'FORNOS', 'Q1'),
+  com('v4', 'Engenheiro de Campo', 'APOIOS', ''),
+]
+
+test('opções de filtro: valores distintos, sem vazio, em ordem alfabética, sem repetir variação de maiúscula/espaço', () => {
+  const r = montarRelatorio(variadas(), ETAPAS_PADRAO, new Map(), { visao: { area: 'Q1' } })
+  expect(r.opcoes).toEqual({
+    funcoes: ['Assistente  Técnico', 'Engenheiro de Campo', 'Técnico de Campo'],
+    disciplinas: ['APOIOS', 'FORNOS', 'NR13'],
+    areas: ['Q1', 'Q3'],
+  })
+})
+
+test('filtra por função (ignorando maiúscula, acento e espaço duplo), disciplina e área; % e totais seguem o filtro', () => {
+  const tarifas = new Map([['v1', { tipo: 'MOD' as const, cobrada: true, valor: 100 }], ['v3', { tipo: 'MOD' as const, cobrada: true, valor: 50 }]])
+  const r = montarRelatorio(variadas(), ETAPAS_PADRAO, tarifas, { visao: { funcao: 'tecnico de  campo' } })
+  expect(r.linhas.map((l) => l.id)).toEqual(['v1', 'v3'])
+  expect(r.totalTaxas).toBe(150)
+  expect(r.percentuais[1]).toBe(0.5)
+  expect(montarRelatorio(variadas(), ETAPAS_PADRAO, null, { visao: { disciplina: 'APOIOS', area: 'Q1' } }).linhas.map((l) => l.id)).toEqual(['v2'])
+  expect(montarRelatorio(variadas(), ETAPAS_PADRAO, null, { visao: { area: 'Nenhuma' } }).linhas).toEqual([])
+})
+
+test('ordena por função, disciplina ou área, crescente ou decrescente, mantendo a ordem original nos empates', () => {
+  const ids = (visao: VisaoRelatorio) =>
+    montarRelatorio(variadas(), ETAPAS_PADRAO, null, { visao }).linhas.map((l) => l.id)
+  expect(ids({ ordem: 'funcao' })).toEqual(['v2', 'v4', 'v1', 'v3'])
+  expect(ids({ ordem: 'funcao', sentido: 'desc' })).toEqual(['v1', 'v3', 'v4', 'v2'])
+  expect(ids({ ordem: 'disciplina' })).toEqual(['v2', 'v4', 'v3', 'v1'])
+  expect(ids({ ordem: 'area' })).toEqual(['v4', 'v2', 'v3', 'v1'])
+  expect(ids({})).toEqual(['v1', 'v2', 'v3', 'v4'])
+})
+
+test('lerVisao lê o endereço e ignora valores inválidos', () => {
+  expect(lerVisao(new URLSearchParams('funcao=T%C3%A9cnico&disciplina=NR13&area=Q3&ordem=area&sentido=desc&onda=o1'))).toEqual({
+    funcao: 'Técnico', disciplina: 'NR13', area: 'Q3', ordem: 'area', sentido: 'desc',
+  })
+  expect(lerVisao(new URLSearchParams('ordem=nome&sentido=x&funcao=%20'))).toEqual({})
 })
