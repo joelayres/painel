@@ -77,3 +77,12 @@ test('com o projeto encerrado não há seleção', () => {
   render(<VagasProjeto {...base} somenteLeitura vagas={grupo} />)
   expect(screen.queryAllByRole('checkbox')).toHaveLength(0)
 })
+
+test('clicar no cabeçalho ordena a tabela por aquela coluna e clicar de novo inverte', async () => {
+  render(<VagasProjeto {...base} vagas={grupo} />)
+  const disciplinas = () => screen.getAllByRole('row').slice(1).map((r) => r.querySelectorAll('td')[2].textContent)
+  await userEvent.click(screen.getByRole('button', { name: /^Disciplina/ }))
+  expect(disciplinas()).toEqual(['Elétrica', 'Fornos', 'GE-902', 'NR-13'])
+  await userEvent.click(screen.getByRole('button', { name: /^Disciplina/ }))
+  expect(disciplinas()).toEqual(['NR-13', 'GE-902', 'Fornos', 'Elétrica'])
+})

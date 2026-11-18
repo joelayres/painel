@@ -10,6 +10,7 @@ import { Selecao } from '@/components/ui/Selecao'
 import { chaveFuncao } from '@/dominio/painel'
 import { dataBR } from '@/lib/formato/datas'
 import { AcoesEmGrupo } from './AcoesEmGrupo'
+import { ordenarVagas, proximaOrdenacao, type ColunaOrdenavel, type Ordenacao } from './ordenacao'
 import { selecionaveis, type FiltroSelecao } from './selecao'
 
 export type VagaProjeto = { id: string; funcao: string; disciplina: string; area: string; ondaNome: string | null; ondaId: string | null; meta: string | null; gestor: string | null; gestorId: string | null; candidato: string | null; dataInicio: string; canceladaEm: string | null; etapaAtual: number | null; etapaNome: string | null; concluiuAlguma: boolean }
@@ -33,12 +34,21 @@ export function VagasProjeto({ projetoId, organizacao, vagas, opcoes, etapas, so
   const doFiltro = selecionaveis(comoSelecionavel, filtro)
   const idsDoFiltro = new Set(doFiltro.map((v) => v.id))
   // A tabela mostra as vagas do filtro (mobilizadas também, sem caixa de seleção).
-  const visiveis = ativas.filter(
-    (v) =>
-      (!filtro.funcao || chaveFuncao(v.funcao) === chaveFuncao(filtro.funcao)) &&
-      (!filtro.onda || v.ondaId === filtro.onda) &&
-      (filtro.etapa === undefined || v.etapaAtual === filtro.etapa),
+  const [ordem, setOrdem] = useState<Ordenacao>(null)
+  const visiveis = ordenarVagas(
+    ativas.filter(
+      (v) =>
+        (!filtro.funcao || chaveFuncao(v.funcao) === chaveFuncao(filtro.funcao)) &&
+        (!filtro.onda || v.ondaId === filtro.onda) &&
+        (filtro.etapa === undefined || v.etapaAtual === filtro.etapa),
+    ),
+    ordem,
+    opcoes.ondas,
   )
+  const colunas: [string, ColunaOrdenavel | null][] = [
+    ['Função', 'funcao'], ['Disciplina', 'disciplina'], ['Área', 'area'], [porOndas ? 'Onda' : 'Meta', 'onda'],
+    ['Etapa atual', 'etapa'], ['Gestor', 'gestor'], ['Candidato', 'candidato'], ['Início', 'inicio'], ['', null],
+  ]
   const selecionadas = doFiltro.filter((v) => marcadas.has(v.id))
   const funcoes = [...new Set(ativas.map((v) => v.funcao))].sort((a, b) => a.localeCompare(b, 'pt-BR'))
   const rotuloDe = (id: string) => {
@@ -103,7 +113,19 @@ export function VagasProjeto({ projetoId, organizacao, vagas, opcoes, etapas, so
           <thead>
             <tr className="border-b border-borda bg-superficie-2 text-sm text-texto-suave">
               {!somenteLeitura && <th className="w-10 px-4 py-2.5"><span className="sr-only">Selecionar</span></th>}
-              {['Função', 'Disciplina', 'Área', porOndas ? 'Onda' : 'Meta', 'Etapa atual', 'Gestor', 'Candidato', 'Início', ''].map((c, i) => <th key={i} className="px-4 py-2.5 font-medium">{c}</th>)}
+              {colunas.map(([rotulo, coluna], i) => {
+                if (!coluna) return <th key={i} className="px-4 py-2.5 font-medium" />
+                const ativa = ordem?.coluna === coluna ? ordem.direcao : null
+                return (
+                  <th key={i} className="px-1.5 py-1 font-medium" aria-sort={ativa === 'asc' ? 'ascending' : ativa === 'desc' ? 'descending' : undefined}>
+                    <button type="button" onClick={() => setOrdem((o) => proximaOrdenacao(o, coluna))}
+                      className={`inline-flex min-h-9 items-center gap-1 rounded-md px-2.5 whitespace-nowrap hover:bg-superficie hover:text-texto focus-visible:outline-2 focus-visible:outline-foco ${ativa ? 'font-semibold text-texto' : ''}`}>
+                      {rotulo}
+                      <span aria-hidden="true" className={ativa ? '' : 'opacity-30'}>{ativa === 'desc' ? '▼' : '▲'}</span>
+                    </button>
+                  </th>
+                )
+              })}
             </tr>
           </thead>
           <tbody>
