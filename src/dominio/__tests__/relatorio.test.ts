@@ -52,3 +52,11 @@ test('Financeiro indisponível', () => {
   expect(r).toMatchObject({ tarifasIndisponiveis: true, semTarifa: 2, totalTaxas: 0 })
   expect(r.linhas[0]).toMatchObject({ tipo: null, taxa: null })
 })
+
+test('etapas fora do relatório não viram coluna nem percentual', () => {
+  const ocultas = new Set(ETAPAS_PADRAO.filter((e) => e.ordem !== 2 && e.ordem !== 4).map((e) => e.id))
+  const r = montarRelatorio([emAndamento('v1', 3), mobilizada('v2')], ETAPAS_PADRAO, new Map(), ocultas)
+  expect(r.etapas.map((e) => e.nome)).toEqual(['Captura de Mercado', 'Entrevista - Timenow'])
+  expect(r.linhas[0].etapas).toEqual(['2026-10-22', null])
+  expect(r.percentuais).toEqual([1, 0.5])
+})

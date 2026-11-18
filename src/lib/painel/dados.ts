@@ -155,7 +155,7 @@ const lerProjetos = (projetos: { id: string; cliente_id: string; nome: string; a
   projetos.map((p) => ({ ...p, organizacao: p.organizacao === 'meta' ? 'meta' : 'ondas' }))
 
 const COLUNAS_VAGA = 'id, projeto_id, meta, funcao, disciplina, area, onda_id, gestor_id, candidato, data_inicio, retomada_em, cancelada_em, adiada_ate, adiada_etapa_id'
-const COLUNAS_ETAPA = 'id, projeto_id, posicao, nome, duracao, padrao, fixa'
+const COLUNAS_ETAPA = 'id, projeto_id, posicao, nome, duracao, padrao, fixa, no_relatorio'
 const COLUNAS_PROJETO = 'id, cliente_id, nome, area, organizacao, encerrado_em, folga_minima'
 
 export async function carregarPainel(sb: SupabaseClient<Database>, hoje: string, projetoId: string) {
@@ -203,6 +203,8 @@ export async function carregarPainel(sb: SupabaseClient<Database>, hoje: string,
     projeto: info,
     vagas: montarPainel(linhas, hoje),
     etapas,
+    // Etapas que a equipe tirou da aba Relatório; a lista do projeto continua inteira.
+    foraDoRelatorio: projetoEtapas.filter((e) => !e.no_relatorio).map((e) => e.id),
     ondas: lerOndas(ondas).map(({ id, nome, inicio, fim }) => ({ id, nome, inicio, fim })),
     gestores,
   }

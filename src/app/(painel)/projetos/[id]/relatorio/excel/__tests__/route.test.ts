@@ -27,6 +27,7 @@ beforeEach(() => {
     etapas: ETAPAS_PADRAO,
     ondas: [{ id: 'o1', nome: 'Onda 1', inicio: '2026-10-22', fim: '2026-11-26' }, ONDA2],
     gestores: [],
+    foraDoRelatorio: ['padrao-1'],
   })
 })
 
@@ -73,4 +74,11 @@ test('Financeiro fora: ainda gera o arquivo', async () => {
   expect((await chamar()).status).toBe(200)
   const arg = (gerarExcelRelatorio.mock.calls[0] as unknown as [{ relatorio: { tarifasIndisponiveis: boolean } }])[0]
   expect(arg.relatorio.tarifasIndisponiveis).toBe(true)
+})
+
+test('etapas fora do relatório não vão para o Excel', async () => {
+  await chamar()
+  const arg = (gerarExcelRelatorio.mock.calls[0] as unknown as [{ relatorio: { etapas: { nome: string }[] } }])[0]
+  expect(arg.relatorio.etapas.map((e) => e.nome)).not.toContain('Abertura de vaga')
+  expect(arg.relatorio.etapas).toHaveLength(12)
 })

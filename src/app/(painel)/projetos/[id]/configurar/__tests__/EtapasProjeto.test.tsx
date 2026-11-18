@@ -8,6 +8,7 @@ const acoes = {
   renomearEtapa: vi.fn(),
   moverEtapa: vi.fn(),
   alterarDuracaoEtapa: vi.fn(),
+  mostrarEtapaNoRelatorio: vi.fn(),
 }
 vi.mock('../acoesConfigurar', () => acoes)
 const acoesCliente = vi.hoisted(() => ({
@@ -22,7 +23,7 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }))
 const { EtapasProjeto } = await import('../EtapasProjeto')
 
 const etapas = [
-  { id: 'e1', ordem: 1, nome: 'Abertura de vaga', fixa: null, padraoCliente: 1, duracao: null, concluidasPor: 0, chegaramAoPonto: 0 },
+  { id: 'e1', ordem: 1, nome: 'Abertura de vaga', fixa: null, padraoCliente: 1, duracao: null, concluidasPor: 0, chegaramAoPonto: 0, noRelatorio: false },
   { id: 'e2', ordem: 2, nome: 'Captura de Mercado', fixa: 'captura' as const, padraoCliente: 4, duracao: null, concluidasPor: 0, chegaramAoPonto: 0 },
   { id: 'e3', ordem: 3, nome: 'Triagem de Candidatos', fixa: null, padraoCliente: 1, duracao: null, concluidasPor: 0, chegaramAoPonto: 0 },
   { id: 'e4', ordem: 4, nome: 'Ambientação/TBS', fixa: null, padraoCliente: 1, duracao: null, concluidasPor: 0, chegaramAoPonto: 2 },
@@ -141,4 +142,28 @@ test('no cliente não há coluna de padrão e as ações são as do cliente', as
   await userEvent.click(screen.getByRole('button', { name: 'Descer Abertura de vaga' }))
   expect(acoesCliente.moverEtapaCliente).toHaveBeenCalledWith('c1', 'e1', 2)
   expect(acoes.moverEtapa).not.toHaveBeenCalled()
+})
+
+test('no projeto, cada etapa tem a caixa "No relatório" e ela chama a ação', async () => {
+  render(<EtapasProjeto {...props} />)
+  expect(screen.getByRole('columnheader', { name: 'No relatório' })).toBeInTheDocument()
+  const abertura = screen.getByRole('checkbox', { name: 'Mostrar Abertura de vaga no relatório' })
+  const captura = screen.getByRole('checkbox', { name: 'Mostrar Captura de Mercado no relatório' })
+  expect(abertura).not.toBeChecked()
+  expect(captura).toBeChecked()
+  await userEvent.click(captura)
+  expect(acoes.mostrarEtapaNoRelatorio).toHaveBeenCalledWith('p1', 'e2', false)
+  await userEvent.click(abertura)
+  expect(acoes.mostrarEtapaNoRelatorio).toHaveBeenCalledWith('p1', 'e1', true)
+})
+
+test('somente leitura mostra Sim/Não sem caixa; no cliente não há a coluna', () => {
+  const { unmount } = render(<EtapasProjeto {...props} somenteLeitura />)
+  expect(screen.queryByRole('checkbox')).toBeNull()
+  expect(screen.getByText('2. Captura de Mercado').closest('tr')).toHaveTextContent('Sim')
+  expect(screen.getByText('1. Abertura de vaga').closest('tr')).toHaveTextContent('Não')
+  unmount()
+  render(<EtapasProjeto {...props} alvo={{ tipo: 'cliente', id: 'c1' }} />)
+  expect(screen.queryByRole('columnheader', { name: 'No relatório' })).toBeNull()
+  expect(screen.queryByRole('checkbox')).toBeNull()
 })

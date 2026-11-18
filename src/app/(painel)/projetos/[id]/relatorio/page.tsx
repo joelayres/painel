@@ -18,10 +18,10 @@ export default async function PaginaRelatorio({ params, searchParams }: { params
   // As tarifas vêm do Financeiro a cada abertura; fora do ar, o relatório abre sem elas.
   const [painel, tarifas] = await Promise.all([carregarPainel(await criarClienteServidor(), hojeSP(), id), buscarTarifasFinanceiro()])
   if (!painel) notFound()
-  const { projeto, vagas, etapas, ondas } = painel
+  const { projeto, vagas, etapas, ondas, foraDoRelatorio } = painel
   const porOndas = projeto.organizacao === 'ondas'
   const onda = porOndas && busca.onda && ondas.some((o) => o.id === busca.onda) ? busca.onda : undefined
-  const relatorio = montarRelatorio(filtrarVagas(vagas, { onda }), etapas, tarifas)
+  const relatorio = montarRelatorio(filtrarVagas(vagas, { onda }), etapas, tarifas, new Set(foraDoRelatorio))
 
   const base = `/projetos/${id}/relatorio`
   const botao = (ativo: boolean) =>

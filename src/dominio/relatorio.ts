@@ -33,8 +33,9 @@ export type Relatorio = {
 
 const centavos = (x: number) => Math.round(x * 100) / 100
 
-export function montarRelatorio(vagas: VagaPainel[], etapas: EtapaDef[], tarifas: Map<string, TarifaDaVaga> | null): Relatorio {
-  const ordenadas = [...etapas].sort((a, b) => a.ordem - b.ordem).map(({ ordem, nome }) => ({ ordem, nome }))
+// `ocultas`: ids das etapas que a equipe tirou do relatório (Configurar); a lista do projeto não muda.
+export function montarRelatorio(vagas: VagaPainel[], etapas: EtapaDef[], tarifas: Map<string, TarifaDaVaga> | null, ocultas: ReadonlySet<string> = new Set()): Relatorio {
+  const ordenadas = etapas.filter((e) => !ocultas.has(e.id)).sort((a, b) => a.ordem - b.ordem).map(({ ordem, nome }) => ({ ordem, nome }))
   const linhas: LinhaRelatorio[] = vagas.map((v) => {
     const t = tarifas?.get(v.id)
     const candidato = v.candidato?.trim()

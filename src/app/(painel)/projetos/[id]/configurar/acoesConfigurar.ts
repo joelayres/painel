@@ -153,6 +153,16 @@ export async function alterarDuracaoEtapa(projetoId: string, etapaId: string, en
   return pronto()
 }
 
+// Liga ou desliga a etapa na aba Relatório; a lista do projeto não muda.
+export async function mostrarEtapaNoRelatorio(projetoId: string, etapaId: string, mostrar: boolean): Promise<RespostaAcao> {
+  await exigirEquipe()
+  if (!ehUuid(projetoId) || !ehUuid(etapaId) || typeof mostrar !== 'boolean') return PROJETO_INVALIDO
+  const sb = await criarClienteServidor()
+  const { error } = await sb.rpc('mostrar_etapa_no_relatorio', { p_etapa: etapaId, p_mostrar: mostrar })
+  if (error) return erroDeEtapa(error.message)
+  return pronto()
+}
+
 type Resultado = { ok: true } | { ok: false; erro: string }
 
 export async function liberar(projetoId: string, usuarioId: string): Promise<Resultado> {

@@ -24,7 +24,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const pedida = new URL(req.url).searchParams.get('onda')
   const onda = porOndas ? painel.ondas.find((o) => o.id === pedida) : undefined
   const arquivo = await gerarExcelRelatorio({
-    relatorio: montarRelatorio(filtrarVagas(painel.vagas, { onda: onda?.id }), painel.etapas, tarifas),
+    relatorio: montarRelatorio(filtrarVagas(painel.vagas, { onda: onda?.id }), painel.etapas, tarifas, new Set(painel.foraDoRelatorio)),
     projeto: painel.projeto.nome,
     onda: onda?.nome ?? null,
     porOndas,
