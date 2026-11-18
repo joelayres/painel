@@ -3,7 +3,7 @@ import { dataBR } from '@/lib/formato/datas'
 import { reais } from '@/lib/formato/moeda'
 
 const pct = (x: number) => `${Math.round(x * 100)}%`
-const th = 'whitespace-nowrap border-b border-borda bg-superficie-2 px-3 py-2 text-left font-semibold'
+const th = 'sticky top-0 z-10 whitespace-nowrap border-b border-borda bg-superficie-2 px-3 py-2 text-left font-semibold'
 const td = 'border-b border-borda px-3 py-2'
 
 // A tabela da planilha do cliente: uma linha por vaga, OK nas etapas concluídas e o % no rodapé.
@@ -16,9 +16,10 @@ export function TabelaRelatorio({ relatorio: r, porOndas }: { relatorio: Relator
           Não foi possível ler as tarifas do Financeiro agora. As etapas estão atualizadas; o Tipo e a Taxa aparecem quando ele voltar.
         </p>
       )}
-      <div className="overflow-x-auto rounded-xl border border-borda bg-superficie">
+      {/* A caixa rola nos dois sentidos, e o cabeçalho fica fixo no topo dela. */}
+      <div className="max-h-[70vh] overflow-auto rounded-xl border border-borda bg-superficie">
         <table className="w-full border-collapse text-sm">
-          <thead className="sticky top-0">
+          <thead>
             <tr>
               {fixas.map((c) => <th key={c} scope="col" className={th}>{c}</th>)}
               {r.etapas.map((e) => <th key={e.ordem} scope="col" className={`${th} text-center`}>{e.nome}</th>)}

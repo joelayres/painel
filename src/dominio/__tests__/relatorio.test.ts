@@ -1,12 +1,11 @@
 import { expect, test } from 'vitest'
 import { ETAPAS_PADRAO } from '@/dominio/etapas'
-import type { TarifaVaga } from '@/lib/financeiro/contrato'
 import { vagaExemplo } from '@/test/vagas'
-import { montarRelatorio } from '../relatorio'
+import { montarRelatorio, type TarifaDaVaga } from '../relatorio'
 
 const emAndamento = (id: string, etapaAtual: number, candidato?: string) => vagaExemplo(id, { cor: 'verde', etapaAtual, candidato })
 const mobilizada = (id: string) => vagaExemplo(id, { cor: null, etapaAtual: null, candidato: 'Ana' })
-const tarifa = (painelVagaId: string, o: Partial<TarifaVaga>): TarifaVaga => ({ painelVagaId, tipo: 'MOD', cobrada: true, linha: '12/2026', descricao: 'x', valor: null, ...o })
+const tarifa = (_id: string, o: Partial<TarifaDaVaga>): TarifaDaVaga => ({ tipo: 'MOD', cobrada: true, valor: null, ...o })
 
 test('uma coluna por etapa, na ordem, com a data de conclusão', () => {
   const r = montarRelatorio([emAndamento('v1', 3)], [...ETAPAS_PADRAO].reverse(), new Map())

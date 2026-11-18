@@ -66,3 +66,10 @@ test('sem vagas', () => {
   render(<TabelaRelatorio relatorio={relatorio({ linhas: [], percentuais: [0, 0], totalTaxas: 0, totalTaxasMobilizadas: 0, semTarifa: 0 })} porOndas />)
   expect(screen.getByText('Nenhuma vaga')).toBeInTheDocument()
 })
+
+test('a tabela rola dentro de uma caixa com altura máxima, para o cabeçalho ficar fixo', () => {
+  render(<TabelaRelatorio relatorio={relatorio()} porOndas />)
+  const caixa = screen.getByRole('table').parentElement!
+  expect(caixa).toHaveClass('overflow-auto', 'max-h-[70vh]')
+  expect(screen.getAllByRole('columnheader')[0]).toHaveClass('sticky', 'top-0')
+})

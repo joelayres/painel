@@ -1,8 +1,10 @@
 // Relatório de mobilização do projeto: uma linha por vaga, uma coluna por etapa, com o tipo e a taxa vindos do Financeiro.
 // A tela e o Excel usam a mesma montagem.
-import type { TarifaVaga } from '@/lib/financeiro/contrato'
 import type { EtapaDef } from './etapas'
 import type { VagaPainel } from './painel'
+
+// O que o relatório usa da tarifa do Financeiro (o TarifaVaga do contrato encaixa aqui).
+export type TarifaDaVaga = { tipo: 'MOD' | 'MOI'; cobrada: boolean; valor: number | null }
 
 export type LinhaRelatorio = {
   id: string
@@ -31,7 +33,7 @@ export type Relatorio = {
 
 const centavos = (x: number) => Math.round(x * 100) / 100
 
-export function montarRelatorio(vagas: VagaPainel[], etapas: EtapaDef[], tarifas: Map<string, TarifaVaga> | null): Relatorio {
+export function montarRelatorio(vagas: VagaPainel[], etapas: EtapaDef[], tarifas: Map<string, TarifaDaVaga> | null): Relatorio {
   const ordenadas = [...etapas].sort((a, b) => a.ordem - b.ordem).map(({ ordem, nome }) => ({ ordem, nome }))
   const linhas: LinhaRelatorio[] = vagas.map((v) => {
     const t = tarifas?.get(v.id)
