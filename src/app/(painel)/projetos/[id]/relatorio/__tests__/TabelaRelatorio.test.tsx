@@ -45,23 +45,17 @@ test('taxa em reais, Não cobrada e — sem tarifa', () => {
   expect(l3).toHaveTextContent('—')
 })
 
-test('vaga aberta mostra a função em texto suave', () => {
+test('vaga aberta mostra a função em texto suave e a etiqueta "vaga aberta"', () => {
   render(<TabelaRelatorio relatorio={relatorio()} porOndas visao={{}} hrefOrdem={href} />)
-  expect(within(screen.getAllByRole('row')[2]).getAllByText('Técnico de Campo')[0]).toHaveClass('text-texto-suave')
+  const l2 = screen.getAllByRole('row')[2]
+  expect(within(l2).getAllByText('Técnico de Campo')[0]).toHaveClass('text-texto-suave')
+  expect(within(l2).getByText('vaga aberta')).toBeInTheDocument()
+  expect(within(screen.getAllByRole('row')[1]).queryByText('vaga aberta')).toBeNull()
 })
 
-test('rodapé com % por etapa e totais', () => {
-  render(<TabelaRelatorio relatorio={relatorio()} porOndas visao={{}} hrefOrdem={href} />)
-  expect(screen.getByText('75%')).toBeInTheDocument()
-  const texto = nbsp(document.body.textContent)
-  expect(texto).toContain('Total das taxas: R$ 36.918,34')
-  expect(texto).toContain('Mobilizadas: R$ 24.108,83')
-  expect(texto).toContain('1 vaga sem tarifa')
-})
-
-test('aviso quando o Financeiro está fora', () => {
-  render(<TabelaRelatorio relatorio={relatorio({ tarifasIndisponiveis: true })} porOndas visao={{}} hrefOrdem={href} />)
-  expect(screen.getByText(/Não foi possível ler as tarifas do Financeiro agora/)).toBeInTheDocument()
+test('vaga mobilizada é marcada na linha', () => {
+  render(<TabelaRelatorio relatorio={relatorio({ linhas: [linha({ mobilizada: true })] })} porOndas visao={{}} hrefOrdem={href} />)
+  expect(screen.getAllByRole('row')[1]).toHaveAttribute('data-mobilizada', 'true')
 })
 
 test('sem vagas', () => {

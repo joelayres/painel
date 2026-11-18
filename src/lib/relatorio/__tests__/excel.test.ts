@@ -58,3 +58,15 @@ test('Financeiro indisponível: linha de aviso', async () => {
   const ws = await abrir(relatorio({ tarifasIndisponiveis: true }))
   expect(String(ws.getCell('A3').value)).toContain('Tarifas indisponíveis')
 })
+
+test('visual: cabeçalho na cor da marca, OK em verde, filtro no cabeçalho', async () => {
+  const ws = await abrir(relatorio())
+  const cab = ws.getCell('A4')
+  expect(cab.fill).toMatchObject({ type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2B6157' } })
+  expect(cab.font).toMatchObject({ bold: true, color: { argb: 'FFFFFFFF' } })
+  expect(ws.getCell('H5').fill).toMatchObject({ fgColor: { argb: 'FFDCF1E4' } })
+  expect(ws.getCell('H5').font).toMatchObject({ bold: true, color: { argb: 'FF1C6239' } })
+  expect(ws.getCell('H5').alignment).toMatchObject({ horizontal: 'center' })
+  expect(ws.getCell('I5').fill).not.toMatchObject({ pattern: 'solid' })
+  expect(ws.autoFilter).toBe('A4:I4')
+})
