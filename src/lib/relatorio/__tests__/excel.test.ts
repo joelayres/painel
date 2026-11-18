@@ -5,13 +5,13 @@ import { gerarExcelRelatorio } from '../excel'
 
 const linha = (o: Partial<LinhaRelatorio>): LinhaRelatorio => ({
   id: 'v1', nome: 'Vinicius Vieira', vagaAberta: false, tipo: 'MOD', funcao: 'Assistente Técnico', disciplina: 'APOIOS', area: 'Q3',
-  onda: 'Onda 1', meta: '2027-01-15', cobrada: true, taxa: 24108.83, etapas: ['2026-10-22', null], mobilizada: false, ...o,
+  onda: 'Onda 1', meta: '2027-01-15', cobrada: true, taxa: 24108.83, etapas: ['2026-10-22', null], mobilizada: false, mobilizadaEm: null, ...o,
 })
 const relatorio = (o: Partial<Relatorio> = {}): Relatorio => ({
   opcoes: { funcoes: [], disciplinas: [], areas: [] },
   etapas: [{ ordem: 1, nome: 'Captura' }, { ordem: 2, nome: 'Entrevistas' }],
   linhas: [linha({}), linha({ id: 'v2', tipo: 'MOI', cobrada: false, taxa: null }), linha({ id: 'v3', tipo: null, taxa: null })],
-  percentuais: [0.75, 0], totalTaxas: 36918.34, totalTaxasMobilizadas: 24108.83, semTarifa: 1, tarifasIndisponiveis: false, ...o,
+  percentuais: [0.75, 0], totalTaxas: 36918.34, totalTaxasMobilizadas: 24108.83, semTarifa: 1, tarifasIndisponiveis: false, colunaMobilizado: false, percentualMobilizado: 0, ...o,
 })
 async function abrir(r: Relatorio, onda: string | null = null) {
   const wb = new ExcelJS.Workbook()
@@ -57,4 +57,27 @@ test('rodapé com % por etapa e totais', async () => {
 test('Financeiro indisponível: linha de aviso', async () => {
   const ws = await abrir(relatorio({ tarifasIndisponiveis: true }))
   expect(String(ws.getCell('A3').value)).toContain('Tarifas indisponíveis')
+})
+
+test('visual: cabeçalho na cor da marca, OK em verde, filtro no cabeçalho', async () => {
+  const ws = await abrir(relatorio())
+  const cab = ws.getCell('A4')
+  expect(cab.fill).toMatchObject({ type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2B6157' } })
+  expect(cab.font).toMatchObject({ bold: true, color: { argb: 'FFFFFFFF' } })
+  expect(ws.getCell('H5').fill).toMatchObject({ fgColor: { argb: 'FFDCF1E4' } })
+  expect(ws.getCell('H5').font).toMatchObject({ bold: true, color: { argb: 'FF1C6239' } })
+  expect(ws.getCell('H5').alignment).toMatchObject({ horizontal: 'center' })
+  expect(ws.getCell('I5').fill).not.toMatchObject({ pattern: 'solid' })
+  expect(ws.autoFilter).toBe('A4:I4')
+})
+
+test('coluna Mobilizado no fim do Excel, com OK e o % no rodapé', async () => {
+  const r = relatorio({ colunaMobilizado: true, percentualMobilizado: 1 / 3, linhas: [linha({ mobilizada: true, mobilizadaEm: '2026-11-03' }), linha({ id: 'v2' }), linha({ id: 'v3' })] })
+  const ws = await abrir(r)
+  expect(ws.getCell('J4').value).toBe('Mobilizado')
+  expect(ws.getCell('J5').value).toBe('OK')
+  expect(ws.getCell('J6').value).toBeNull()
+  const pct = ws.getRow(rotulos(ws).get('% concluído')!)
+  expect(pct.getCell(10).value).toBeCloseTo(1 / 3)
+  expect(ws.autoFilter).toBe('A4:J4')
 })

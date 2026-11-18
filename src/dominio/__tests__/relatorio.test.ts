@@ -104,3 +104,25 @@ test('lerVisao lê o endereço e ignora valores inválidos', () => {
   })
   expect(lerVisao(new URLSearchParams('ordem=nome&sentido=x&funcao=%20'))).toEqual({})
 })
+
+test('coluna Mobilizado: OK com a data quando a vaga concluiu todas as etapas, e o % do recorte', () => {
+  const r = montarRelatorio([emAndamento('v1', 3), mobilizada('v2'), emAndamento('v3', 13)], ETAPAS_PADRAO, new Map())
+  expect(r.colunaMobilizado).toBe(true)
+  expect(r.linhas.map((l) => l.mobilizadaEm)).toEqual([null, '2026-10-22', null])
+  expect(r.percentualMobilizado).toBeCloseTo(1 / 3)
+  expect(montarRelatorio([], ETAPAS_PADRAO, new Map()).percentualMobilizado).toBe(0)
+})
+
+test('a coluna Mobilizado vale mesmo com a última etapa fora do relatório', () => {
+  const ocultas = new Set([ETAPAS_PADRAO[12].id])
+  const r = montarRelatorio([mobilizada('v1')], ETAPAS_PADRAO, new Map(), { ocultas })
+  expect(r.colunaMobilizado).toBe(true)
+  expect(r.linhas[0].mobilizadaEm).toBe('2026-10-22')
+})
+
+test('sem coluna automática quando o projeto já tem uma etapa Mobilizado visível', () => {
+  const etapas = ETAPAS_PADRAO.map((e) => (e.ordem === 13 ? { ...e, nome: 'Mobilizado' } : e))
+  expect(montarRelatorio([mobilizada('v1')], etapas, new Map()).colunaMobilizado).toBe(false)
+  const oculta = montarRelatorio([mobilizada('v1')], etapas, new Map(), { ocultas: new Set([etapas[12].id]) })
+  expect(oculta.colunaMobilizado).toBe(true)
+})

@@ -8,6 +8,7 @@ import { carregarPainel } from '@/lib/painel/dados'
 import { ehUuid } from '@/lib/validacao/vaga'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
 import { FiltrosRelatorio } from './FiltrosRelatorio'
+import { ResumoRelatorio } from './ResumoRelatorio'
 import { TabelaRelatorio } from './TabelaRelatorio'
 
 export const metadata = { title: 'Relatório · Painel de Mobilização' }
@@ -56,10 +57,14 @@ export default async function PaginaRelatorio({ params, searchParams }: { params
           </nav>
         ) : <span />}
         {/* Rota que devolve um arquivo: <a> comum, sem a navegação do Next. */}
-        <a href={com(`${base}/excel`, {})} className="rounded-lg border border-primaria px-3 py-1.5 text-sm font-medium text-primaria hover:bg-primaria hover:text-white focus-visible:outline-2 focus-visible:outline-foco">
+        <a href={com(`${base}/excel`, {})} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-primaria px-4 text-sm font-semibold text-primaria-texto hover:bg-primaria-forte focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco">
+          <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 3v9m0 0-3.5-3.5M10 12l3.5-3.5M4 15.5h12" />
+          </svg>
           Baixar Excel
         </a>
       </div>
+      <ResumoRelatorio relatorio={relatorio} />
       <FiltrosRelatorio opcoes={relatorio.opcoes} />
       <TabelaRelatorio relatorio={relatorio} porOndas={porOndas} visao={visao} hrefOrdem={hrefOrdem} />
     </div>

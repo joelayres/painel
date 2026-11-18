@@ -1,15 +1,38 @@
 import Link from 'next/link'
-import type { ColunaOrdem, Relatorio, VisaoRelatorio } from '@/dominio/relatorio'
+import type { ColunaOrdem, LinhaRelatorio, Relatorio, VisaoRelatorio } from '@/dominio/relatorio'
 import { dataBR } from '@/lib/formato/datas'
 import { reais } from '@/lib/formato/moeda'
 
-const pct = (x: number) => `${Math.round(x * 100)}%`
-const th = 'sticky top-0 z-10 whitespace-nowrap border-b border-borda bg-superficie-2 px-3 py-2 text-left font-semibold'
-const td = 'border-b border-borda px-3 py-2'
-
-// A tabela da planilha do cliente: uma linha por vaga, OK nas etapas concluídas e o % no rodapé.
 // Função, Disciplina e Área ordenam pelo título: o primeiro clique ordena de A a Z, o seguinte inverte.
 const ORDENAVEIS: Record<string, ColunaOrdem> = { Função: 'funcao', Disciplina: 'disciplina', Área: 'area' }
+
+// O cabeçalho é a faixa da marca e fica fixo no topo da caixa; a coluna Nome fica fixa ao rolar para o lado.
+const th = 'sticky top-0 z-10 bg-faixa px-3 py-3 text-left align-bottom text-sm font-semibold whitespace-nowrap text-faixa-texto'
+const thNome = 'left-0 z-20'
+const td = 'border-b border-borda px-3 py-2 align-middle'
+
+const etiqueta = (texto: string, fundo: string, cor: string) => (
+  <span className="inline-block rounded-md px-1.5 py-0.5 text-xs font-semibold" style={{ background: `var(${fundo})`, color: `var(${cor})` }}>{texto}</span>
+)
+
+function Tipo({ tipo }: { tipo: LinhaRelatorio['tipo'] }) {
+  if (tipo === 'MOI') return etiqueta('MOI', '--st-reaprovacao-fundo', '--st-reaprovacao-texto')
+  if (tipo === 'MOD') return etiqueta('MOD', '--st-conferencia-fundo', '--st-conferencia-texto')
+  return <span className="text-texto-suave">—</span>
+}
+
+// OK de etapa no verde claro; o da coluna Mobilizado no verde cheio, que é o resultado que o cliente acompanha.
+function Ok({ forte = false }: { forte?: boolean }) {
+  return (
+    <span
+      className="inline-flex min-w-9 justify-center rounded-full px-2 py-0.5 text-xs font-bold"
+      style={forte ? { background: 'var(--prazo-verde)', color: '#fff' } : { background: 'var(--st-finalizada-fundo)', color: 'var(--st-finalizada-texto)' }}
+    >
+      OK
+    </span>
+  )
+}
+const Pendente = () => <span aria-hidden="true" className="inline-block h-1.5 w-1.5 rounded-full bg-borda" />
 
 export function TabelaRelatorio({ relatorio: r, porOndas, visao, hrefOrdem }: {
   relatorio: Relatorio
@@ -19,72 +42,75 @@ export function TabelaRelatorio({ relatorio: r, porOndas, visao, hrefOrdem }: {
 }) {
   const fixas = ['Nome', 'Tipo', 'Função', 'Disciplina', 'Área', porOndas ? 'Onda' : 'Meta', 'Taxa']
   const cabecalho = (titulo: string) => {
+    const classe = `${th} ${titulo === 'Nome' ? thNome : ''} ${titulo === 'Taxa' ? 'text-right' : ''}`
     const coluna = ORDENAVEIS[titulo]
-    if (!coluna) return <th key={titulo} scope="col" className={th}>{titulo}</th>
+    if (!coluna) return <th key={titulo} scope="col" className={classe}>{titulo}</th>
     const ativa = visao.ordem === coluna
     const desc = ativa && visao.sentido === 'desc'
     return (
-      <th key={titulo} scope="col" className={th} aria-sort={ativa ? (desc ? 'descending' : 'ascending') : undefined}>
-        <Link href={hrefOrdem(coluna, ativa && !desc ? 'desc' : 'asc')} className="inline-flex items-center gap-1 hover:text-primaria focus-visible:outline-2 focus-visible:outline-foco">
+      <th key={titulo} scope="col" className={classe} aria-sort={ativa ? (desc ? 'descending' : 'ascending') : undefined}>
+        <Link href={hrefOrdem(coluna, ativa && !desc ? 'desc' : 'asc')} className="inline-flex items-center gap-1 rounded underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-foco">
           {titulo}
-          {ativa && <span aria-hidden="true">{desc ? '▼' : '▲'}</span>}
+          {ativa && <span aria-hidden="true" className="text-xs">{desc ? '▼' : '▲'}</span>}
         </Link>
       </th>
     )
   }
+  const celula = `${td} group-hover:bg-superficie-2`
+
   return (
-    <div className="flex flex-col gap-3">
-      {r.tarifasIndisponiveis && (
-        <p role="status" className="rounded-lg border border-borda bg-superficie-2 px-3 py-2 text-sm">
-          Não foi possível ler as tarifas do Financeiro agora. As etapas estão atualizadas; o Tipo e a Taxa aparecem quando ele voltar.
-        </p>
-      )}
-      {/* A caixa rola nos dois sentidos, e o cabeçalho fica fixo no topo dela. */}
-      <div className="max-h-[70vh] overflow-auto rounded-xl border border-borda bg-superficie">
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr>
-              {fixas.map(cabecalho)}
-              {r.etapas.map((e) => <th key={e.ordem} scope="col" className={`${th} text-center`}>{e.nome}</th>)}
-            </tr>
-          </thead>
-          <tbody>
-            {r.linhas.length === 0 ? (
-              <tr><td colSpan={fixas.length + r.etapas.length} className={`${td} text-center text-texto-suave`}>Nenhuma vaga</td></tr>
-            ) : r.linhas.map((l) => (
-              <tr key={l.id} className="hover:bg-superficie-2">
-                <td className={`${td} whitespace-nowrap`}><span className={l.vagaAberta ? 'text-texto-suave' : 'font-medium'}>{l.nome}</span></td>
-                <td className={td}>{l.tipo ?? '—'}</td>
-                <td className={td}>{l.funcao}</td>
-                <td className={td}>{l.disciplina}</td>
-                <td className={td}>{l.area}</td>
-                <td className={`${td} whitespace-nowrap`}>{porOndas ? (l.onda ?? '—') : dataBR(l.meta)}</td>
-                <td className={`${td} whitespace-nowrap text-right tabular-nums`}>
-                  {!l.cobrada ? <span className="text-texto-suave">Não cobrada</span> : l.taxa === null ? '—' : reais(l.taxa)}
-                </td>
-                {l.etapas.map((data, i) => (
-                  <td key={r.etapas[i].ordem} className={`${td} text-center font-semibold`} title={data ? `Concluída em ${dataBR(data)}` : undefined}>
-                    {data ? 'OK' : ''}
-                  </td>
-                ))}
-              </tr>
+    <div className="max-h-[70vh] overflow-auto rounded-2xl border border-borda bg-superficie">
+      <table className="w-full border-separate border-spacing-0 text-sm">
+        <thead>
+          <tr>
+            {fixas.map(cabecalho)}
+            {[...r.etapas.map((e) => ({ chave: String(e.ordem), nome: e.nome })), ...(r.colunaMobilizado ? [{ chave: 'mobilizado', nome: 'Mobilizado' }] : [])].map((e) => (
+              <th key={e.chave} scope="col" className={`${th} w-20 min-w-20 px-2 text-center whitespace-normal`}>
+                <span className="font-titulo text-[15px] leading-tight font-semibold">{e.nome}</span>
+              </th>
             ))}
-          </tbody>
-          <tfoot>
-            <tr className="bg-superficie-2 font-semibold">
-              <th scope="row" colSpan={fixas.length} className="px-3 py-2 text-right">% concluído</th>
-              {r.percentuais.map((p, i) => <td key={r.etapas[i].ordem} className="px-3 py-2 text-center tabular-nums">{pct(p)}</td>)}
+          </tr>
+        </thead>
+        <tbody>
+          {r.linhas.length === 0 ? (
+            <tr>
+              <td colSpan={fixas.length + r.etapas.length + (r.colunaMobilizado ? 1 : 0)} className="px-3 py-10 text-center text-texto-suave">
+                <p className="font-medium text-texto">Nenhuma vaga</p>
+                <p className="mt-1">Mude ou limpe os filtros para ver as vagas do projeto.</p>
+              </td>
             </tr>
-          </tfoot>
-        </table>
-      </div>
-      <p className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-        <span><span className="text-texto-suave">Total das taxas:</span> <strong>{reais(r.totalTaxas)}</strong></span>
-        <span><span className="text-texto-suave">Mobilizadas:</span> <strong>{reais(r.totalTaxasMobilizadas)}</strong></span>
-        {!r.tarifasIndisponiveis && r.semTarifa > 0 && (
-          <span className="text-texto-suave">{r.semTarifa} {r.semTarifa === 1 ? 'vaga sem tarifa' : 'vagas sem tarifa'} no Financeiro</span>
-        )}
-      </p>
+          ) : r.linhas.map((l) => (
+            <tr key={l.id} data-mobilizada={l.mobilizada ? 'true' : undefined} className="group">
+              {/* A barra verde à esquerda marca a vaga mobilizada. */}
+              <td
+                className={`${celula} sticky left-0 z-[1] min-w-48 bg-superficie`}
+                style={{ boxShadow: l.mobilizada ? 'inset 4px 0 0 var(--prazo-verde)' : undefined }}
+              >
+                <span className={`block ${l.vagaAberta ? 'text-texto-suave' : 'font-semibold'}`}>{l.nome}</span>
+                {l.vagaAberta && <span className="mt-0.5 block">{etiqueta('vaga aberta', '--st-pendente-fundo', '--st-pendente-texto')}</span>}
+              </td>
+              <td className={celula}><Tipo tipo={l.tipo} /></td>
+              <td className={`${celula} min-w-36 max-w-52`}>{l.funcao}</td>
+              <td className={`${celula} min-w-36 max-w-56 text-[13px] leading-snug`}>{l.disciplina}</td>
+              <td className={celula}>{l.area}</td>
+              <td className={`${celula} whitespace-nowrap text-texto-suave`}>{porOndas ? (l.onda ?? '—') : dataBR(l.meta)}</td>
+              <td className={`${celula} text-right whitespace-nowrap tabular-nums`}>
+                {!l.cobrada ? <span className="text-xs text-texto-suave">Não cobrada</span> : l.taxa === null ? <span className="text-texto-suave">—</span> : <span className="font-medium">{reais(l.taxa)}</span>}
+              </td>
+              {l.etapas.map((data, i) => (
+                <td key={r.etapas[i].ordem} className={`${celula} px-2 text-center`} title={data ? `Concluída em ${dataBR(data)}` : undefined}>
+                  {data ? <Ok /> : <Pendente />}
+                </td>
+              ))}
+              {r.colunaMobilizado && (
+                <td className={`${celula} px-2 text-center`} title={l.mobilizada && l.mobilizadaEm ? `Mobilizada em ${dataBR(l.mobilizadaEm)}` : undefined}>
+                  {l.mobilizada ? <Ok forte /> : <Pendente />}
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
