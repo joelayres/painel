@@ -10,6 +10,7 @@ export function AbasProjeto({ projetoId, equipe }: { projetoId: string; equipe: 
   const abas = [
     { href: `${base}/resumo`, rotulo: 'Resumo' },
     { href: base, rotulo: 'Painel' },
+    { href: `${base}/relatorio`, rotulo: 'Relatório' },
     ...(equipe ? [{ href: `${base}/configurar`, rotulo: 'Configurar' }] : []),
   ]
   return (

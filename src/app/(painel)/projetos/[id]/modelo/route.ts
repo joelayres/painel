@@ -1,15 +1,12 @@
 import { hojeSP } from '@/dominio/tempo'
 import { ehEquipe, obterSessao } from '@/lib/auth/perfil'
+import { nomeArquivo } from '@/lib/formato/arquivo'
 import { gerarModelo } from '@/lib/importacao/modelo'
 import { carregarPainel } from '@/lib/painel/dados'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
 import { ehUuid } from '@/lib/validacao/vaga'
 
 const naoEncontrado = () => new Response('Não encontrado.', { status: 404 })
-
-// "Mobilização Braskem 2027" → "mobilizacao-braskem-2027" (nome de arquivo sem acento nem espaço).
-const nomeArquivo = (nome: string) =>
-  nome.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'projeto'
 
 // Só a equipe (Administrador e Analista de RH) baixa o modelo; para os outros, a rota não existe.
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
