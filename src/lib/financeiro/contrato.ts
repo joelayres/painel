@@ -14,3 +14,14 @@ export type VagaPainelFinanceiro = {
   admitida: boolean; mobilizada: boolean
 }
 export type RespostaVagas = { versao: 1; projetos: ProjetoPainel[]; vagas: VagaPainelFinanceiro[] }
+
+// Formato da rota /api/painel/tarifas do Financeiro, que o relatório do projeto lê. Mude nos dois repositórios ao mesmo tempo.
+export type TarifaVaga = {
+  painelVagaId: string
+  tipo: 'MOD' | 'MOI'
+  cobrada: boolean // false para MOI e "não cobrar"
+  linha: string | null // null = vaga sem linha cadastrada
+  descricao: string | null // descrição da linha na tabela de tarifas
+  valor: number | null // tarifa vigente no mês; null se não cobrada, sem linha ou sem vigência
+}
+export type RespostaTarifasVagas = { versao: 1; vagas: TarifaVaga[] }

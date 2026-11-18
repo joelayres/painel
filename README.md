@@ -22,7 +22,7 @@ cp .env.example .env.local   # preencha com as chaves do projeto Supabase "paine
 npm run dev
 ```
 
-Variáveis (`.env.local` e Vercel): `NEXT_PUBLIC_SUPABASE_URL` (sem `/rest/v1/` no fim), `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`. Só no `.env.local`: `SUPABASE_PROJECT_REF` e `SUPABASE_DB_PASSWORD`, para `npm run db:push` e `npm run db:tipos`.
+Variáveis (`.env.local` e Vercel): `NEXT_PUBLIC_SUPABASE_URL` (sem `/rest/v1/` no fim), `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`. Só no `.env.local`: `SUPABASE_PROJECT_REF` e `SUPABASE_DB_PASSWORD`, para `npm run db:push` e `npm run db:tipos`. Integração com o Financeiro: `FINANCEIRO_SEGREDO` (o mesmo valor de `FINANCEIRO_SEGREDO_PAINEL` lá) e `FINANCEIRO_ENDERECO` (sem `/` no fim), de onde o Relatório lê o tipo e a tarifa de cada vaga.
 
 ## Banco
 
