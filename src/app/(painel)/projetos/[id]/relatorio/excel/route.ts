@@ -1,5 +1,5 @@
 import { filtrarVagas } from '@/dominio/painel'
-import { montarRelatorio } from '@/dominio/relatorio'
+import { lerVisao, montarRelatorio } from '@/dominio/relatorio'
 import { hojeSP } from '@/dominio/tempo'
 import { obterSessao } from '@/lib/auth/perfil'
 import { buscarTarifasFinanceiro } from '@/lib/financeiro/tarifas'
@@ -21,10 +21,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   if (!painel) return naoEncontrado()
 
   const porOndas = painel.projeto.organizacao === 'ondas'
-  const pedida = new URL(req.url).searchParams.get('onda')
+  const busca = new URL(req.url).searchParams
+  const pedida = busca.get('onda')
   const onda = porOndas ? painel.ondas.find((o) => o.id === pedida) : undefined
   const arquivo = await gerarExcelRelatorio({
-    relatorio: montarRelatorio(filtrarVagas(painel.vagas, { onda: onda?.id }), painel.etapas, tarifas, new Set(painel.foraDoRelatorio)),
+    relatorio: montarRelatorio(filtrarVagas(painel.vagas, { onda: onda?.id }), painel.etapas, tarifas, { ocultas: new Set(painel.foraDoRelatorio), visao: lerVisao(busca) }),
     projeto: painel.projeto.nome,
     onda: onda?.nome ?? null,
     porOndas,

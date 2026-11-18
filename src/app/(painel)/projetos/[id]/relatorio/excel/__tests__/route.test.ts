@@ -82,3 +82,17 @@ test('etapas fora do relatório não vão para o Excel', async () => {
   expect(arg.relatorio.etapas.map((e) => e.nome)).not.toContain('Abertura de vaga')
   expect(arg.relatorio.etapas).toHaveLength(12)
 })
+
+test('o Excel sai com o filtro e a ordem da tela', async () => {
+  carregarPainel.mockResolvedValue({
+    ...(await carregarPainel()),
+    vagas: [
+      { ...vagaExemplo('v1', { cor: 'verde', etapaAtual: 2 }), area: 'Q3' },
+      { ...vagaExemplo('v2', { cor: 'verde', etapaAtual: 2 }), area: 'Q1', funcao: 'Assistente' },
+      { ...vagaExemplo('v3', { cor: 'verde', etapaAtual: 2 }), area: 'Q1', funcao: 'Engenheiro' },
+    ],
+  })
+  await chamar(ID, '?area=Q1&ordem=funcao&sentido=desc')
+  const arg = (gerarExcelRelatorio.mock.calls[0] as unknown as [{ relatorio: { linhas: { id: string }[] } }])[0]
+  expect(arg.relatorio.linhas.map((l) => l.id)).toEqual(['v3', 'v2'])
+})

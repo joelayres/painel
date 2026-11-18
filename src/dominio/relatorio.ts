@@ -1,10 +1,27 @@
 // Relatório de mobilização do projeto: uma linha por vaga, uma coluna por etapa, com o tipo e a taxa vindos do Financeiro.
 // A tela e o Excel usam a mesma montagem.
 import type { EtapaDef } from './etapas'
-import type { VagaPainel } from './painel'
+import { chaveFuncao, type VagaPainel } from './painel'
 
 // O que o relatório usa da tarifa do Financeiro (o TarifaVaga do contrato encaixa aqui).
 export type TarifaDaVaga = { tipo: 'MOD' | 'MOI'; cobrada: boolean; valor: number | null }
+
+// Filtro e ordem da tabela, lidos do endereço (a tela e o Excel usam os mesmos).
+export const COLUNAS_ORDEM = ['funcao', 'disciplina', 'area'] as const
+export type ColunaOrdem = (typeof COLUNAS_ORDEM)[number]
+export type VisaoRelatorio = { funcao?: string; disciplina?: string; area?: string; ordem?: ColunaOrdem; sentido?: 'asc' | 'desc' }
+
+export function lerVisao(p: { get(chave: string): string | null }): VisaoRelatorio {
+  const v: VisaoRelatorio = {}
+  for (const c of COLUNAS_ORDEM) {
+    const valor = p.get(c)?.trim()
+    if (valor) v[c] = valor
+  }
+  const ordem = p.get('ordem')
+  if ((COLUNAS_ORDEM as readonly string[]).includes(ordem ?? '')) v.ordem = ordem as ColunaOrdem
+  if (v.ordem && p.get('sentido') === 'desc') v.sentido = 'desc'
+  return v
+}
 
 export type LinhaRelatorio = {
   id: string
@@ -22,6 +39,7 @@ export type LinhaRelatorio = {
   mobilizada: boolean
 }
 export type Relatorio = {
+  opcoes: { funcoes: string[]; disciplinas: string[]; areas: string[] } // valores para os filtros, de todas as vagas recebidas
   etapas: { ordem: number; nome: string }[]
   linhas: LinhaRelatorio[]
   percentuais: number[] // 0..1 por etapa: vagas que concluíram ÷ vagas do relatório
@@ -33,8 +51,30 @@ export type Relatorio = {
 
 const centavos = (x: number) => Math.round(x * 100) / 100
 
+const comparar = (a: string, b: string) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' })
+
+// Valores distintos (sem diferença de maiúscula, acento ou espaço), sem vazio, em ordem alfabética.
+function distintos(valores: string[]): string[] {
+  const porChave = new Map<string, string>()
+  for (const v of valores) if (v.trim() && !porChave.has(chaveFuncao(v))) porChave.set(chaveFuncao(v), v)
+  return [...porChave.values()].sort(comparar)
+}
+
 // `ocultas`: ids das etapas que a equipe tirou do relatório (Configurar); a lista do projeto não muda.
-export function montarRelatorio(vagas: VagaPainel[], etapas: EtapaDef[], tarifas: Map<string, TarifaDaVaga> | null, ocultas: ReadonlySet<string> = new Set()): Relatorio {
+// `visao`: filtro e ordem; o % e os totais seguem as vagas filtradas.
+export function montarRelatorio(
+  todas: VagaPainel[],
+  etapas: EtapaDef[],
+  tarifas: Map<string, TarifaDaVaga> | null,
+  { ocultas = new Set<string>(), visao = {} }: { ocultas?: ReadonlySet<string>; visao?: VisaoRelatorio } = {},
+): Relatorio {
+  const filtros = COLUNAS_ORDEM.flatMap((c) => (visao[c] ? [[c, chaveFuncao(visao[c])] as const] : []))
+  const vagas = todas.filter((v) => filtros.every(([c, chave]) => chaveFuncao(v[c]) === chave))
+  if (visao.ordem) {
+    const c = visao.ordem
+    const sinal = visao.sentido === 'desc' ? -1 : 1
+    vagas.sort((a, b) => sinal * comparar(a[c], b[c])) // sort estável: empate fica na ordem original
+  }
   const ordenadas = etapas.filter((e) => !ocultas.has(e.id)).sort((a, b) => a.ordem - b.ordem).map(({ ordem, nome }) => ({ ordem, nome }))
   const linhas: LinhaRelatorio[] = vagas.map((v) => {
     const t = tarifas?.get(v.id)
@@ -57,6 +97,7 @@ export function montarRelatorio(vagas: VagaPainel[], etapas: EtapaDef[], tarifas
   })
   const soma = (ls: LinhaRelatorio[]) => centavos(ls.reduce((s, l) => s + (l.taxa ?? 0), 0))
   return {
+    opcoes: { funcoes: distintos(todas.map((v) => v.funcao)), disciplinas: distintos(todas.map((v) => v.disciplina)), areas: distintos(todas.map((v) => v.area)) },
     etapas: ordenadas,
     linhas,
     percentuais: ordenadas.map((_, i) => (linhas.length ? linhas.filter((l) => l.etapas[i] !== null).length / linhas.length : 0)),
