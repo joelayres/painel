@@ -7,7 +7,11 @@ const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um :
 export function ResumoRelatorio({ relatorio: r }: { relatorio: Relatorio }) {
   const total = r.linhas.length
   const mobilizadas = r.linhas.filter((l) => l.mobilizada).length
-  const concluidas = r.etapas.map((_, i) => r.linhas.filter((l) => l.etapas[i] !== null).length)
+  // O funil termina na coluna automática Mobilizado, quando ela existe.
+  const passos = [
+    ...r.etapas.map((e, i) => ({ chave: String(e.ordem), nome: e.nome, pct: r.percentuais[i], n: r.linhas.filter((l) => l.etapas[i] !== null).length })),
+    ...(r.colunaMobilizado ? [{ chave: 'mobilizado', nome: 'Mobilizado', pct: r.percentualMobilizado, n: mobilizadas }] : []),
+  ]
   const taxa = (valor: number) => (r.tarifasIndisponiveis ? '—' : reais(valor))
 
   return (
@@ -41,16 +45,16 @@ export function ResumoRelatorio({ relatorio: r }: { relatorio: Relatorio }) {
 
       {/* O funil: as etapas em sequência, cada uma com quanto do recorte já passou por ela. */}
       <ol aria-label="Andamento por etapa" className="flex overflow-x-auto">
-        {r.etapas.map((e, i) => {
-          const pct = Math.round(r.percentuais[i] * 100)
+        {passos.map((e) => {
+          const pct = Math.round(e.pct * 100)
           return (
-            <li key={e.ordem} className="relative flex min-w-36 flex-1 flex-col gap-2 border-r border-borda px-4 py-4 last:border-r-0">
+            <li key={e.chave} className="relative flex min-w-36 flex-1 flex-col gap-2 border-r border-borda px-4 py-4 last:border-r-0">
               <h3 className="text-sm leading-snug font-medium text-texto-suave">{e.nome}</h3>
               <span className="font-titulo text-3xl leading-none font-semibold tabular-nums">{pct}%</span>
               <div role="progressbar" aria-label={`${e.nome}: ${pct}%`} aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} className="h-1.5 overflow-hidden rounded-full bg-superficie-2">
                 <div className="h-full rounded-full bg-primaria" style={{ width: `${pct}%` }} />
               </div>
-              <span className="text-xs text-texto-suave tabular-nums">{concluidas[i]} de {plural(total, 'vaga', 'vagas')}</span>
+              <span className="text-xs text-texto-suave tabular-nums">{e.n} de {plural(total, 'vaga', 'vagas')}</span>
             </li>
           )
         })}

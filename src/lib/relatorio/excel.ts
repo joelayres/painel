@@ -17,7 +17,7 @@ export async function gerarExcelRelatorio(p: { relatorio: Relatorio; projeto: st
   const r = p.relatorio
   const wb = new ExcelJS.Workbook()
   const ws = wb.addWorksheet('Relatório', { views: [{ state: 'frozen', ySplit: 4 }] })
-  const cabecalho = ['Nome', 'Tipo', 'Função', 'Disciplina', 'Área', p.porOndas ? 'Onda' : 'Meta', 'Taxa', ...r.etapas.map((e) => e.nome)]
+  const cabecalho = ['Nome', 'Tipo', 'Função', 'Disciplina', 'Área', p.porOndas ? 'Onda' : 'Meta', 'Taxa', ...r.etapas.map((e) => e.nome), ...(r.colunaMobilizado ? ['Mobilizado'] : [])]
 
   ws.getCell('A1').value = `${p.projeto} · Relatório de mobilização`
   ws.getCell('A1').font = { bold: true, size: 14 }
@@ -41,6 +41,7 @@ export async function gerarExcelRelatorio(p: { relatorio: Relatorio; projeto: st
       l.nome, l.tipo ?? '—', l.funcao, l.disciplina, l.area, p.porOndas ? (l.onda ?? '') : dataBR(l.meta),
       !l.cobrada ? 'Não cobrada' : l.taxa,
       ...l.etapas.map((data) => (data ? 'OK' : null)),
+      ...(r.colunaMobilizado ? [l.mobilizada ? 'OK' : null] : []),
     ])
     linha.eachCell({ includeEmpty: true }, (c, i) => {
       if (i > cabecalho.length) return
@@ -49,8 +50,9 @@ export async function gerarExcelRelatorio(p: { relatorio: Relatorio; projeto: st
     })
     if (l.vagaAberta) linha.getCell(1).font = { italic: true, color: { argb: 'FF52625D' } }
     else linha.getCell(1).font = { bold: true }
-    l.etapas.forEach((data, i) => {
-      if (!data) return
+    const oks = [...l.etapas.map((d) => d !== null), ...(r.colunaMobilizado ? [l.mobilizada] : [])]
+    oks.forEach((ok, i) => {
+      if (!ok) return
       const c = linha.getCell(COL_TAXA + 1 + i)
       c.fill = solido(OK_FUNDO)
       c.font = { bold: true, color: { argb: OK_TEXTO } }
@@ -58,10 +60,11 @@ export async function gerarExcelRelatorio(p: { relatorio: Relatorio; projeto: st
   }
 
   ws.addRow([])
-  const pct = ws.addRow(['% concluído', ...Array(COL_TAXA - 1).fill(null), ...r.percentuais])
+  const percentuais = [...r.percentuais, ...(r.colunaMobilizado ? [r.percentualMobilizado] : [])]
+  const pct = ws.addRow(['% concluído', ...Array(COL_TAXA - 1).fill(null), ...percentuais])
   pct.font = { bold: true }
   pct.eachCell((c, i) => { if (i > COL_TAXA) c.alignment = { horizontal: 'center' } })
-  r.percentuais.forEach((_, i) => { pct.getCell(COL_TAXA + 1 + i).numFmt = '0%' })
+  percentuais.forEach((_, i) => { pct.getCell(COL_TAXA + 1 + i).numFmt = '0%' })
   const total = (rotulo: string, valor: number, formato: string) => {
     const linha = ws.addRow([rotulo])
     linha.getCell(COL_TAXA).value = valor

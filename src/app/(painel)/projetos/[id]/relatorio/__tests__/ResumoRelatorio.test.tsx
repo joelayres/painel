@@ -5,13 +5,13 @@ import { ResumoRelatorio } from '../ResumoRelatorio'
 
 const linha = (o: Partial<LinhaRelatorio>): LinhaRelatorio => ({
   id: 'v1', nome: 'Vinicius Vieira', vagaAberta: false, tipo: 'MOD', funcao: 'Assistente Técnico', disciplina: 'APOIOS', area: 'Q3',
-  onda: 'Onda 1', meta: '2027-01-15', cobrada: true, taxa: 24108.83, etapas: ['2026-10-22', null], mobilizada: false, ...o,
+  onda: 'Onda 1', meta: '2027-01-15', cobrada: true, taxa: 24108.83, etapas: ['2026-10-22', null], mobilizada: false, mobilizadaEm: null, ...o,
 })
 const relatorio = (o: Partial<Relatorio> = {}): Relatorio => ({
   opcoes: { funcoes: [], disciplinas: [], areas: [] },
   etapas: [{ ordem: 1, nome: 'Captura' }, { ordem: 2, nome: 'Entrevistas' }],
   linhas: [linha({}), linha({ id: 'v2', etapas: ['2026-10-22', '2026-10-23'], mobilizada: true }), linha({ id: 'v3', etapas: ['2026-10-22', null] }), linha({ id: 'v4', etapas: [null, null] })],
-  percentuais: [0.75, 0.25], totalTaxas: 36918.34, totalTaxasMobilizadas: 24108.83, semTarifa: 1, tarifasIndisponiveis: false, ...o,
+  percentuais: [0.75, 0.25], totalTaxas: 36918.34, totalTaxasMobilizadas: 24108.83, semTarifa: 1, tarifasIndisponiveis: false, colunaMobilizado: false, percentualMobilizado: 0, ...o,
 })
 const texto = () => (document.body.textContent ?? '').replace(/ /g, ' ')
 
@@ -46,4 +46,12 @@ test('sem vagas: funil zerado sem erro', () => {
   render(<ResumoRelatorio relatorio={relatorio({ linhas: [], percentuais: [0, 0], totalTaxas: 0, totalTaxasMobilizadas: 0, semTarifa: 0 })} />)
   expect(texto()).toContain('0 vagas')
   expect(texto()).toContain('0 de 0 vagas')
+})
+
+test('funil termina em Mobilizado quando há a coluna automática', () => {
+  render(<ResumoRelatorio relatorio={relatorio({ colunaMobilizado: true, percentualMobilizado: 0.25 })} />)
+  const itens = within(screen.getByRole('list', { name: 'Andamento por etapa' })).getAllByRole('listitem')
+  expect(itens.map((i) => i.querySelector('h3')?.textContent)).toEqual(['Captura', 'Entrevistas', 'Mobilizado'])
+  expect(itens[2]).toHaveTextContent('25%')
+  expect(itens[2]).toHaveTextContent('1 de 4 vagas')
 })

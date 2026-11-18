@@ -21,6 +21,19 @@ function Tipo({ tipo }: { tipo: LinhaRelatorio['tipo'] }) {
   return <span className="text-texto-suave">—</span>
 }
 
+// OK de etapa no verde claro; o da coluna Mobilizado no verde cheio, que é o resultado que o cliente acompanha.
+function Ok({ forte = false }: { forte?: boolean }) {
+  return (
+    <span
+      className="inline-flex min-w-9 justify-center rounded-full px-2 py-0.5 text-xs font-bold"
+      style={forte ? { background: 'var(--prazo-verde)', color: '#fff' } : { background: 'var(--st-finalizada-fundo)', color: 'var(--st-finalizada-texto)' }}
+    >
+      OK
+    </span>
+  )
+}
+const Pendente = () => <span aria-hidden="true" className="inline-block h-1.5 w-1.5 rounded-full bg-borda" />
+
 export function TabelaRelatorio({ relatorio: r, porOndas, visao, hrefOrdem }: {
   relatorio: Relatorio
   porOndas: boolean
@@ -51,8 +64,8 @@ export function TabelaRelatorio({ relatorio: r, porOndas, visao, hrefOrdem }: {
         <thead>
           <tr>
             {fixas.map(cabecalho)}
-            {r.etapas.map((e) => (
-              <th key={e.ordem} scope="col" className={`${th} w-20 min-w-20 px-2 text-center whitespace-normal`}>
+            {[...r.etapas.map((e) => ({ chave: String(e.ordem), nome: e.nome })), ...(r.colunaMobilizado ? [{ chave: 'mobilizado', nome: 'Mobilizado' }] : [])].map((e) => (
+              <th key={e.chave} scope="col" className={`${th} w-20 min-w-20 px-2 text-center whitespace-normal`}>
                 <span className="font-titulo text-[15px] leading-tight font-semibold">{e.nome}</span>
               </th>
             ))}
@@ -61,7 +74,7 @@ export function TabelaRelatorio({ relatorio: r, porOndas, visao, hrefOrdem }: {
         <tbody>
           {r.linhas.length === 0 ? (
             <tr>
-              <td colSpan={fixas.length + r.etapas.length} className="px-3 py-10 text-center text-texto-suave">
+              <td colSpan={fixas.length + r.etapas.length + (r.colunaMobilizado ? 1 : 0)} className="px-3 py-10 text-center text-texto-suave">
                 <p className="font-medium text-texto">Nenhuma vaga</p>
                 <p className="mt-1">Mude ou limpe os filtros para ver as vagas do projeto.</p>
               </td>
@@ -86,13 +99,14 @@ export function TabelaRelatorio({ relatorio: r, porOndas, visao, hrefOrdem }: {
               </td>
               {l.etapas.map((data, i) => (
                 <td key={r.etapas[i].ordem} className={`${celula} px-2 text-center`} title={data ? `Concluída em ${dataBR(data)}` : undefined}>
-                  {data ? (
-                    <span className="inline-flex min-w-9 justify-center rounded-full px-2 py-0.5 text-xs font-bold" style={{ background: 'var(--st-finalizada-fundo)', color: 'var(--st-finalizada-texto)' }}>OK</span>
-                  ) : (
-                    <span aria-hidden="true" className="inline-block h-1.5 w-1.5 rounded-full bg-borda" />
-                  )}
+                  {data ? <Ok /> : <Pendente />}
                 </td>
               ))}
+              {r.colunaMobilizado && (
+                <td className={`${celula} px-2 text-center`} title={l.mobilizada && l.mobilizadaEm ? `Mobilizada em ${dataBR(l.mobilizadaEm)}` : undefined}>
+                  {l.mobilizada ? <Ok forte /> : <Pendente />}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

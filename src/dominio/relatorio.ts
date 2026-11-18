@@ -37,6 +37,7 @@ export type LinhaRelatorio = {
   taxa: number | null
   etapas: (string | null)[] // data de conclusão de cada etapa, na ordem de Relatorio.etapas
   mobilizada: boolean
+  mobilizadaEm: string | null // data em que concluiu a última etapa do projeto
 }
 export type Relatorio = {
   opcoes: { funcoes: string[]; disciplinas: string[]; areas: string[] } // valores para os filtros, de todas as vagas recebidas
@@ -47,6 +48,10 @@ export type Relatorio = {
   totalTaxasMobilizadas: number
   semTarifa: number // vagas cobradas sem valor
   tarifasIndisponiveis: boolean // o Financeiro não respondeu
+  // Coluna automática "Mobilizado" (vaga que concluiu todas as etapas do projeto), no fim da tabela.
+  // Some quando o próprio projeto já mostra uma etapa chamada Mobilizado, para não repetir.
+  colunaMobilizado: boolean
+  percentualMobilizado: number
 }
 
 const centavos = (x: number) => Math.round(x * 100) / 100
@@ -93,6 +98,7 @@ export function montarRelatorio(
       taxa: t?.valor ?? null,
       etapas: ordenadas.map((e) => v.previsao.etapas.find((p) => p.ordem === e.ordem)?.concluidaEm ?? null),
       mobilizada: v.situacao.mobilizada,
+      mobilizadaEm: v.situacao.mobilizada ? (v.previsao.etapas.at(-1)?.concluidaEm ?? null) : null,
     }
   })
   const soma = (ls: LinhaRelatorio[]) => centavos(ls.reduce((s, l) => s + (l.taxa ?? 0), 0))
@@ -105,5 +111,7 @@ export function montarRelatorio(
     totalTaxasMobilizadas: soma(linhas.filter((l) => l.mobilizada)),
     semTarifa: linhas.filter((l) => l.cobrada && l.taxa === null).length,
     tarifasIndisponiveis: tarifas === null,
+    colunaMobilizado: !ordenadas.some((e) => chaveFuncao(e.nome).startsWith('mobiliza')),
+    percentualMobilizado: linhas.length ? linhas.filter((l) => l.mobilizada).length / linhas.length : 0,
   }
 }

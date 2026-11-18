@@ -5,7 +5,7 @@ import { TabelaRelatorio } from '../TabelaRelatorio'
 
 const linha = (o: Partial<LinhaRelatorio>): LinhaRelatorio => ({
   id: 'v1', nome: 'Vinicius Vieira', vagaAberta: false, tipo: 'MOD', funcao: 'Assistente Técnico', disciplina: 'APOIOS', area: 'Q3',
-  onda: 'Onda 1', meta: '2027-01-15', cobrada: true, taxa: 24108.83, etapas: ['2026-10-22', null], mobilizada: false, ...o,
+  onda: 'Onda 1', meta: '2027-01-15', cobrada: true, taxa: 24108.83, etapas: ['2026-10-22', null], mobilizada: false, mobilizadaEm: null, ...o,
 })
 const relatorio = (o: Partial<Relatorio> = {}): Relatorio => ({
   opcoes: { funcoes: [], disciplinas: [], areas: [] },
@@ -16,7 +16,7 @@ const relatorio = (o: Partial<Relatorio> = {}): Relatorio => ({
     linha({ id: 'v3', nome: 'Silvio Rocha', tipo: null, taxa: null }),
   ],
   percentuais: [0.75, 0],
-  totalTaxas: 36918.34, totalTaxasMobilizadas: 24108.83, semTarifa: 1, tarifasIndisponiveis: false, ...o,
+  totalTaxas: 36918.34, totalTaxasMobilizadas: 24108.83, semTarifa: 1, tarifasIndisponiveis: false, colunaMobilizado: false, percentualMobilizado: 0, ...o,
 })
 const href = (c: string, sentido: string) => `?ordem=${c}&sentido=${sentido}`
 const nbsp = (t: string | null) => (t ?? '').replace(/ /g, ' ')
@@ -82,4 +82,20 @@ test('Função, Disciplina e Área ordenam ao clicar; a ativa mostra o sentido e
   rerender(<TabelaRelatorio relatorio={relatorio()} porOndas visao={{ ordem: 'funcao', sentido: 'desc' }} hrefOrdem={href} />)
   expect(screen.getByRole('columnheader', { name: /Função/ })).toHaveAttribute('aria-sort', 'descending')
   expect(screen.getByRole('link', { name: /Função/ })).toHaveAttribute('href', '?ordem=funcao&sentido=asc')
+})
+
+test('coluna Mobilizado no fim, com OK e a data no title', () => {
+  const r = relatorio({ colunaMobilizado: true, percentualMobilizado: 1 / 3, linhas: [linha({ mobilizada: true, mobilizadaEm: '2026-11-03' }), linha({ id: 'v2' })] })
+  render(<TabelaRelatorio relatorio={r} porOndas visao={{}} hrefOrdem={href} />)
+  expect(screen.getAllByRole('columnheader').at(-1)).toHaveTextContent('Mobilizado')
+  const [, l1, l2] = screen.getAllByRole('row')
+  const ultima = (l: HTMLElement) => within(l).getAllByRole('cell').at(-1)!
+  expect(ultima(l1)).toHaveTextContent('OK')
+  expect(ultima(l1)).toHaveAttribute('title', 'Mobilizada em 03/11/2026')
+  expect(ultima(l2)).not.toHaveTextContent('OK')
+})
+
+test('sem a coluna automática, a última coluna é a última etapa', () => {
+  render(<TabelaRelatorio relatorio={relatorio()} porOndas visao={{}} hrefOrdem={href} />)
+  expect(screen.getAllByRole('columnheader').at(-1)).toHaveTextContent('Entrevistas')
 })
