@@ -1,0 +1,48 @@
+// O relatório do projeto em Excel, no formato da planilha do cliente: "OK" nas etapas concluídas e o % no rodapé.
+import ExcelJS from 'exceljs'
+import type { Relatorio } from '@/dominio/relatorio'
+import { dataBR } from '@/lib/formato/datas'
+
+const MOEDA = '"R$" #,##0.00'
+const COL_TAXA = 7 // Nome, Tipo, Função, Disciplina, Área, Onda/Meta, Taxa
+
+export async function gerarExcelRelatorio(p: { relatorio: Relatorio; projeto: string; onda: string | null; porOndas: boolean; hoje: string }): Promise<Buffer> {
+  const r = p.relatorio
+  const wb = new ExcelJS.Workbook()
+  const ws = wb.addWorksheet('Relatório', { views: [{ state: 'frozen', ySplit: 4 }] })
+  const cabecalho = ['Nome', 'Tipo', 'Função', 'Disciplina', 'Área', p.porOndas ? 'Onda' : 'Meta', 'Taxa', ...r.etapas.map((e) => e.nome)]
+
+  ws.getCell('A1').value = `${p.projeto} · Relatório de mobilização`
+  ws.getCell('A1').font = { bold: true, size: 14 }
+  ws.getCell('A2').value = `Gerado em ${dataBR(p.hoje)}${p.onda ? ` · ${p.onda}` : ''}`
+  if (r.tarifasIndisponiveis) ws.getCell('A3').value = 'Tarifas indisponíveis: o Financeiro não respondeu na hora da geração.'
+
+  const cab = ws.getRow(4)
+  cab.values = cabecalho
+  cab.font = { bold: true }
+  cabecalho.forEach((titulo, i) => { ws.getColumn(i + 1).width = i === 0 || i === 2 ? 32 : Math.max(12, titulo.length + 4) })
+  ws.getColumn(COL_TAXA).numFmt = MOEDA
+
+  for (const l of r.linhas) {
+    ws.addRow([
+      l.nome, l.tipo ?? '—', l.funcao, l.disciplina, l.area, p.porOndas ? (l.onda ?? '') : dataBR(l.meta),
+      !l.cobrada ? 'Não cobrada' : l.taxa,
+      ...l.etapas.map((data) => (data ? 'OK' : null)),
+    ])
+  }
+
+  ws.addRow([])
+  const pct = ws.addRow(['% concluído', ...Array(COL_TAXA - 1).fill(null), ...r.percentuais])
+  pct.font = { bold: true }
+  r.percentuais.forEach((_, i) => { pct.getCell(COL_TAXA + 1 + i).numFmt = '0%' })
+  const total = (rotulo: string, valor: number, formato: string) => {
+    const linha = ws.addRow([rotulo])
+    linha.getCell(COL_TAXA).value = valor
+    linha.getCell(COL_TAXA).numFmt = formato
+  }
+  total('Total das taxas', r.totalTaxas, MOEDA)
+  total('Total das taxas (mobilizadas)', r.totalTaxasMobilizadas, MOEDA)
+  total('Vagas sem tarifa', r.semTarifa, '0')
+
+  return Buffer.from(await wb.xlsx.writeBuffer())
+}
