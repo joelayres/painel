@@ -275,14 +275,14 @@ isOneToOne: false
                   ]
                 },"participacoes": {
                   Row: {
-                    "analisando_desde": string | null,"candidato_id": string | null,"classificacao": string | null,"classificacao_em": string | null,"classificacao_por": string | null,"criado_em": string,"curriculo_id": string,"do_banco": boolean,"erro": string | null,"id": string,"resultado": string,"selecao_id": string,"situacao": string
+                    "analisando_desde": string | null,"candidato_id": string | null,"classificacao": string | null,"classificacao_em": string | null,"classificacao_por": string | null,"criado_em": string,"curriculo_id": string,"do_banco": boolean,"erro": string | null,"id": string,"indicado_por": string | null,"resultado": string,"selecao_id": string,"situacao": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "analisando_desde"?: string | null,"candidato_id"?: string | null,"classificacao"?: string | null,"classificacao_em"?: string | null,"classificacao_por"?: string | null,"criado_em"?: string,"curriculo_id": string,"do_banco"?: boolean,"erro"?: string | null,"id"?: string,"resultado"?: string,"selecao_id": string,"situacao"?: string
+                    "analisando_desde"?: string | null,"candidato_id"?: string | null,"classificacao"?: string | null,"classificacao_em"?: string | null,"classificacao_por"?: string | null,"criado_em"?: string,"curriculo_id": string,"do_banco"?: boolean,"erro"?: string | null,"id"?: string,"indicado_por"?: string | null,"resultado"?: string,"selecao_id": string,"situacao"?: string
                   }
                   Update: {
-                    "analisando_desde"?: string | null,"candidato_id"?: string | null,"classificacao"?: string | null,"classificacao_em"?: string | null,"classificacao_por"?: string | null,"criado_em"?: string,"curriculo_id"?: string,"do_banco"?: boolean,"erro"?: string | null,"id"?: string,"resultado"?: string,"selecao_id"?: string,"situacao"?: string
+                    "analisando_desde"?: string | null,"candidato_id"?: string | null,"classificacao"?: string | null,"classificacao_em"?: string | null,"classificacao_por"?: string | null,"criado_em"?: string,"curriculo_id"?: string,"do_banco"?: boolean,"erro"?: string | null,"id"?: string,"indicado_por"?: string | null,"resultado"?: string,"selecao_id"?: string,"situacao"?: string
                   }
                   Relationships: [
                     {
@@ -533,7 +533,7 @@ isOneToOne: false
                            },
 "buscar_candidatos":
 { Args: { "p": Json }; Returns: {
-              "cidade": string,"funcoes": (string)[],"id": string,"melhor_nota": number,"nome": string,"resultados": (string)[],"uf": string,"ultima_em": string
+              "cidade": string,"funcoes": (string)[],"id": string,"indicacoes": (string)[],"melhor_nota": number,"nome": string,"resultados": (string)[],"uf": string,"ultima_em": string
             }[]
                            },
 "cancelar_vaga":
@@ -553,6 +553,9 @@ isOneToOne: false
                            },
 "confirmar_classificacao":
 { Args: { "p_participacoes": (string)[] }; Returns: number
+                           },
+"definir_indicacao":
+{ Args: { "p_indicado_por": string,"p_participacao": string }; Returns: undefined
                            },
 "definir_resultado":
 { Args: { "p_participacao": string,"p_resultado": string }; Returns: undefined
@@ -643,6 +646,9 @@ isOneToOne: false
 "incluir_etapa_cliente":
 { Args: { "p_cliente": string,"p_depois_de": string,"p_duracao": number,"p_nome": string }; Returns: string
                            },
+"indicadores":
+{ Args: Record<PropertyKey, never>; Returns: (string)[]
+                           },
 "iniciar_analise":
 { Args: { "p_participacao": string }; Returns: {
               "caminho": string,"descritivo": string,"nome_arquivo": string
@@ -668,7 +674,7 @@ isOneToOne: false
                            },
 "participacoes_do_candidato":
 { Args: { "p_candidato": string }; Returns: {
-              "classificacao": string,"criado_em": string,"detalhe_visivel": boolean,"funcao": string,"nota": number,"participacao_id": string,"projeto": string,"projeto_id": string,"resultado": string,"selecao_id": string
+              "classificacao": string,"criado_em": string,"detalhe_visivel": boolean,"funcao": string,"indicado_por": string,"nota": number,"participacao_id": string,"projeto": string,"projeto_id": string,"resultado": string,"selecao_id": string
             }[]
                            },
 "pessoas_do_projeto":
