@@ -5,7 +5,41 @@ export type Database = {
   
   "public": {
           Tables: {
-            "cliente_duracoes": {
+            "analises_ia": {
+                  Row: {
+                    "classificacao": string,"criado_em": string,"descritivo": string,"id": string,"modelo": string,"nota": number,"participacao_id": string,"resposta": NonNullable<Json>,"tokens_entrada": number | null,"tokens_saida": number | null,"versao_prompt": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "classificacao": string,"criado_em"?: string,"descritivo": string,"id"?: string,"modelo": string,"nota": number,"participacao_id": string,"resposta": NonNullable<Json>,"tokens_entrada"?: number | null,"tokens_saida"?: number | null,"versao_prompt": string
+                  }
+                  Update: {
+                    "classificacao"?: string,"criado_em"?: string,"descritivo"?: string,"id"?: string,"modelo"?: string,"nota"?: number,"participacao_id"?: string,"resposta"?: NonNullable<Json>,"tokens_entrada"?: number | null,"tokens_saida"?: number | null,"versao_prompt"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "analises_ia_participacao_id_fkey"
+      columns: ["participacao_id"]
+isOneToOne: false
+      referencedRelation: "participacoes"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"candidatos": {
+                  Row: {
+                    "cidade": string | null,"cpf": string | null,"criado_em": string,"email": string | null,"id": string,"nome": string,"telefone": string | null,"uf": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "cidade"?: string | null,"cpf"?: string | null,"criado_em"?: string,"email"?: string | null,"id"?: string,"nome": string,"telefone"?: string | null,"uf"?: string | null
+                  }
+                  Update: {
+                    "cidade"?: string | null,"cpf"?: string | null,"criado_em"?: string,"email"?: string | null,"id"?: string,"nome"?: string,"telefone"?: string | null,"uf"?: string | null
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"cliente_duracoes": {
                   Row: {
                     "cliente_id": string,"duracao": number,"ordem": number
                   }
@@ -71,6 +105,26 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"curriculos": {
+                  Row: {
+                    "caminho": string,"candidato_id": string | null,"enviado_em": string,"enviado_por": string,"id": string,"nome_arquivo": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "caminho": string,"candidato_id"?: string | null,"enviado_em"?: string,"enviado_por": string,"id"?: string,"nome_arquivo": string
+                  }
+                  Update: {
+                    "caminho"?: string,"candidato_id"?: string | null,"enviado_em"?: string,"enviado_por"?: string,"id"?: string,"nome_arquivo"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "curriculos_candidato_id_fkey"
+      columns: ["candidato_id"]
+isOneToOne: false
+      referencedRelation: "candidatos"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"entradas_portal": {
                   Row: {
                     "jti": string,"usado_em": string
@@ -84,6 +138,26 @@ isOneToOne: false
                   }
                   Relationships: [
                     
+                  ]
+                },"entrevistas": {
+                  Row: {
+                    "alterado_em": string | null,"data": string,"entrevistador": string,"id": string,"impressoes": string,"parecer": string,"participacao_id": string,"registrado_em": string,"registrado_por": string,"tipo": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "alterado_em"?: string | null,"data": string,"entrevistador": string,"id"?: string,"impressoes"?: string,"parecer": string,"participacao_id": string,"registrado_em"?: string,"registrado_por": string,"tipo": string
+                  }
+                  Update: {
+                    "alterado_em"?: string | null,"data"?: string,"entrevistador"?: string,"id"?: string,"impressoes"?: string,"parecer"?: string,"participacao_id"?: string,"registrado_em"?: string,"registrado_por"?: string,"tipo"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "entrevistas_participacao_id_fkey"
+      columns: ["participacao_id"]
+isOneToOne: false
+      referencedRelation: "participacoes"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"etapas": {
                   Row: {
@@ -153,6 +227,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"historico_selecao": {
+                  Row: {
+                    "acao": string,"detalhe": Json | null,"em": string,"id": string,"nome_usuario": string,"participacao_id": string | null,"selecao_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "acao": string,"detalhe"?: Json | null,"em"?: string,"id"?: string,"nome_usuario": string,"participacao_id"?: string | null,"selecao_id": string
+                  }
+                  Update: {
+                    "acao"?: string,"detalhe"?: Json | null,"em"?: string,"id"?: string,"nome_usuario"?: string,"participacao_id"?: string | null,"selecao_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "historico_selecao_participacao_id_fkey"
+      columns: ["participacao_id"]
+isOneToOne: false
+      referencedRelation: "participacoes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "historico_selecao_selecao_id_fkey"
+      columns: ["selecao_id"]
+isOneToOne: false
+      referencedRelation: "selecoes"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"ondas": {
                   Row: {
                     "fim": string,"id": string,"inicio": string,"nome": string,"projeto_id": string
@@ -170,6 +270,38 @@ isOneToOne: false
       columns: ["projeto_id"]
 isOneToOne: false
       referencedRelation: "projetos"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"participacoes": {
+                  Row: {
+                    "analisando_desde": string | null,"candidato_id": string | null,"classificacao": string | null,"classificacao_em": string | null,"classificacao_por": string | null,"criado_em": string,"curriculo_id": string,"do_banco": boolean,"erro": string | null,"id": string,"resultado": string,"selecao_id": string,"situacao": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "analisando_desde"?: string | null,"candidato_id"?: string | null,"classificacao"?: string | null,"classificacao_em"?: string | null,"classificacao_por"?: string | null,"criado_em"?: string,"curriculo_id": string,"do_banco"?: boolean,"erro"?: string | null,"id"?: string,"resultado"?: string,"selecao_id": string,"situacao"?: string
+                  }
+                  Update: {
+                    "analisando_desde"?: string | null,"candidato_id"?: string | null,"classificacao"?: string | null,"classificacao_em"?: string | null,"classificacao_por"?: string | null,"criado_em"?: string,"curriculo_id"?: string,"do_banco"?: boolean,"erro"?: string | null,"id"?: string,"resultado"?: string,"selecao_id"?: string,"situacao"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "participacoes_candidato_id_fkey"
+      columns: ["candidato_id"]
+isOneToOne: false
+      referencedRelation: "candidatos"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "participacoes_curriculo_id_fkey"
+      columns: ["curriculo_id"]
+isOneToOne: false
+      referencedRelation: "curriculos"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "participacoes_selecao_id_fkey"
+      columns: ["selecao_id"]
+isOneToOne: false
+      referencedRelation: "selecoes"
       referencedColumns: ["id"]
     }
                   ]
@@ -242,6 +374,26 @@ isOneToOne: false
       columns: ["cliente_id"]
 isOneToOne: false
       referencedRelation: "clientes"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"selecoes": {
+                  Row: {
+                    "criado_em": string,"criado_por": string | null,"descritivo": string,"encerrada_em": string | null,"funcao": string,"id": string,"projeto_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "criado_em"?: string,"criado_por"?: string | null,"descritivo": string,"encerrada_em"?: string | null,"funcao": string,"id"?: string,"projeto_id": string
+                  }
+                  Update: {
+                    "criado_em"?: string,"criado_por"?: string | null,"descritivo"?: string,"encerrada_em"?: string | null,"funcao"?: string,"id"?: string,"projeto_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "selecoes_projeto_id_fkey"
+      columns: ["projeto_id"]
+isOneToOne: false
+      referencedRelation: "projetos"
       referencedColumns: ["id"]
     }
                   ]
@@ -379,6 +531,11 @@ isOneToOne: false
 "alterar_vagas_em_grupo":
 { Args: { "p_campo": string,"p_vagas": (string)[],"p_valor": string }; Returns: Json
                            },
+"buscar_candidatos":
+{ Args: { "p": Json }; Returns: {
+              "cidade": string,"funcoes": (string)[],"id": string,"melhor_nota": number,"nome": string,"resultados": (string)[],"uf": string,"ultima_em": string
+            }[]
+                           },
 "cancelar_vaga":
 { Args: { "p_id": string }; Returns: undefined
                            },
@@ -394,6 +551,12 @@ isOneToOne: false
 "concluir_etapas":
 { Args: { "p_ate": number,"p_data": string,"p_ordem_esperada": number,"p_vaga": string }; Returns: undefined
                            },
+"confirmar_classificacao":
+{ Args: { "p_participacoes": (string)[] }; Returns: number
+                           },
+"definir_resultado":
+{ Args: { "p_participacao": string,"p_resultado": string }; Returns: undefined
+                           },
 "desfazer_etapa":
 { Args: { "p_ordem_esperada": number,"p_vaga": string }; Returns: undefined
                            },
@@ -408,6 +571,9 @@ isOneToOne: false
                            },
 "encerrar_projeto":
 { Args: { "p_id": string }; Returns: undefined
+                           },
+"encerrar_selecao":
+{ Args: { "p_encerrar": boolean,"p_id": string }; Returns: undefined
                            },
 "etapa_atual":
 { Args: { "p_vaga": string }; Returns: number
@@ -435,6 +601,9 @@ isOneToOne: false
 "etapas_padrao_do_cliente":
 { Args: { "p_cliente": string }; Returns: undefined
                            },
+"excluir_candidato":
+{ Args: { "p_candidato": string }; Returns: (string)[]
+                           },
 "excluir_cliente":
 { Args: { "p_id": string }; Returns: undefined
                            },
@@ -444,8 +613,20 @@ isOneToOne: false
 "excluir_etapa_cliente":
 { Args: { "p_etapa": string }; Returns: undefined
                            },
+"exigir_equipe":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"exigir_participacao":
+{ Args: { "p_participacao": string }; Returns: string
+                           },
 "exigir_projeto":
 { Args: { "p": string }; Returns: undefined
+                           },
+"exigir_selecao":
+{ Args: { "p_selecao": string }; Returns: undefined
+                           },
+"falhar_analise":
+{ Args: { "p_erro": string,"p_participacao": string }; Returns: undefined
                            },
 "hoje_sp":
 { Args: Record<PropertyKey, never>; Returns: string
@@ -453,11 +634,19 @@ isOneToOne: false
 "importar_vagas":
 { Args: { "p_projeto": string,"p_vagas": Json }; Returns: number
                            },
+"incluir_do_banco":
+{ Args: { "p_candidatos": (string)[],"p_selecao": string }; Returns: number
+                           },
 "incluir_etapa":
 { Args: { "p_depois_de": string,"p_duracao": number,"p_nome": string,"p_projeto": string }; Returns: string
                            },
 "incluir_etapa_cliente":
 { Args: { "p_cliente": string,"p_depois_de": string,"p_duracao": number,"p_nome": string }; Returns: string
+                           },
+"iniciar_analise":
+{ Args: { "p_participacao": string }; Returns: {
+              "caminho": string,"descritivo": string,"nome_arquivo": string
+            }[]
                            },
 "meu_nome":
 { Args: Record<PropertyKey, never>; Returns: string
@@ -473,6 +662,14 @@ isOneToOne: false
                            },
 "mover_etapa_cliente":
 { Args: { "p_etapa": string,"p_para": number }; Returns: undefined
+                           },
+"mudar_classificacao":
+{ Args: { "p_classificacao": string,"p_justificativa": string,"p_participacao": string }; Returns: undefined
+                           },
+"participacoes_do_candidato":
+{ Args: { "p_candidato": string }; Returns: {
+              "classificacao": string,"criado_em": string,"detalhe_visivel": boolean,"funcao": string,"nota": number,"participacao_id": string,"projeto": string,"projeto_id": string,"resultado": string,"selecao_id": string
+            }[]
                            },
 "pessoas_do_projeto":
 { Args: { "p_projeto": string }; Returns: {
@@ -490,6 +687,9 @@ isOneToOne: false
 "pode_ver_projeto":
 { Args: { "p": string }; Returns: boolean
                            },
+"pode_ver_selecao":
+{ Args: { "p_selecao": string }; Returns: boolean
+                           },
 "posicao_etapa":
 { Args: { "p_etapa": string }; Returns: number
                            },
@@ -498,6 +698,18 @@ isOneToOne: false
                            },
 "reabrir_projeto":
 { Args: { "p_id": string }; Returns: undefined
+                           },
+"reanalisar":
+{ Args: { "p_participacoes": (string)[] }; Returns: undefined
+                           },
+"registrar_analise":
+{ Args: { "p": Json,"p_participacao": string }; Returns: string
+                           },
+"registrar_curriculo":
+{ Args: { "p_caminho": string,"p_nome_arquivo": string,"p_selecao": string }; Returns: string
+                           },
+"registrar_selecao":
+{ Args: { "p_acao": string,"p_detalhe"?: Json,"p_nome"?: string,"p_participacao": string,"p_selecao": string }; Returns: undefined
                            },
 "renomear_etapa":
 { Args: { "p_etapa": string,"p_nome": string }; Returns: undefined
@@ -508,6 +720,9 @@ isOneToOne: false
 "salvar_cliente":
 { Args: { "p_id": string,"p_nome": string }; Returns: string
                            },
+"salvar_entrevista":
+{ Args: { "p": Json,"p_id": string,"p_participacao": string }; Returns: string
+                           },
 "salvar_motivo_atraso":
 { Args: { "p_ordem_esperada": number,"p_texto": string,"p_vaga": string }; Returns: undefined
                            },
@@ -515,6 +730,9 @@ isOneToOne: false
 { Args: { "p_fim": string,"p_id": string,"p_inicio": string,"p_nome": string,"p_projeto": string }; Returns: string
                            },
 "salvar_projeto":
+{ Args: { "p": Json,"p_id": string }; Returns: string
+                           },
+"salvar_selecao":
 { Args: { "p": Json,"p_id": string }; Returns: string
                            },
 "salvar_vaga":
