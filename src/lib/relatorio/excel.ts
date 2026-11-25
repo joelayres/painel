@@ -11,13 +11,14 @@ const OK_FUNDO = 'FFDCF1E4'
 const OK_TEXTO = 'FF1C6239'
 const BORDA = { style: 'thin' as const, color: { argb: 'FFD3DDD9' } }
 const solido = (argb: string): ExcelJS.Fill => ({ type: 'pattern', pattern: 'solid', fgColor: { argb } })
-const COL_TAXA = 7 // Nome, Tipo, Função, Disciplina, Área, Onda/Meta, Taxa
 
 export async function gerarExcelRelatorio(p: { relatorio: Relatorio; projeto: string; onda: string | null; porOndas: boolean; hoje: string }): Promise<Buffer> {
   const r = p.relatorio
   const wb = new ExcelJS.Workbook()
   const ws = wb.addWorksheet('Relatório', { views: [{ state: 'frozen', ySplit: 4 }] })
-  const cabecalho = ['Nome', 'Tipo', 'Função', 'Disciplina', 'Área', p.porOndas ? 'Onda' : 'Meta', 'Taxa', ...r.etapas.map((e) => e.nome), ...(r.colunaMobilizado ? ['Mobilizado'] : [])]
+  const fixas = ['Nome', 'Tipo', 'Função', 'Disciplina', 'Área', 'Gestor', ...(p.porOndas ? ['Onda'] : []), 'Data final', 'Taxa']
+  const COL_TAXA = fixas.length // a Taxa fecha as colunas fixas; as etapas vêm depois
+  const cabecalho = [...fixas, ...r.etapas.map((e) => e.nome), ...(r.colunaMobilizado ? ['Mobilizado'] : [])]
 
   ws.getCell('A1').value = `${p.projeto} · Relatório de mobilização`
   ws.getCell('A1').font = { bold: true, size: 14 }
@@ -38,7 +39,7 @@ export async function gerarExcelRelatorio(p: { relatorio: Relatorio; projeto: st
 
   for (const l of r.linhas) {
     const linha = ws.addRow([
-      l.nome, l.tipo ?? '—', l.funcao, l.disciplina, l.area, p.porOndas ? (l.onda ?? '') : dataBR(l.meta),
+      l.nome, l.tipo ?? '—', l.funcao, l.disciplina, l.area, l.gestor ?? '—', ...(p.porOndas ? [l.onda ?? ''] : []), dataBR(l.meta),
       !l.cobrada ? 'Não cobrada' : l.taxa,
       ...l.etapas.map((data) => (data ? 'OK' : null)),
       ...(r.colunaMobilizado ? [l.mobilizada ? 'OK' : null] : []),

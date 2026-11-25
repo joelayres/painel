@@ -3,8 +3,8 @@ import type { ColunaOrdem, LinhaRelatorio, Relatorio, VisaoRelatorio } from '@/d
 import { dataBR } from '@/lib/formato/datas'
 import { reais } from '@/lib/formato/moeda'
 
-// Função, Disciplina e Área ordenam pelo título: o primeiro clique ordena de A a Z, o seguinte inverte.
-const ORDENAVEIS: Record<string, ColunaOrdem> = { Função: 'funcao', Disciplina: 'disciplina', Área: 'area' }
+// Função, Disciplina, Área e Gestor ordenam pelo título: o primeiro clique ordena de A a Z, o seguinte inverte.
+const ORDENAVEIS: Record<string, ColunaOrdem> = { Função: 'funcao', Disciplina: 'disciplina', Área: 'area', Gestor: 'gestor' }
 
 // O cabeçalho é a faixa da marca e fica fixo no topo da caixa; a coluna Nome fica fixa ao rolar para o lado.
 const th = 'sticky top-0 z-10 bg-faixa px-3 py-3 text-left align-bottom text-sm font-semibold whitespace-nowrap text-faixa-texto'
@@ -40,7 +40,7 @@ export function TabelaRelatorio({ relatorio: r, porOndas, visao, hrefOrdem }: {
   visao: VisaoRelatorio
   hrefOrdem: (coluna: ColunaOrdem, sentido: 'asc' | 'desc') => string
 }) {
-  const fixas = ['Nome', 'Tipo', 'Função', 'Disciplina', 'Área', porOndas ? 'Onda' : 'Meta', 'Taxa']
+  const fixas = ['Nome', 'Tipo', 'Função', 'Disciplina', 'Área', 'Gestor', ...(porOndas ? ['Onda'] : []), 'Data final', 'Taxa']
   const cabecalho = (titulo: string) => {
     const classe = `${th} ${titulo === 'Nome' ? thNome : ''} ${titulo === 'Taxa' ? 'text-right' : ''}`
     const coluna = ORDENAVEIS[titulo]
@@ -93,7 +93,9 @@ export function TabelaRelatorio({ relatorio: r, porOndas, visao, hrefOrdem }: {
               <td className={`${celula} min-w-36 max-w-52`}>{l.funcao}</td>
               <td className={`${celula} min-w-36 max-w-56 text-[13px] leading-snug`}>{l.disciplina}</td>
               <td className={celula}>{l.area}</td>
-              <td className={`${celula} whitespace-nowrap text-texto-suave`}>{porOndas ? (l.onda ?? '—') : dataBR(l.meta)}</td>
+              <td className={`${celula} whitespace-nowrap`}>{l.gestor ?? <span className="text-texto-suave">—</span>}</td>
+              {porOndas && <td className={`${celula} whitespace-nowrap text-texto-suave`}>{l.onda ?? '—'}</td>}
+              <td className={`${celula} whitespace-nowrap tabular-nums`}>{dataBR(l.meta)}</td>
               <td className={`${celula} text-right whitespace-nowrap tabular-nums`}>
                 {!l.cobrada ? <span className="text-xs text-texto-suave">Não cobrada</span> : l.taxa === null ? <span className="text-texto-suave">—</span> : <span className="font-medium">{reais(l.taxa)}</span>}
               </td>

@@ -4,11 +4,11 @@ import type { LinhaRelatorio, Relatorio } from '@/dominio/relatorio'
 import { ResumoRelatorio } from '../ResumoRelatorio'
 
 const linha = (o: Partial<LinhaRelatorio>): LinhaRelatorio => ({
-  id: 'v1', nome: 'Vinicius Vieira', vagaAberta: false, tipo: 'MOD', funcao: 'Assistente Técnico', disciplina: 'APOIOS', area: 'Q3',
+  id: 'v1', nome: 'Vinicius Vieira', vagaAberta: false, tipo: 'MOD', funcao: 'Assistente Técnico', disciplina: 'APOIOS', area: 'Q3', gestor: null,
   onda: 'Onda 1', meta: '2027-01-15', cobrada: true, taxa: 24108.83, etapas: ['2026-10-22', null], mobilizada: false, mobilizadaEm: null, ...o,
 })
 const relatorio = (o: Partial<Relatorio> = {}): Relatorio => ({
-  opcoes: { funcoes: [], disciplinas: [], areas: [] },
+  opcoes: { funcoes: [], disciplinas: [], areas: [], gestores: [] },
   etapas: [{ ordem: 1, nome: 'Captura' }, { ordem: 2, nome: 'Entrevistas' }],
   linhas: [linha({}), linha({ id: 'v2', etapas: ['2026-10-22', '2026-10-23'], mobilizada: true }), linha({ id: 'v3', etapas: ['2026-10-22', null] }), linha({ id: 'v4', etapas: [null, null] })],
   percentuais: [0.75, 0.25], totalTaxas: 36918.34, totalTaxasMobilizadas: 24108.83, semTarifa: 1, tarifasIndisponiveis: false, colunaMobilizado: false, percentualMobilizado: 0, ...o,

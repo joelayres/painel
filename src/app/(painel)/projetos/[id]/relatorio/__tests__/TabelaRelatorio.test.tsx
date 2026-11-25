@@ -4,11 +4,11 @@ import type { LinhaRelatorio, Relatorio } from '@/dominio/relatorio'
 import { TabelaRelatorio } from '../TabelaRelatorio'
 
 const linha = (o: Partial<LinhaRelatorio>): LinhaRelatorio => ({
-  id: 'v1', nome: 'Vinicius Vieira', vagaAberta: false, tipo: 'MOD', funcao: 'Assistente Técnico', disciplina: 'APOIOS', area: 'Q3',
+  id: 'v1', nome: 'Vinicius Vieira', vagaAberta: false, tipo: 'MOD', funcao: 'Assistente Técnico', disciplina: 'APOIOS', area: 'Q3', gestor: 'Marcos Lima',
   onda: 'Onda 1', meta: '2027-01-15', cobrada: true, taxa: 24108.83, etapas: ['2026-10-22', null], mobilizada: false, mobilizadaEm: null, ...o,
 })
 const relatorio = (o: Partial<Relatorio> = {}): Relatorio => ({
-  opcoes: { funcoes: [], disciplinas: [], areas: [] },
+  opcoes: { funcoes: [], disciplinas: [], areas: [], gestores: [] },
   etapas: [{ ordem: 1, nome: 'Captura' }, { ordem: 2, nome: 'Entrevistas' }],
   linhas: [
     linha({}),
@@ -24,9 +24,17 @@ const nbsp = (t: string | null) => (t ?? '').replace(/ /g, ' ')
 test('cabeçalho na ordem da planilha', () => {
   const { rerender } = render(<TabelaRelatorio relatorio={relatorio()} porOndas visao={{}} hrefOrdem={href} />)
   const cab = () => screen.getAllByRole('columnheader').map((c) => c.textContent)
-  expect(cab()).toEqual(['Nome', 'Tipo', 'Função', 'Disciplina', 'Área', 'Onda', 'Taxa', 'Captura', 'Entrevistas'])
+  expect(cab()).toEqual(['Nome', 'Tipo', 'Função', 'Disciplina', 'Área', 'Gestor', 'Onda', 'Data final', 'Taxa', 'Captura', 'Entrevistas'])
   rerender(<TabelaRelatorio relatorio={relatorio()} porOndas={false} visao={{}} hrefOrdem={href} />)
-  expect(cab()).toContain('Meta')
+  expect(cab()).toEqual(['Nome', 'Tipo', 'Função', 'Disciplina', 'Área', 'Gestor', 'Data final', 'Taxa', 'Captura', 'Entrevistas'])
+})
+
+test('gestor e data final da mobilização na linha', () => {
+  render(<TabelaRelatorio relatorio={relatorio({ linhas: [linha({}), linha({ id: 'v2', gestor: null })] })} porOndas visao={{}} hrefOrdem={href} />)
+  const [, l1, l2] = screen.getAllByRole('row')
+  expect(l1).toHaveTextContent('Marcos Lima')
+  expect(l1).toHaveTextContent('15/01/2027')
+  expect(within(l2).getAllByText('—').length).toBeGreaterThan(0)
 })
 
 test('OK nas etapas concluídas, com a data no title', () => {
@@ -70,11 +78,12 @@ test('a tabela rola dentro de uma caixa com altura máxima, para o cabeçalho fi
   expect(screen.getAllByRole('columnheader')[0]).toHaveClass('sticky', 'top-0')
 })
 
-test('Função, Disciplina e Área ordenam ao clicar; a ativa mostra o sentido e o próximo clique inverte', () => {
+test('Função, Disciplina, Área e Gestor ordenam ao clicar; a ativa mostra o sentido e o próximo clique inverte', () => {
   const { rerender } = render(<TabelaRelatorio relatorio={relatorio()} porOndas visao={{}} hrefOrdem={href} />)
   expect(screen.getByRole('link', { name: /Função/ })).toHaveAttribute('href', '?ordem=funcao&sentido=asc')
   expect(screen.getByRole('link', { name: /Disciplina/ })).toHaveAttribute('href', '?ordem=disciplina&sentido=asc')
   expect(screen.getByRole('link', { name: /Área/ })).toHaveAttribute('href', '?ordem=area&sentido=asc')
+  expect(screen.getByRole('link', { name: /Gestor/ })).toHaveAttribute('href', '?ordem=gestor&sentido=asc')
   expect(screen.queryByRole('link', { name: /Nome/ })).toBeNull()
   rerender(<TabelaRelatorio relatorio={relatorio()} porOndas visao={{ ordem: 'funcao' }} hrefOrdem={href} />)
   expect(screen.getByRole('columnheader', { name: /Função/ })).toHaveAttribute('aria-sort', 'ascending')
