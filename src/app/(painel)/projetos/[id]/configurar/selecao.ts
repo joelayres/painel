@@ -1,9 +1,9 @@
 // Seleção de vagas para as ações em grupo do Configurar.
-import { chaveFuncao } from '@/dominio/painel'
+import { candidatoContem, chaveFuncao } from '@/dominio/painel'
 
 // etapaAtual null = mobilizada. concluiuAlguma: já passou da primeira etapa (o início não pesa mais).
-export type VagaSelecionavel = { id: string; funcao: string; ondaId: string | null; etapaAtual: number | null; concluiuAlguma: boolean; cancelada: boolean }
-export type FiltroSelecao = { funcao?: string; onda?: string; etapa?: number }
+export type VagaSelecionavel = { id: string; funcao: string; ondaId: string | null; etapaAtual: number | null; concluiuAlguma: boolean; cancelada: boolean; candidato?: string | null }
+export type FiltroSelecao = { funcao?: string; onda?: string; etapa?: number; candidato?: string }
 
 // Canceladas e mobilizadas não entram em ação em grupo.
 export function selecionaveis<T extends VagaSelecionavel>(vagas: T[], f: FiltroSelecao): T[] {
@@ -14,7 +14,8 @@ export function selecionaveis<T extends VagaSelecionavel>(vagas: T[], f: FiltroS
       v.etapaAtual !== null &&
       (!funcao || chaveFuncao(v.funcao) === funcao) &&
       (!f.onda || v.ondaId === f.onda) &&
-      (f.etapa === undefined || v.etapaAtual === f.etapa),
+      (f.etapa === undefined || v.etapaAtual === f.etapa) &&
+      candidatoContem(v.candidato, f.candidato),
   )
 }
 

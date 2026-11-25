@@ -86,3 +86,20 @@ test('clicar no cabeçalho ordena a tabela por aquela coluna e clicar de novo in
   await userEvent.click(screen.getByRole('button', { name: /^Disciplina/ }))
   expect(disciplinas()).toEqual(['NR-13', 'GE-902', 'Fornos', 'Elétrica'])
 })
+
+test('filtrar por candidato mostra só as vagas com o nome buscado e limita a seleção a elas', async () => {
+  const vagas = [
+    { ...vaga, id: 'c1', funcao: 'Soldador', candidato: 'João Araújo' },
+    { ...vaga, id: 'c2', funcao: 'Pintor', candidato: 'Maria Silva' },
+    { ...vaga, id: 'c3', funcao: 'Caldeireiro', candidato: null },
+  ]
+  render(<VagasProjeto {...base} vagas={vagas} />)
+  await userEvent.type(screen.getByLabelText('Filtrar por candidato'), 'araujo')
+  expect(screen.getByRole('link', { name: 'Soldador' })).toBeInTheDocument()
+  expect(screen.queryByRole('link', { name: 'Pintor' })).toBeNull()
+  expect(screen.queryByRole('link', { name: 'Caldeireiro' })).toBeNull()
+  expect(screen.getByRole('button', { name: 'Selecionar todas (1)' })).toBeInTheDocument()
+  await userEvent.clear(screen.getByLabelText('Filtrar por candidato'))
+  await userEvent.type(screen.getByLabelText('Filtrar por candidato'), 'ninguém')
+  expect(screen.getByText('Nenhuma vaga com esses filtros.')).toBeInTheDocument()
+})

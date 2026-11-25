@@ -6,8 +6,9 @@ import { useState, useTransition } from 'react'
 import { cancelarVaga } from '@/app/(painel)/vagas/[id]/acoesVaga'
 import { FormVaga } from '@/components/rh/FormVaga'
 import { Botao } from '@/components/ui/Botao'
+import { Campo } from '@/components/ui/Campo'
 import { Selecao } from '@/components/ui/Selecao'
-import { chaveFuncao } from '@/dominio/painel'
+import { candidatoContem, chaveFuncao } from '@/dominio/painel'
 import { dataBR } from '@/lib/formato/datas'
 import { AcoesEmGrupo } from './AcoesEmGrupo'
 import { ordenarVagas, proximaOrdenacao, type ColunaOrdenavel, type Ordenacao } from './ordenacao'
@@ -40,7 +41,8 @@ export function VagasProjeto({ projetoId, organizacao, vagas, opcoes, etapas, so
       (v) =>
         (!filtro.funcao || chaveFuncao(v.funcao) === chaveFuncao(filtro.funcao)) &&
         (!filtro.onda || v.ondaId === filtro.onda) &&
-        (filtro.etapa === undefined || v.etapaAtual === filtro.etapa),
+        (filtro.etapa === undefined || v.etapaAtual === filtro.etapa) &&
+        candidatoContem(v.candidato, filtro.candidato),
     ),
     ordem,
     opcoes.ondas,
@@ -100,6 +102,8 @@ export function VagasProjeto({ projetoId, organizacao, vagas, opcoes, etapas, so
           )}
           <Selecao rotulo="Filtrar por etapa atual" value={filtro.etapa === undefined ? '' : String(filtro.etapa)} onChange={(e) => filtrar({ ...filtro, etapa: e.target.value ? Number(e.target.value) : undefined })}
             opcoes={[{ valor: '', rotulo: 'Todas as etapas' }, ...etapas.map((e) => ({ valor: String(e.ordem), rotulo: `${e.ordem}. ${e.nome}` }))]} />
+          <Campo rotulo="Filtrar por candidato" type="search" placeholder="Nome do candidato" value={filtro.candidato ?? ''} className="w-56"
+            onChange={(e) => filtrar({ ...filtro, candidato: e.target.value || undefined })} />
           <Botao variante="secundario" disabled={doFiltro.length === 0} onClick={() => setMarcadas(new Set(doFiltro.map((v) => v.id)))}>Selecionar todas ({doFiltro.length})</Botao>
           {marcadas.size > 0 && <Botao variante="fantasma" onClick={() => setMarcadas(new Set())}>Limpar seleção</Botao>}
         </div>
@@ -173,6 +177,7 @@ export function VagasProjeto({ projetoId, organizacao, vagas, opcoes, etapas, so
           </tbody>
         </table>
         {ativas.length === 0 && <p className="p-6 text-center text-texto-suave">Nenhuma vaga ativa.</p>}
+        {ativas.length > 0 && visiveis.length === 0 && <p className="p-6 text-center text-texto-suave">Nenhuma vaga com esses filtros.</p>}
       </div>
       {canceladas.length > 0 && (
         <details className="rounded-xl border border-borda bg-superficie p-4">

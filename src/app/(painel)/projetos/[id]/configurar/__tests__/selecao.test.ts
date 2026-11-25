@@ -23,6 +23,13 @@ test('selecionáveis filtra por onda e por etapa atual', () => {
   expect(selecionaveis(vagas, {}).map((v) => v.id)).toEqual(['a', 'b', 'c'])
 })
 
+test('selecionáveis filtra por parte do nome do candidato, sem diferença de acento ou maiúscula', () => {
+  const vagas = [vaga('a', { candidato: 'João Araújo' }), vaga('b', { candidato: 'Maria Silva' }), vaga('c', { candidato: null })]
+  expect(selecionaveis(vagas, { candidato: 'joao' }).map((v) => v.id)).toEqual(['a'])
+  expect(selecionaveis(vagas, { candidato: 'ARAUJO' }).map((v) => v.id)).toEqual(['a'])
+  expect(selecionaveis(vagas, { candidato: '  ' }).map((v) => v.id)).toEqual(['a', 'b', 'c'])
+})
+
 test('etapa comum só quando todas estão na mesma etapa', () => {
   expect(etapaComum([vaga('a', { etapaAtual: 3 }), vaga('b', { etapaAtual: 3 })])).toBe(3)
   expect(etapaComum([vaga('a', { etapaAtual: 3 }), vaga('b', { etapaAtual: 4 })])).toBeNull()
