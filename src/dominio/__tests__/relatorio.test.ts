@@ -61,11 +61,12 @@ test('etapas fora do relatório não viram coluna nem percentual', () => {
   expect(r.percentuais).toEqual([1, 0.5])
 })
 
-const com = (id: string, funcao: string, disciplina: string, area: string, etapaAtual = 2) => ({ ...emAndamento(id, etapaAtual), funcao, disciplina, area })
+const com = (id: string, funcao: string, disciplina: string, area: string, etapaAtual = 2, gestor: string | null = null) =>
+  ({ ...emAndamento(id, etapaAtual), funcao, disciplina, area, gestor: gestor ? { id: `g-${gestor}`, nome: gestor } : null })
 const variadas = () => [
-  com('v1', 'Técnico de Campo', 'NR13', 'Q3', 3),
-  com('v2', 'Assistente  Técnico', 'APOIOS', 'Q1'),
-  com('v3', 'técnico de campo', 'FORNOS', 'Q1'),
+  com('v1', 'Técnico de Campo', 'NR13', 'Q3', 3, 'Paulo Reis'),
+  com('v2', 'Assistente  Técnico', 'APOIOS', 'Q1', 2, 'Ana Souza'),
+  com('v3', 'técnico de campo', 'FORNOS', 'Q1', 2, 'paulo reis'),
   com('v4', 'Engenheiro de Campo', 'APOIOS', ''),
 ]
 
@@ -75,6 +76,7 @@ test('opções de filtro: valores distintos, sem vazio, em ordem alfabética, se
     funcoes: ['Assistente  Técnico', 'Engenheiro de Campo', 'Técnico de Campo'],
     disciplinas: ['APOIOS', 'FORNOS', 'NR13'],
     areas: ['Q1', 'Q3'],
+    gestores: ['Ana Souza', 'Paulo Reis'],
   })
 })
 
@@ -86,6 +88,7 @@ test('filtra por função (ignorando maiúscula, acento e espaço duplo), discip
   expect(r.percentuais[1]).toBe(0.5)
   expect(montarRelatorio(variadas(), ETAPAS_PADRAO, null, { visao: { disciplina: 'APOIOS', area: 'Q1' } }).linhas.map((l) => l.id)).toEqual(['v2'])
   expect(montarRelatorio(variadas(), ETAPAS_PADRAO, null, { visao: { area: 'Nenhuma' } }).linhas).toEqual([])
+  expect(montarRelatorio(variadas(), ETAPAS_PADRAO, null, { visao: { gestor: 'Paulo Reis' } }).linhas.map((l) => l.id)).toEqual(['v1', 'v3'])
 })
 
 test('ordena por função, disciplina ou área, crescente ou decrescente, mantendo a ordem original nos empates', () => {
@@ -95,12 +98,14 @@ test('ordena por função, disciplina ou área, crescente ou decrescente, manten
   expect(ids({ ordem: 'funcao', sentido: 'desc' })).toEqual(['v1', 'v3', 'v4', 'v2'])
   expect(ids({ ordem: 'disciplina' })).toEqual(['v2', 'v4', 'v3', 'v1'])
   expect(ids({ ordem: 'area' })).toEqual(['v4', 'v2', 'v3', 'v1'])
+  expect(ids({ ordem: 'gestor' })).toEqual(['v4', 'v2', 'v1', 'v3'])
+  expect(ids({ ordem: 'gestor', sentido: 'desc' })).toEqual(['v1', 'v3', 'v2', 'v4'])
   expect(ids({})).toEqual(['v1', 'v2', 'v3', 'v4'])
 })
 
 test('lerVisao lê o endereço e ignora valores inválidos', () => {
-  expect(lerVisao(new URLSearchParams('funcao=T%C3%A9cnico&disciplina=NR13&area=Q3&ordem=area&sentido=desc&onda=o1'))).toEqual({
-    funcao: 'Técnico', disciplina: 'NR13', area: 'Q3', ordem: 'area', sentido: 'desc',
+  expect(lerVisao(new URLSearchParams('funcao=T%C3%A9cnico&disciplina=NR13&area=Q3&gestor=Ana&ordem=gestor&sentido=desc&onda=o1'))).toEqual({
+    funcao: 'Técnico', disciplina: 'NR13', area: 'Q3', gestor: 'Ana', ordem: 'gestor', sentido: 'desc',
   })
   expect(lerVisao(new URLSearchParams('ordem=nome&sentido=x&funcao=%20'))).toEqual({})
 })

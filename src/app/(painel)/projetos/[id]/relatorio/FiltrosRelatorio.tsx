@@ -5,9 +5,10 @@ import type { Relatorio } from '@/dominio/relatorio'
 
 const classe = 'min-h-11 rounded-lg border border-borda bg-superficie px-3'
 const FILTROS = [
-  { chave: 'funcao', rotulo: 'Função', opcoes: 'funcoes' },
-  { chave: 'disciplina', rotulo: 'Disciplina', opcoes: 'disciplinas' },
-  { chave: 'area', rotulo: 'Área', opcoes: 'areas' },
+  { chave: 'funcao', rotulo: 'Função', opcoes: 'funcoes', todas: 'todas' },
+  { chave: 'disciplina', rotulo: 'Disciplina', opcoes: 'disciplinas', todas: 'todas' },
+  { chave: 'area', rotulo: 'Área', opcoes: 'areas', todas: 'todas' },
+  { chave: 'gestor', rotulo: 'Gestor', opcoes: 'gestores', todas: 'todos' },
 ] as const
 
 // Os filtros vivem no endereço, como no Painel: o link filtrado pode ser compartilhado e o Excel sai igual.
@@ -31,7 +32,7 @@ export function FiltrosRelatorio({ opcoes }: { opcoes: Relatorio['opcoes'] }) {
           key={f.chave} aria-label={f.rotulo} value={params.get(f.chave) ?? ''} className={classe}
           onChange={(e) => { const valor = e.target.value; ir((p) => (valor ? p.set(f.chave, valor) : p.delete(f.chave))) }}
         >
-          <option value="">{f.rotulo}: todas</option>
+          <option value="">{f.rotulo}: {f.todas}</option>
           {opcoes[f.opcoes].map((v) => <option key={v} value={v}>{v}</option>)}
         </select>
       ))}

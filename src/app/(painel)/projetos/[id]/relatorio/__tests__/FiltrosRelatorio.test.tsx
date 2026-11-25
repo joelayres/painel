@@ -10,14 +10,15 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(busca),
 }))
 const { FiltrosRelatorio } = await import('../FiltrosRelatorio')
-const opcoes = { funcoes: ['Assistente Técnico', 'Técnico de Campo'], disciplinas: ['APOIOS', 'NR13'], areas: ['Q1', 'Q3'] }
+const opcoes = { funcoes: ['Assistente Técnico', 'Técnico de Campo'], disciplinas: ['APOIOS', 'NR13'], areas: ['Q1', 'Q3'], gestores: ['Ana Souza'] }
 
 beforeEach(() => { push.mockReset(); busca = 'onda=o1&ordem=area' })
 
-test('três filtros com as opções e "todas"', () => {
+test('quatro filtros com as opções e "todas"/"todos"', () => {
   render(<FiltrosRelatorio opcoes={opcoes} />)
-  for (const rotulo of ['Função', 'Disciplina', 'Área']) expect(screen.getByRole('combobox', { name: rotulo })).toHaveValue('')
+  for (const rotulo of ['Função', 'Disciplina', 'Área', 'Gestor']) expect(screen.getByRole('combobox', { name: rotulo })).toHaveValue('')
   expect(screen.getByRole('option', { name: 'Função: todas' })).toBeInTheDocument()
+  expect(screen.getByRole('option', { name: 'Gestor: todos' })).toBeInTheDocument()
   expect(screen.getByRole('option', { name: 'NR13' })).toBeInTheDocument()
 })
 
@@ -28,7 +29,7 @@ test('escolher um valor vai para o endereço, mantendo onda e ordem', async () =
 })
 
 test('o filtro ativo aparece selecionado e "Limpar filtros" tira só os filtros', async () => {
-  busca = 'onda=o1&funcao=T%C3%A9cnico+de+Campo&area=Q1&ordem=area'
+  busca = 'onda=o1&funcao=T%C3%A9cnico+de+Campo&area=Q1&gestor=Ana+Souza&ordem=area'
   render(<FiltrosRelatorio opcoes={opcoes} />)
   expect(screen.getByRole('combobox', { name: 'Função' })).toHaveValue('Técnico de Campo')
   await userEvent.click(screen.getByRole('button', { name: 'Limpar filtros' }))

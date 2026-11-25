@@ -7,9 +7,12 @@ import { chaveFuncao, type VagaPainel } from './painel'
 export type TarifaDaVaga = { tipo: 'MOD' | 'MOI'; cobrada: boolean; valor: number | null }
 
 // Filtro e ordem da tabela, lidos do endereço (a tela e o Excel usam os mesmos).
-export const COLUNAS_ORDEM = ['funcao', 'disciplina', 'area'] as const
+export const COLUNAS_ORDEM = ['funcao', 'disciplina', 'area', 'gestor'] as const
 export type ColunaOrdem = (typeof COLUNAS_ORDEM)[number]
-export type VisaoRelatorio = { funcao?: string; disciplina?: string; area?: string; ordem?: ColunaOrdem; sentido?: 'asc' | 'desc' }
+export type VisaoRelatorio = { funcao?: string; disciplina?: string; area?: string; gestor?: string; ordem?: ColunaOrdem; sentido?: 'asc' | 'desc' }
+
+// O texto da vaga em cada coluna filtrável; o gestor é filtrado e ordenado pelo nome (sem gestor = vazio).
+const valor = (v: VagaPainel, c: ColunaOrdem) => (c === 'gestor' ? (v.gestor?.nome ?? '') : v[c])
 
 export function lerVisao(p: { get(chave: string): string | null }): VisaoRelatorio {
   const v: VisaoRelatorio = {}
@@ -41,7 +44,7 @@ export type LinhaRelatorio = {
   mobilizadaEm: string | null // data em que concluiu a última etapa do projeto
 }
 export type Relatorio = {
-  opcoes: { funcoes: string[]; disciplinas: string[]; areas: string[] } // valores para os filtros, de todas as vagas recebidas
+  opcoes: { funcoes: string[]; disciplinas: string[]; areas: string[]; gestores: string[] } // valores para os filtros, de todas as vagas recebidas
   etapas: { ordem: number; nome: string }[]
   linhas: LinhaRelatorio[]
   percentuais: number[] // 0..1 por etapa: vagas que concluíram ÷ vagas do relatório
@@ -75,11 +78,11 @@ export function montarRelatorio(
   { ocultas = new Set<string>(), visao = {} }: { ocultas?: ReadonlySet<string>; visao?: VisaoRelatorio } = {},
 ): Relatorio {
   const filtros = COLUNAS_ORDEM.flatMap((c) => (visao[c] ? [[c, chaveFuncao(visao[c])] as const] : []))
-  const vagas = todas.filter((v) => filtros.every(([c, chave]) => chaveFuncao(v[c]) === chave))
+  const vagas = todas.filter((v) => filtros.every(([c, chave]) => chaveFuncao(valor(v, c)) === chave))
   if (visao.ordem) {
     const c = visao.ordem
     const sinal = visao.sentido === 'desc' ? -1 : 1
-    vagas.sort((a, b) => sinal * comparar(a[c], b[c])) // sort estável: empate fica na ordem original
+    vagas.sort((a, b) => sinal * comparar(valor(a, c), valor(b, c))) // sort estável: empate fica na ordem original
   }
   const ordenadas = etapas.filter((e) => !ocultas.has(e.id)).sort((a, b) => a.ordem - b.ordem).map(({ ordem, nome }) => ({ ordem, nome }))
   const linhas: LinhaRelatorio[] = vagas.map((v) => {
@@ -105,7 +108,7 @@ export function montarRelatorio(
   })
   const soma = (ls: LinhaRelatorio[]) => centavos(ls.reduce((s, l) => s + (l.taxa ?? 0), 0))
   return {
-    opcoes: { funcoes: distintos(todas.map((v) => v.funcao)), disciplinas: distintos(todas.map((v) => v.disciplina)), areas: distintos(todas.map((v) => v.area)) },
+    opcoes: { funcoes: distintos(todas.map((v) => v.funcao)), disciplinas: distintos(todas.map((v) => v.disciplina)), areas: distintos(todas.map((v) => v.area)), gestores: distintos(todas.map((v) => valor(v, 'gestor'))) },
     etapas: ordenadas,
     linhas,
     percentuais: ordenadas.map((_, i) => (linhas.length ? linhas.filter((l) => l.etapas[i] !== null).length / linhas.length : 0)),

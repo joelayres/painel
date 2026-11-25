@@ -3,8 +3,8 @@ import type { ColunaOrdem, LinhaRelatorio, Relatorio, VisaoRelatorio } from '@/d
 import { dataBR } from '@/lib/formato/datas'
 import { reais } from '@/lib/formato/moeda'
 
-// Função, Disciplina e Área ordenam pelo título: o primeiro clique ordena de A a Z, o seguinte inverte.
-const ORDENAVEIS: Record<string, ColunaOrdem> = { Função: 'funcao', Disciplina: 'disciplina', Área: 'area' }
+// Função, Disciplina, Área e Gestor ordenam pelo título: o primeiro clique ordena de A a Z, o seguinte inverte.
+const ORDENAVEIS: Record<string, ColunaOrdem> = { Função: 'funcao', Disciplina: 'disciplina', Área: 'area', Gestor: 'gestor' }
 
 // O cabeçalho é a faixa da marca e fica fixo no topo da caixa; a coluna Nome fica fixa ao rolar para o lado.
 const th = 'sticky top-0 z-10 bg-faixa px-3 py-3 text-left align-bottom text-sm font-semibold whitespace-nowrap text-faixa-texto'
