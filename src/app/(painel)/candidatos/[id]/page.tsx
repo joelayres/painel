@@ -13,7 +13,7 @@ import { VerCurriculo } from './VerCurriculo'
 export const metadata = { title: 'Candidato · Painel de Mobilização' }
 
 type Candidato = { id: string; nome: string; email: string | null; telefone: string | null; cpf: string | null; cidade: string | null; uf: string | null; criado_em: string }
-type Participacao = { participacao_id: string; selecao_id: string; projeto_id: string; projeto: string; funcao: string; criado_em: string; nota: number | null; classificacao: Classificacao | null; resultado: Resultado; detalhe_visivel: boolean }
+type Participacao = { participacao_id: string; selecao_id: string; projeto_id: string; projeto: string; funcao: string; criado_em: string; nota: number | null; classificacao: Classificacao | null; resultado: Resultado; detalhe_visivel: boolean; indicado_por: string | null }
 
 export default async function FichaCandidato({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -58,7 +58,7 @@ export default async function FichaCandidato({ params }: { params: Promise<{ id:
               <>
                 <span className="font-semibold">{p.funcao} · {p.projeto}</span>
                 <span className="text-sm text-texto-suave">
-                  {dataBR(p.criado_em.slice(0, 10))} · nota {p.nota ?? '—'} · {p.classificacao ? rotuloClassificacao(p.classificacao) : 'não analisado'} · {rotuloResultado(p.resultado)}
+                  {dataBR(p.criado_em.slice(0, 10))} · nota {p.nota ?? '—'} · {p.classificacao ? rotuloClassificacao(p.classificacao) : 'não analisado'} · {rotuloResultado(p.resultado)}{p.indicado_por ? ` · indicado por ${p.indicado_por}` : ''}
                 </span>
               </>
             )

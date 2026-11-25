@@ -7,27 +7,30 @@ import { classeControle } from '@/components/ui/Campo'
 import { PainelLateral } from '@/components/ui/PainelLateral'
 import { ATENDE, CLASSIFICACOES, PARECERES, RESULTADOS, TIPOS_ENTREVISTA, rotuloClassificacao, type Resultado } from '@/dominio/selecao'
 import { dataBR } from '@/lib/formato/datas'
-import { definirResultado, levarParaVaga, linkCurriculo, mudarClassificacao } from '../acoesSelecao'
+import { definirIndicacao, definirResultado, levarParaVaga, linkCurriculo, mudarClassificacao } from '../acoesSelecao'
 import type { Participacao } from './dados'
 import { FormEntrevista } from './FormEntrevista'
 
 export type VagaLivre = { id: string; rotulo: string }
 
 // Tudo de um candidato na seleção: a análise da IA, a classificação, as entrevistas e o resultado.
-export function PainelParticipacao({ participacao: p, vagas, aoFechar }: { participacao: Participacao | null; vagas: VagaLivre[]; aoFechar: () => void }) {
+export function PainelParticipacao({ participacao: p, vagas, indicadores, aoFechar }: { participacao: Participacao | null; vagas: VagaLivre[]; indicadores: string[]; aoFechar: () => void }) {
   return (
     <PainelLateral titulo={p?.candidato?.nome ?? p?.curriculo.nome_arquivo ?? ''} aberto={p !== null} aoFechar={aoFechar}>
-      {p && <Conteudo key={p.id} p={p} vagas={vagas} />}
+      {p && <Conteudo key={p.id} p={p} vagas={vagas} indicadores={indicadores} />}
     </PainelLateral>
   )
 }
 
-function Conteudo({ p, vagas }: { p: Participacao; vagas: VagaLivre[] }) {
+function Conteudo({ p, vagas, indicadores }: { p: Participacao; vagas: VagaLivre[]; indicadores: string[] }) {
   const router = useRouter()
   const idCls = useId()
   const idJust = useId()
   const idRes = useId()
   const idVaga = useId()
+  const idIndicacao = useId()
+  const idIndicadores = useId()
+  const [indicadoPor, setIndicadoPor] = useState(p.indicado_por ?? '')
   const [nova, setNova] = useState<string>('')
   const [justificativa, setJustificativa] = useState('')
   const [vaga, setVaga] = useState('')
@@ -69,6 +72,13 @@ function Conteudo({ p, vagas }: { p: Participacao; vagas: VagaLivre[] }) {
         )}
         <Botao variante="secundario" className="self-start" onClick={abrirCurriculo}>Ver currículo</Botao>
       </div>
+
+      <section className="flex flex-col gap-2">
+        <label htmlFor={idIndicacao} className="font-titulo text-lg font-semibold">Indicado por</label>
+        <input id={idIndicacao} value={indicadoPor} onChange={(e) => setIndicadoPor(e.target.value)} list={idIndicadores} maxLength={120} placeholder="Ex.: Ivan Braskem (vazio se não houve indicação)" className={classeControle} />
+        <datalist id={idIndicadores}>{indicadores.map((i) => <option key={i} value={i} />)}</datalist>
+        <Botao variante="secundario" className="self-start" disabled={enviando || indicadoPor.trim() === (p.indicado_por ?? '')} onClick={() => executar(() => definirIndicacao(p.id, indicadoPor), 'Indicação salva.')}>Salvar indicação</Botao>
+      </section>
 
       {p.situacao === 'erro' && <p className="text-[var(--st-reprovada-texto)]">Erro na análise: {p.erro}</p>}
 

@@ -113,6 +113,11 @@ export async function salvarEntrevista(id: string | null, participacaoId: string
   return chamar('salvar_entrevista', { p_id: id, p_participacao: participacaoId, p: entrada })
 }
 
+// Texto vazio tira a indicação.
+export async function definirIndicacao(id: string, indicadoPor: string): Promise<Resposta> {
+  return chamar('definir_indicacao', { p_participacao: id, p_indicado_por: indicadoPor })
+}
+
 export async function definirResultado(id: string, resultado: string): Promise<Resposta> {
   return chamar('definir_resultado', { p_participacao: id, p_resultado: resultado })
 }

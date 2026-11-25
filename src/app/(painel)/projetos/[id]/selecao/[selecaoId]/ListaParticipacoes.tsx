@@ -13,7 +13,7 @@ type Linha = LinhaParticipacao & { p: Participacao }
 
 const ABAS: [Aba, string][] = [['aConfirmar', 'A confirmar'], ['aderentes', 'Aderentes e parciais'], ['naoAderentes', 'Não aderentes']]
 
-export function ListaParticipacoes({ participacoes, vagas }: { participacoes: Participacao[]; vagas: VagaLivre[] }) {
+export function ListaParticipacoes({ participacoes, vagas, indicadores }: { participacoes: Participacao[]; vagas: VagaLivre[]; indicadores: string[] }) {
   const router = useRouter()
   const [aba, setAba] = useState<Aba>('aConfirmar')
   const [marcadas, setMarcadas] = useState<Set<string>>(new Set())
@@ -90,6 +90,7 @@ export function ListaParticipacoes({ participacoes, vagas }: { participacoes: Pa
                   {l.classificacao === 'a_confirmar' && l.p.analises[0] ? ` · IA sugere ${rotuloClassificacao(l.p.analises[0].classificacao).toLowerCase()}` : ''}
                   {` · ${rotuloResultado(l.resultado)}`}
                   {l.p.entrevistas.length ? ` · ${l.p.entrevistas.length} entrevista(s)` : ''}
+                  {l.p.indicado_por ? ` · Indicado por ${l.p.indicado_por}` : ''}
                 </span>
                 {l.resumo && <span className="line-clamp-2 text-sm">{l.resumo}</span>}
               </button>
@@ -99,7 +100,7 @@ export function ListaParticipacoes({ participacoes, vagas }: { participacoes: Pa
       )}
       {repetidas > 0 && <p className="text-sm text-texto-suave">{repetidas} currículo(s) já estavam nesta seleção e não foram analisados de novo.</p>}
 
-      <PainelParticipacao participacao={selecionada} vagas={vagas} aoFechar={() => setAberta(null)} />
+      <PainelParticipacao participacao={selecionada} vagas={vagas} indicadores={indicadores} aoFechar={() => setAberta(null)} />
     </section>
   )
 }

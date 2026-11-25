@@ -9,7 +9,7 @@ import { RESULTADOS, type Resultado } from '@/dominio/selecao'
 import { dataBR } from '@/lib/formato/datas'
 import { incluirDoBanco } from '../projetos/[id]/selecao/acoesSelecao'
 
-export type LinhaCandidato = { id: string; nome: string; cidade: string | null; uf: string | null; ultima_em: string; funcoes: string[]; melhor_nota: number | null; resultados: Resultado[] }
+export type LinhaCandidato = { id: string; nome: string; cidade: string | null; uf: string | null; ultima_em: string; funcoes: string[]; melhor_nota: number | null; resultados: Resultado[]; indicacoes: string[] }
 type SelecaoAberta = { id: string; projetoId: string; rotulo: string }
 
 export function TabelaCandidatos({ candidatos, selecoes }: { candidatos: LinhaCandidato[]; selecoes: SelecaoAberta[] }) {
@@ -52,7 +52,7 @@ export function TabelaCandidatos({ candidatos, selecoes }: { candidatos: LinhaCa
             <tr>
               <th className="p-2"><span className="sr-only">Marcar</span></th>
               <th className="p-2">Nome</th><th className="p-2">Cidade/UF</th><th className="p-2">Funções</th>
-              <th className="p-2">Melhor nota</th><th className="p-2">Resultados</th><th className="p-2">Última participação</th>
+              <th className="p-2">Melhor nota</th><th className="p-2">Resultados</th><th className="p-2">Indicado por</th><th className="p-2">Última participação</th>
             </tr>
           </thead>
           <tbody>
@@ -64,6 +64,7 @@ export function TabelaCandidatos({ candidatos, selecoes }: { candidatos: LinhaCa
                 <td className="p-2">{c.funcoes.join(', ') || '—'}</td>
                 <td className="p-2">{c.melhor_nota ?? '—'}</td>
                 <td className="p-2">{c.resultados.map((r) => RESULTADOS[r]).join(', ') || '—'}</td>
+                <td className="p-2">{c.indicacoes.join(', ') || '—'}</td>
                 <td className="p-2">{dataBR(c.ultima_em.slice(0, 10))}</td>
               </tr>
             ))}

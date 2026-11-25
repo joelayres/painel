@@ -6,7 +6,7 @@ const MARCA = 'FF2B6157'
 const BRANCO = 'FFFFFFFF'
 const BORDA = { style: 'thin' as const, color: { argb: 'FFD3DDD9' } }
 
-export type LinhaExcelSelecao = { nome: string; email: string | null; telefone: string | null; nota: number | null; classificacao: string; resumo: string; entrevistas: string; resultado: string }
+export type LinhaExcelSelecao = { nome: string; email: string | null; telefone: string | null; nota: number | null; classificacao: string; resumo: string; entrevistas: string; resultado: string; indicadoPor: string | null }
 
 export async function gerarExcelSelecao(p: { projeto: string; funcao: string; hoje: string; linhas: LinhaExcelSelecao[] }): Promise<Buffer> {
   const wb = new ExcelJS.Workbook()
@@ -16,17 +16,17 @@ export async function gerarExcelSelecao(p: { projeto: string; funcao: string; ho
   ws.getCell('A2').value = `Gerado em ${dataBR(p.hoje)}`
 
   const cabecalho = ws.getRow(3)
-  cabecalho.values = ['Nome', 'E-mail', 'Telefone', 'Nota', 'Classificação', 'Resumo', 'Entrevistas', 'Resultado']
+  cabecalho.values = ['Nome', 'E-mail', 'Telefone', 'Nota', 'Classificação', 'Resumo', 'Entrevistas', 'Resultado', 'Indicado por']
   cabecalho.eachCell((c) => {
     c.font = { bold: true, color: { argb: BRANCO } }
     c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: MARCA } }
     c.border = { top: BORDA, bottom: BORDA, left: BORDA, right: BORDA }
   })
   for (const l of p.linhas) {
-    const linha = ws.addRow([l.nome, l.email ?? '', l.telefone ?? '', l.nota ?? '', l.classificacao, l.resumo, l.entrevistas, l.resultado])
+    const linha = ws.addRow([l.nome, l.email ?? '', l.telefone ?? '', l.nota ?? '', l.classificacao, l.resumo, l.entrevistas, l.resultado, l.indicadoPor ?? ''])
     linha.alignment = { vertical: 'top', wrapText: true }
     linha.eachCell((c) => { c.border = { top: BORDA, bottom: BORDA, left: BORDA, right: BORDA } })
   }
-  ws.columns.forEach((c, i) => { c.width = [28, 28, 16, 8, 22, 60, 40, 24][i] })
+  ws.columns.forEach((c, i) => { c.width = [28, 28, 16, 8, 22, 60, 40, 24, 24][i] })
   return Buffer.from(await wb.xlsx.writeBuffer())
 }

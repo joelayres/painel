@@ -7,9 +7,9 @@ import { Campo, classeControle } from '@/components/ui/Campo'
 import { CLASSIFICACOES, RESULTADOS } from '@/dominio/selecao'
 
 // A ordem dos filtros no endereço é fixa: o link da busca pode ser compartilhado.
-export const CHAVES = ['nome', 'funcao', 'resultado', 'classificacao', 'nota', 'uf', 'desde'] as const
+export const CHAVES = ['nome', 'funcao', 'resultado', 'classificacao', 'nota', 'uf', 'desde', 'indicacao'] as const
 
-export function FiltrosCandidatos() {
+export function FiltrosCandidatos({ indicadores }: { indicadores: string[] }) {
   const router = useRouter()
   const params = useSearchParams()
   const [f, setF] = useState<Record<(typeof CHAVES)[number], string>>(() => Object.fromEntries(CHAVES.map((k) => [k, params.get(k) ?? ''])) as Record<(typeof CHAVES)[number], string>)
@@ -44,6 +44,8 @@ export function FiltrosCandidatos() {
       <Campo rotulo="Nota mínima" type="number" min={0} max={100} value={f.nota} onChange={mudar('nota')} />
       <Campo rotulo="UF" maxLength={2} value={f.uf} onChange={mudar('uf')} />
       <Campo rotulo="Participou desde" type="date" value={f.desde} onChange={mudar('desde')} />
+      <Campo rotulo="Indicado por" value={f.indicacao} onChange={mudar('indicacao')} list="filtro-indicadores" />
+      <datalist id="filtro-indicadores">{indicadores.map((i) => <option key={i} value={i} />)}</datalist>
       <div className="flex items-end"><Botao type="submit">Buscar</Botao></div>
     </form>
   )

@@ -395,3 +395,75 @@ describe('seleção: análises ao mesmo tempo', () => {
       }
     }))
 })
+
+describe('seleção: indicação', () => {
+  const indicacao = async (c: Client, part: string) => (await c.query('select indicado_por from participacoes where id = $1', [part])).rows[0].indicado_por
+
+  it('registra, muda e tira a indicação, com histórico', () =>
+    emTransacao(async (c) => {
+      const { sel } = await cenario(c)
+      const part = await novoCurriculo(c, sel)
+      await registrarAnalise(c, part, {})
+      await c.query("select definir_indicacao($1, '  Ivan Braskem ')", [part])
+      expect(await indicacao(c, part)).toBe('Ivan Braskem')
+      await c.query("select definir_indicacao($1, 'Ivan (Braskem)')", [part])
+      await c.query("select definir_indicacao($1, '  ')", [part])
+      expect(await indicacao(c, part)).toBeNull()
+      const { rows } = await c.query("select acao, detalhe from historico_selecao where participacao_id = $1 and acao like '%indicação%'", [part])
+      expect(rows.map((r) => r.acao).sort()).toEqual(['Mudou a indicação', 'Registrou a indicação', 'Tirou a indicação'])
+      expect(rows.find((r) => r.acao === 'Mudou a indicação').detalhe).toEqual({ de: 'Ivan Braskem', para: 'Ivan (Braskem)' })
+      expect(await erroSalvo(c, () => c.query('select definir_indicacao($1, $2)', [part, 'x'.repeat(121)]))).toContain('indicação longa demais')
+    }))
+
+  it('analista sem o projeto não mexe na indicação', () =>
+    emTransacao(async (c) => {
+      const { sel } = await cenario(c)
+      const part = await novoCurriculo(c, sel)
+      await c.query('reset role')
+      await comoUsuario(c, 'analista')
+      expect(await erroSalvo(c, () => c.query("select definir_indicacao($1, 'Ivan')", [part]))).toContain('sem permissão')
+    }))
+
+  it('candidato reconhecido na análise traz a última indicação', () =>
+    emTransacao(async (c) => {
+      const { sel, projetoId } = await cenario(c)
+      const p1 = await novoCurriculo(c, sel)
+      await registrarAnalise(c, p1, { cpf: '31231231299' })
+      await c.query("select definir_indicacao($1, 'Ivan Braskem')", [p1])
+      const sel2 = (await c.query('select salvar_selecao(null, $1) as id', [JSON.stringify({ projeto_id: projetoId, funcao: 'Soldador', descritivo: 'x' })])).rows[0].id
+      const p2 = await novoCurriculo(c, sel2)
+      await registrarAnalise(c, p2, { cpf: '31231231299' })
+      expect(await indicacao(c, p2)).toBe('Ivan Braskem')
+      const { rows } = await c.query("select acao from historico_selecao where participacao_id = $1 and acao like '%indicação%'", [p2])
+      expect(rows.map((r) => r.acao)).toEqual(['Repetiu a indicação da seleção anterior'])
+    }))
+
+  it('incluir do banco traz a última indicação', () =>
+    emTransacao(async (c) => {
+      const { sel, projetoId } = await cenario(c)
+      const p1 = await novoCurriculo(c, sel)
+      await registrarAnalise(c, p1, { cpf: '41241241288' })
+      await c.query("select definir_indicacao($1, 'Marta Timenow')", [p1])
+      const cand = (await situacao(c, p1)).candidato_id
+      const sel2 = (await c.query('select salvar_selecao(null, $1) as id', [JSON.stringify({ projeto_id: projetoId, funcao: 'Montador', descritivo: 'x' })])).rows[0].id
+      await c.query('select incluir_do_banco($1, $2)', [sel2, [cand]])
+      const { rows } = await c.query('select indicado_por from participacoes where selecao_id = $1', [sel2])
+      expect(rows).toEqual([{ indicado_por: 'Marta Timenow' }])
+    }))
+
+  it('banco filtra por indicação, mostra as indicações e sugere os indicadores', () =>
+    emTransacao(async (c) => {
+      const { sel } = await cenario(c)
+      const part = await novoCurriculo(c, sel)
+      await registrarAnalise(c, part, { nome: 'Pedro Indicado', cpf: '51251251277' })
+      await c.query("select definir_indicacao($1, 'Ivan Braskem')", [part])
+      const achou = await c.query('select nome, indicacoes from buscar_candidatos($1)', [JSON.stringify({ indicado_por: 'ivan' })])
+      expect(achou.rows).toContainEqual({ nome: 'Pedro Indicado', indicacoes: ['Ivan Braskem'] })
+      const nada = await c.query('select nome from buscar_candidatos($1)', [JSON.stringify({ indicado_por: 'ninguém-assim', nome: 'Pedro Indicado' })])
+      expect(nada.rows).toEqual([])
+      const ficha = await c.query('select indicado_por from participacoes_do_candidato((select candidato_id from participacoes where id = $1))', [part])
+      expect(ficha.rows).toEqual([{ indicado_por: 'Ivan Braskem' }])
+      const sugestoes = await c.query('select indicadores() as lista')
+      expect(sugestoes.rows[0].lista).toContain('Ivan Braskem')
+    }))
+})

@@ -40,6 +40,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       resumo: l.resumo ?? '',
       entrevistas: l.p.entrevistas.map((e) => `${TIPOS_ENTREVISTA[e.tipo]}: ${PARECERES[e.parecer]}`).join('; '),
       resultado: RESULTADOS[l.resultado],
+      indicadoPor: l.p.indicado_por,
     })),
   })
   return new Response(new Uint8Array(arquivo), {

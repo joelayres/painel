@@ -22,6 +22,7 @@ export const MENSAGENS: [string, string][] = [
   ['descritivo obrigatório', 'Escreva o descritivo da vaga.'],
   ['caminho inválido', 'O arquivo não foi enviado corretamente. Tente de novo.'],
   ['entrevistador obrigatório', 'Informe quem entrevistou.'],
+  ['indicação longa demais', 'A indicação pode ter até 120 caracteres.'],
   ['candidato ainda não analisado', 'Este currículo ainda não foi analisado.'],
 ]
 

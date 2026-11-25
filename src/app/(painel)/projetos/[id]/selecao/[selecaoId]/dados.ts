@@ -28,6 +28,7 @@ export type Participacao = {
   classificacao_por: string | null
   resultado: 'em_andamento' | 'escolhido' | 'aprovado_nao_escolhido' | 'reprovado' | 'desistiu'
   do_banco: boolean
+  indicado_por: string | null
   curriculo_id: string
   candidato: { id: string; nome: string; email: string | null; telefone: string | null; cidade: string | null; uf: string | null } | null
   curriculo: { nome_arquivo: string }
@@ -44,7 +45,7 @@ export async function carregarSelecao(sb: Awaited<ReturnType<typeof criarCliente
     db.from('selecoes').select('id, projeto_id, funcao, descritivo, encerrada_em').eq('id', selecaoId).maybeSingle<Selecao>(),
     db
       .from('participacoes')
-      .select('id, situacao, analisando_desde, erro, classificacao, classificacao_por, resultado, do_banco, curriculo_id, candidato:candidatos(id, nome, email, telefone, cidade, uf), curriculo:curriculos(nome_arquivo), analises:analises_ia(id, nota, classificacao, modelo, criado_em, descritivo, resposta), entrevistas(id, tipo, data, entrevistador, parecer, impressoes, registrado_por)')
+      .select('id, situacao, analisando_desde, erro, classificacao, classificacao_por, resultado, do_banco, indicado_por, curriculo_id, candidato:candidatos(id, nome, email, telefone, cidade, uf), curriculo:curriculos(nome_arquivo), analises:analises_ia(id, nota, classificacao, modelo, criado_em, descritivo, resposta), entrevistas(id, tipo, data, entrevistador, parecer, impressoes, registrado_por)')
       .eq('selecao_id', selecaoId)
       .order('criado_em')
       .returns<Participacao[]>(),
