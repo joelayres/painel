@@ -60,9 +60,11 @@ export async function carregarSelecao(sb: Awaited<ReturnType<typeof criarCliente
   return { selecao, participacoes: lista }
 }
 
+export type Pendente = { id: string; arquivo: string; erro: string | null }
+
 // Pendentes para "continuar análise": nunca analisadas, com erro, ou paradas há mais de 5 minutos.
-export function idsPendentes(ps: Pick<Participacao, 'id' | 'situacao' | 'analisando_desde'>[], agora = Date.now()): string[] {
+export function pendentesDaSelecao(ps: Pick<Participacao, 'id' | 'situacao' | 'analisando_desde' | 'erro' | 'curriculo'>[], agora = Date.now()): Pendente[] {
   return ps
     .filter((p) => p.situacao === 'pendente' || p.situacao === 'erro' || (p.situacao === 'analisando' && p.analisando_desde !== null && agora - Date.parse(p.analisando_desde) > 5 * 60 * 1000))
-    .map((p) => p.id)
+    .map((p) => ({ id: p.id, arquivo: p.curriculo.nome_arquivo, erro: p.situacao === 'erro' ? p.erro : null }))
 }

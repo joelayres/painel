@@ -4,7 +4,7 @@ import { exigirEquipe } from '@/lib/auth/perfil'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
 import { ehUuid } from '@/lib/validacao/vaga'
 import { CabecalhoSelecao } from './CabecalhoSelecao'
-import { carregarSelecao, idsPendentes } from './dados'
+import { carregarSelecao, pendentesDaSelecao } from './dados'
 import { ImportarCurriculos } from './ImportarCurriculos'
 import { ListaParticipacoes } from './ListaParticipacoes'
 import { dataBR } from '@/lib/formato/datas'
@@ -35,8 +35,8 @@ export default async function TelaSelecao({ params }: { params: Promise<{ id: st
     <div className="flex flex-col gap-4">
       <Link href={`/projetos/${id}/selecao`} className="text-sm font-medium text-primaria hover:underline">← Seleções</Link>
       <CabecalhoSelecao selecao={selecao} funcoes={funcoes} />
-      {!selecao.encerrada_em && <ImportarCurriculos selecaoId={selecao.id} pendentes={idsPendentes(participacoes)} />}
-      <ListaParticipacoes participacoes={participacoes} vagas={vagasLivres} indicadores={indicadores ?? []} />
+      <ImportarCurriculos selecaoId={selecao.id} pendentes={pendentesDaSelecao(participacoes)} encerrada={selecao.encerrada_em !== null} />
+      <ListaParticipacoes encerrada={selecao.encerrada_em !== null} participacoes={participacoes} vagas={vagasLivres} indicadores={indicadores ?? []} />
     </div>
   )
 }

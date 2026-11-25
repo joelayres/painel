@@ -467,3 +467,46 @@ describe('seleção: indicação', () => {
       expect(sugestoes.rows[0].lista).toContain('Ivan Braskem')
     }))
 })
+
+describe('seleção encerrada e envio de arquivos', () => {
+  const encerrar = (c: Client, sel: string) => c.query('select encerrar_selecao($1, true)', [sel])
+
+  it('seleção encerrada não recebe currículos nem análises, mas aceita resultado, entrevista e indicação', () =>
+    emTransacao(async (c) => {
+      const { sel } = await cenario(c)
+      const analisada = await novoCurriculo(c, sel)
+      await registrarAnalise(c, analisada, { cpf: '61261261266' })
+      const cand = (await situacao(c, analisada)).candidato_id
+      const pendente = await novoCurriculo(c, sel)
+      await encerrar(c, sel)
+      expect(await erroSalvo(c, () => novoCurriculo(c, sel))).toContain('seleção encerrada')
+      expect(await erroSalvo(c, () => c.query('select * from iniciar_analise($1)', [pendente]))).toContain('seleção encerrada')
+      expect(await erroSalvo(c, () => c.query('select reanalisar($1)', [[analisada]]))).toContain('seleção encerrada')
+      expect(await erroSalvo(c, () => c.query("select salvar_selecao($1, '{\"funcao\":\"x\",\"descritivo\":\"y\"}')", [sel]))).toContain('seleção encerrada')
+      const outra = (await c.query('select salvar_selecao(null, $1) as id', [JSON.stringify({ projeto_id: (await c.query('select projeto_id from selecoes where id = $1', [sel])).rows[0].projeto_id, funcao: 'x', descritivo: 'y' })])).rows[0].id
+      await encerrar(c, outra)
+      expect(await erroSalvo(c, () => c.query('select incluir_do_banco($1, $2)', [outra, [cand]]))).toContain('seleção encerrada')
+      await c.query("select definir_resultado($1, 'escolhido')", [analisada])
+      await c.query("select definir_indicacao($1, 'Ivan Braskem')", [analisada])
+      await c.query('select salvar_entrevista(null, $1, $2)', [analisada, JSON.stringify({ tipo: 'cliente', data: '2026-11-25', entrevistador: 'Ivan', parecer: 'recomendado', impressoes: '' })])
+      await c.query('select encerrar_selecao($1, false)', [sel])
+      expect((await c.query('select * from iniciar_analise($1)', [pendente])).rows).toHaveLength(1)
+    }))
+
+  const enviar = (c: Client, caminho: string) =>
+    c.query("insert into storage.objects (bucket_id, name) values ('curriculos', $1)", [caminho])
+
+  it('o envio de PDF só vale para a pasta de uma seleção aberta do projeto da pessoa', () =>
+    emTransacao(async (c) => {
+      const { sel } = await cenario(c)
+      await enviar(c, `${sel}/a.pdf`)
+      expect(await erroSalvo(c, () => enviar(c, 'solto.pdf'))).toContain('row-level security')
+      expect(await erroSalvo(c, () => enviar(c, 'nao-e-uuid/a.pdf'))).toContain('row-level security')
+      await encerrar(c, sel)
+      expect(await erroSalvo(c, () => enviar(c, `${sel}/b.pdf`))).toContain('row-level security')
+      await c.query('select encerrar_selecao($1, false)', [sel])
+      await c.query('reset role')
+      await comoUsuario(c, 'analista')
+      expect(await erroSalvo(c, () => enviar(c, `${sel}/c.pdf`))).toContain('row-level security')
+    }))
+})

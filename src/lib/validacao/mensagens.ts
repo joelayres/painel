@@ -15,6 +15,7 @@ export const MENSAGENS: [string, string][] = [
   ['onda obrigatória', 'Escolha a onda.'],
   ['vaga mobilizada', 'A vaga já foi mobilizada; não há etapa para adiar.'],
   ['motivo longo demais', 'O motivo pode ter até 500 caracteres.'],
+  ['seleção encerrada', 'Esta seleção está encerrada. Reabra para incluir ou analisar currículos.'],
   ['análise em andamento', 'Este currículo já está sendo analisado.'],
   ['justificativa obrigatória', 'Escreva o motivo da mudança.'],
   ['justificativa longa demais', 'O motivo pode ter até 500 caracteres.'],

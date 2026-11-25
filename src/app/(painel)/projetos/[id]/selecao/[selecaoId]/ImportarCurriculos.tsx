@@ -5,6 +5,7 @@ import { useId, useState } from 'react'
 import { Botao } from '@/components/ui/Botao'
 import { criarClienteNavegador } from '@/lib/supabase/cliente'
 import { analisarParticipacao, registrarCurriculo } from '../acoesSelecao'
+import type { Pendente } from './dados'
 import { processarFila } from './fila'
 
 const LIMITE = 10 * 1024 * 1024
@@ -14,7 +15,7 @@ type Linha = { chave: string; nome: string; estado: 'recusado' | 'enviando' | 'a
 
 // Importa PDFs: o navegador envia cada arquivo ao Storage, registra o currículo e conduz a fila de
 // análise (3 por vez). Se a aba fechar, os que faltaram aparecem como pendentes para continuar.
-export function ImportarCurriculos({ selecaoId, pendentes }: { selecaoId: string; pendentes: string[] }) {
+export function ImportarCurriculos({ selecaoId, pendentes, encerrada }: { selecaoId: string; pendentes: Pendente[]; encerrada: boolean }) {
   const router = useRouter()
   const idArquivo = useId()
   const [linhas, setLinhas] = useState<Linha[]>([])
@@ -86,11 +87,41 @@ export function ImportarCurriculos({ selecaoId, pendentes }: { selecaoId: string
     router.refresh()
   }
 
-  async function continuar() {
+  async function tentarPendente(id: string) {
     setOcupado(true)
-    await analisar(pendentes.map((id) => ({ id })))
+    await analisar([{ id }])
     setOcupado(false)
     router.refresh()
+  }
+
+  async function continuar() {
+    setOcupado(true)
+    await analisar(pendentes.map((p) => ({ id: p.id })))
+    setOcupado(false)
+    router.refresh()
+  }
+
+  // Os que estão nesta tela já aparecem acima, com o estado ao vivo.
+  const nestaTela = new Set(linhas.map((l) => l.participacaoId).filter(Boolean))
+  const anteriores = pendentes.filter((p) => !nestaTela.has(p.id))
+  const listaPendentes = anteriores.length > 0 && (
+    <div className="flex flex-col gap-1 text-sm">
+      <p className="font-medium">Aguardando análise ou com erro ({anteriores.length})</p>
+      <ul className="flex flex-col gap-1">
+        {anteriores.map((p) => (
+          <li key={p.id} className="flex flex-wrap items-center gap-2">
+            <span className={p.erro ? 'text-[var(--st-reprovada-texto)]' : 'text-texto-suave'}>{p.arquivo}: {p.erro ?? 'aguardando análise'}</span>
+            {!encerrada && !ocupado && (
+              <Botao variante="fantasma" className="min-h-8 px-2 text-sm" aria-label={`Tentar de novo ${p.arquivo}`} onClick={() => tentarPendente(p.id)}>Tentar de novo</Botao>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+
+  if (encerrada) {
+    return listaPendentes ? <section className="flex flex-col gap-3 rounded-xl border border-borda bg-superficie p-4">{listaPendentes}</section> : null
   }
 
   return (
@@ -112,6 +143,7 @@ export function ImportarCurriculos({ selecaoId, pendentes }: { selecaoId: string
           <div className="h-full bg-primaria transition-all" style={{ width: `${(progresso.feitos / Math.max(progresso.total, 1)) * 100}%` }} />
         </div>
       )}
+      {listaPendentes}
       {linhas.length > 0 && (
         <ul className="flex flex-col gap-1 text-sm">
           {linhas.map((l) => (

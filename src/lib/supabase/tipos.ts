@@ -690,6 +690,9 @@ isOneToOne: false
 "pode_alterar_projeto":
 { Args: { "p": string }; Returns: boolean
                            },
+"pode_enviar_curriculo":
+{ Args: { "p_nome": string }; Returns: boolean
+                           },
 "pode_ver_projeto":
 { Args: { "p": string }; Returns: boolean
                            },
@@ -743,6 +746,9 @@ isOneToOne: false
                            },
 "salvar_vaga":
 { Args: { "p": Json,"p_id": string }; Returns: string
+                           },
+"selecao_aberta":
+{ Args: { "p_selecao": string }; Returns: boolean
                            },
 "travar_etapa_cliente":
 { Args: { "p_etapa": string }; Returns: {

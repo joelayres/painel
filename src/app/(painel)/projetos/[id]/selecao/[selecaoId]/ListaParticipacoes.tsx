@@ -13,7 +13,7 @@ type Linha = LinhaParticipacao & { p: Participacao }
 
 const ABAS: [Aba, string][] = [['aConfirmar', 'A confirmar'], ['aderentes', 'Aderentes e parciais'], ['naoAderentes', 'Não aderentes']]
 
-export function ListaParticipacoes({ participacoes, vagas, indicadores }: { participacoes: Participacao[]; vagas: VagaLivre[]; indicadores: string[] }) {
+export function ListaParticipacoes({ participacoes, vagas, indicadores, encerrada = false }: { participacoes: Participacao[]; vagas: VagaLivre[]; indicadores: string[]; encerrada?: boolean }) {
   const router = useRouter()
   const [aba, setAba] = useState<Aba>('aConfirmar')
   const [marcadas, setMarcadas] = useState<Set<string>>(new Set())
@@ -71,7 +71,7 @@ export function ListaParticipacoes({ participacoes, vagas, indicadores }: { part
         {aba === 'aConfirmar' && (
           <Botao disabled={!ids.length || enviando} onClick={() => executar(() => confirmarClassificacao(ids))}>Confirmar sugestão da IA</Botao>
         )}
-        <Botao variante="secundario" disabled={!ids.length || enviando} onClick={() => executar(() => reanalisar(ids))}>Reanalisar selecionados</Botao>
+        {!encerrada && <Botao variante="secundario" disabled={!ids.length || enviando} onClick={() => executar(() => reanalisar(ids))}>Reanalisar selecionados</Botao>}
       </div>
       {erro && <p role="alert" className="text-sm text-[var(--st-reprovada-texto)]">{erro}</p>}
 
