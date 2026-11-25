@@ -207,3 +207,15 @@ A gravação da análise da IA é feita pelo servidor. **[Claude]** A conferênc
 - O texto exato do prompt e do esquema de saída, dentro do que está acima.
 - O layout fino das telas, seguindo os componentes existentes (`PainelLateral`, `Cartao`, `Botao`, `TabelaCadastro`).
 - Como a tela controla as 3 análises simultâneas e a retomada.
+
+## Adendo de 25/11: Indicação
+
+**Por quê:** saber quem indicou cada candidato (por exemplo, "Ivan Braskem") e acompanhar o que aconteceu com os indicados de cada pessoa.
+
+- **[Joel]** A indicação fica em **cada participação** (opção B): "Indicado por Ivan Braskem para Caldeireiro, projeto X". A ficha do candidato mostra todas, e o banco de candidatos filtra por "Indicado por".
+- **[Joel]** Na prática, a indicação de um candidato não muda de uma vaga para outra. Por isso, quando ele entra numa seleção nova, a participação já vem com a **última indicação registrada**. Isso vale para o currículo reconhecido na análise (por CPF ou e-mail) e para o incluído do banco. O RH pode corrigir.
+- **[Claude]** O campo é de texto livre, de 1 a 120 caracteres, com sugestão dos nomes já usados, para o mesmo indicador não aparecer escrito de jeitos diferentes. Apagar o texto tira a indicação.
+- **[Claude]** O preenchimento fica no painel do candidato, dentro da seleção. Na importação vêm vários PDFs de uma vez, então não há campo ali.
+- **[Claude]** O histórico registra quem incluiu, mudou ou tirou a indicação, com o valor anterior. Quando a indicação vem repetida da seleção anterior, isso também fica registrado.
+- **[Claude]** O Excel da seleção ganha a coluna "Indicado por".
+- Migração nova e aditiva: `20261125000002_indicacao.sql`.
