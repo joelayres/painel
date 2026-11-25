@@ -11,7 +11,7 @@ export function AbasProjeto({ projetoId, equipe }: { projetoId: string; equipe: 
     { href: `${base}/resumo`, rotulo: 'Resumo' },
     { href: base, rotulo: 'Painel' },
     { href: `${base}/relatorio`, rotulo: 'Relatório' },
-    ...(equipe ? [{ href: `${base}/configurar`, rotulo: 'Configurar' }] : []),
+    ...(equipe ? [{ href: `${base}/selecao`, rotulo: 'Seleção' }, { href: `${base}/configurar`, rotulo: 'Configurar' }] : []),
   ]
   return (
     <nav aria-label="Abas do projeto" className="flex gap-1 border-b border-borda">

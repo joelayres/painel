@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { exigirEquipe } from '@/lib/auth/perfil'
 import { analisarCurriculo, ErroAnalise } from '@/lib/curriculos/ia'
 import { VERSAO_PROMPT } from '@/lib/curriculos/pedido'
-import { rpcLivre } from '@/lib/curriculos/rpc'
+import { rpcLivre, semTipos } from '@/lib/curriculos/rpc'
 import { criarClienteAdmin } from '@/lib/supabase/admin'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
 import { traduzirErro } from '@/lib/validacao/mensagens'
@@ -121,8 +121,7 @@ export async function definirResultado(id: string, resultado: string): Promise<R
 export async function linkCurriculo(curriculoId: string): Promise<{ ok: true; url: string } | Erro> {
   await exigirEquipe()
   const sb = await criarClienteServidor()
-  const { data } = await (sb as unknown as { from: (t: string) => { select: (c: string) => { eq: (k: string, v: string) => { maybeSingle: () => Promise<{ data: { caminho: string } | null }> } } } })
-    .from('curriculos').select('caminho').eq('id', curriculoId).maybeSingle()
+  const { data } = await semTipos(sb).from('curriculos').select('caminho').eq('id', curriculoId).maybeSingle<{ caminho: string }>()
   if (!data) return { ok: false, erro: 'Currículo não encontrado.' }
   const link = await sb.storage.from('curriculos').createSignedUrl(data.caminho, 60)
   if (link.error || !link.data) return { ok: false, erro: 'Não foi possível abrir o currículo.' }
