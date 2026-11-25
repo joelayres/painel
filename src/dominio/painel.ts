@@ -43,8 +43,11 @@ const semAcento = (t: string) => t.normalize('NFD').replace(/\p{Diacritic}/gu, '
 // Chave para comparar funções: sem acento, minúsculas e espaços normalizados.
 export const chaveFuncao = (t: string) => semAcento(t).replace(/\s+/g, ' ')
 
+// Busca por parte do nome do candidato, sem diferença de maiúscula ou acento; busca vazia aceita todos.
+export const candidatoContem = (candidato: string | null | undefined, busca: string | undefined) =>
+  !busca?.trim() || (!!candidato && semAcento(candidato).includes(semAcento(busca)))
+
 export function filtrarVagas(vagas: VagaPainel[], f: Filtro): VagaPainel[] {
-  const busca = f.candidato ? semAcento(f.candidato) : ''
   const funcao = f.funcao ? chaveFuncao(f.funcao) : ''
   return vagas.filter(
     (v) =>
@@ -52,7 +55,7 @@ export function filtrarVagas(vagas: VagaPainel[], f: Filtro): VagaPainel[] {
       (!funcao || chaveFuncao(v.funcao) === funcao) &&
       (!f.area || v.area === f.area) &&
       (!f.gestorId || v.gestor?.id === f.gestorId) &&
-      (!busca || (v.candidato !== null && semAcento(v.candidato).includes(busca))),
+      candidatoContem(v.candidato, f.candidato),
   )
 }
 
