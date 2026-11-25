@@ -16,6 +16,7 @@
     "test:sql": "vitest run --config vitest.sql.config.mts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.14.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.118.0",
     "exceljs": "^4.4.0",
