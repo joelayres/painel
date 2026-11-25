@@ -31,8 +31,9 @@ export type LinhaRelatorio = {
   funcao: string
   disciplina: string
   area: string
+  gestor: string | null
   onda: string | null
-  meta: string
+  meta: string // data final da mobilização: o fim da onda ou a meta cadastrada na vaga
   cobrada: boolean // false só quando o Financeiro diz que não é cobrada (MOI / não cobrar)
   taxa: number | null
   etapas: (string | null)[] // data de conclusão de cada etapa, na ordem de Relatorio.etapas
@@ -92,6 +93,7 @@ export function montarRelatorio(
       funcao: v.funcao,
       disciplina: v.disciplina,
       area: v.area,
+      gestor: v.gestor?.nome ?? null,
       onda: v.onda?.nome ?? null,
       meta: v.meta,
       cobrada: t?.cobrada ?? true,

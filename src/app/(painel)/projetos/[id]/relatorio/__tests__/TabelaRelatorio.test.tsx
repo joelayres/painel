@@ -4,7 +4,7 @@ import type { LinhaRelatorio, Relatorio } from '@/dominio/relatorio'
 import { TabelaRelatorio } from '../TabelaRelatorio'
 
 const linha = (o: Partial<LinhaRelatorio>): LinhaRelatorio => ({
-  id: 'v1', nome: 'Vinicius Vieira', vagaAberta: false, tipo: 'MOD', funcao: 'Assistente Técnico', disciplina: 'APOIOS', area: 'Q3',
+  id: 'v1', nome: 'Vinicius Vieira', vagaAberta: false, tipo: 'MOD', funcao: 'Assistente Técnico', disciplina: 'APOIOS', area: 'Q3', gestor: 'Marcos Lima',
   onda: 'Onda 1', meta: '2027-01-15', cobrada: true, taxa: 24108.83, etapas: ['2026-10-22', null], mobilizada: false, mobilizadaEm: null, ...o,
 })
 const relatorio = (o: Partial<Relatorio> = {}): Relatorio => ({
@@ -24,9 +24,17 @@ const nbsp = (t: string | null) => (t ?? '').replace(/ /g, ' ')
 test('cabeçalho na ordem da planilha', () => {
   const { rerender } = render(<TabelaRelatorio relatorio={relatorio()} porOndas visao={{}} hrefOrdem={href} />)
   const cab = () => screen.getAllByRole('columnheader').map((c) => c.textContent)
-  expect(cab()).toEqual(['Nome', 'Tipo', 'Função', 'Disciplina', 'Área', 'Onda', 'Taxa', 'Captura', 'Entrevistas'])
+  expect(cab()).toEqual(['Nome', 'Tipo', 'Função', 'Disciplina', 'Área', 'Gestor', 'Onda', 'Data final', 'Taxa', 'Captura', 'Entrevistas'])
   rerender(<TabelaRelatorio relatorio={relatorio()} porOndas={false} visao={{}} hrefOrdem={href} />)
-  expect(cab()).toContain('Meta')
+  expect(cab()).toEqual(['Nome', 'Tipo', 'Função', 'Disciplina', 'Área', 'Gestor', 'Data final', 'Taxa', 'Captura', 'Entrevistas'])
+})
+
+test('gestor e data final da mobilização na linha', () => {
+  render(<TabelaRelatorio relatorio={relatorio({ linhas: [linha({}), linha({ id: 'v2', gestor: null })] })} porOndas visao={{}} hrefOrdem={href} />)
+  const [, l1, l2] = screen.getAllByRole('row')
+  expect(l1).toHaveTextContent('Marcos Lima')
+  expect(l1).toHaveTextContent('15/01/2027')
+  expect(within(l2).getAllByText('—').length).toBeGreaterThan(0)
 })
 
 test('OK nas etapas concluídas, com a data no title', () => {

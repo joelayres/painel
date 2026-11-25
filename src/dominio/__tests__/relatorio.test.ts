@@ -30,7 +30,7 @@ test('sem vagas: percentuais zero e totais zero', () => {
 
 test('nome é o candidato, ou a função com vagaAberta', () => {
   const r = montarRelatorio([emAndamento('v1', 2, 'Vinicius Vieira'), emAndamento('v2', 2)], ETAPAS_PADRAO, new Map())
-  expect(r.linhas[0]).toMatchObject({ nome: 'Vinicius Vieira', vagaAberta: false, funcao: 'Técnico de Campo', disciplina: 'NR-13', area: 'Caldeiraria', onda: 'Onda 1', meta: '2026-11-26' })
+  expect(r.linhas[0]).toMatchObject({ nome: 'Vinicius Vieira', vagaAberta: false, funcao: 'Técnico de Campo', disciplina: 'NR-13', area: 'Caldeiraria', gestor: 'Ana Souza', onda: 'Onda 1', meta: '2026-11-26' })
   expect(r.linhas[1]).toMatchObject({ nome: 'Técnico de Campo', vagaAberta: true })
 })
 
