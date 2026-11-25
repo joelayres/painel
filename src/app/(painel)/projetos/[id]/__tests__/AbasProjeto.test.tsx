@@ -4,10 +4,11 @@ import { AbasProjeto } from '../AbasProjeto'
 
 vi.mock('next/navigation', () => ({ usePathname: () => '/projetos/p1/resumo' }))
 
-test('o Resumo vem primeiro e o Configurar só para o RH', () => {
+test('o Resumo vem primeiro; Seleção e Configurar só para o RH', () => {
   render(<AbasProjeto projetoId="p1" equipe />)
   const abas = screen.getAllByRole('link')
-  expect(abas.map((a) => a.textContent)).toEqual(['Resumo', 'Painel', 'Relatório', 'Configurar'])
+  expect(abas.map((a) => a.textContent)).toEqual(['Resumo', 'Painel', 'Relatório', 'Seleção', 'Configurar'])
+  expect(abas[3]).toHaveAttribute('href', '/projetos/p1/selecao')
   expect(abas[0]).toHaveAttribute('href', '/projetos/p1/resumo')
   expect(abas[0]).toHaveAttribute('aria-current', 'page')
   expect(abas[1]).toHaveAttribute('href', '/projetos/p1')
@@ -15,7 +16,7 @@ test('o Resumo vem primeiro e o Configurar só para o RH', () => {
   expect(abas[2]).toHaveAttribute('href', '/projetos/p1/relatorio')
 })
 
-test('gestor e cliente veem o Relatório, mas não o Configurar', () => {
+test('gestor e cliente veem o Relatório, mas não a Seleção nem o Configurar', () => {
   render(<AbasProjeto projetoId="p1" equipe={false} />)
   expect(screen.getAllByRole('link').map((a) => a.textContent)).toEqual(['Resumo', 'Painel', 'Relatório'])
 })

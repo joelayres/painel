@@ -15,6 +15,15 @@ export const MENSAGENS: [string, string][] = [
   ['onda obrigatória', 'Escolha a onda.'],
   ['vaga mobilizada', 'A vaga já foi mobilizada; não há etapa para adiar.'],
   ['motivo longo demais', 'O motivo pode ter até 500 caracteres.'],
+  ['análise em andamento', 'Este currículo já está sendo analisado.'],
+  ['justificativa obrigatória', 'Escreva o motivo da mudança.'],
+  ['justificativa longa demais', 'O motivo pode ter até 500 caracteres.'],
+  ['função obrigatória', 'Informe a função.'],
+  ['descritivo obrigatório', 'Escreva o descritivo da vaga.'],
+  ['caminho inválido', 'O arquivo não foi enviado corretamente. Tente de novo.'],
+  ['entrevistador obrigatório', 'Informe quem entrevistou.'],
+  ['indicação longa demais', 'A indicação pode ter até 120 caracteres.'],
+  ['candidato ainda não analisado', 'Este currículo ainda não foi analisado.'],
 ]
 
 export function traduzirErro(mensagem: string, padrao: string): string {
