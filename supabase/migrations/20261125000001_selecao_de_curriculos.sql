@@ -267,6 +267,11 @@ begin
   v_email := nullif(lower(trim(c->>'email')), '');
   v_nome := nullif(trim(c->>'nome'), '');
 
+  -- A fila analisa vários currículos ao mesmo tempo: duas análises do mesmo candidato esperam uma
+  -- pela outra aqui, e a segunda já encontra o cadastro da primeira. Sempre CPF antes do e-mail.
+  if v_cpf is not null then perform pg_advisory_xact_lock(hashtext('candidato:' || v_cpf)); end if;
+  if v_email is not null then perform pg_advisory_xact_lock(hashtext('candidato:' || v_email)); end if;
+
   v_cand := v_part.candidato_id;
   if v_cand is null and v_cpf is not null then
     select id into v_cand from candidatos where cpf = v_cpf order by criado_em limit 1;

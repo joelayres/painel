@@ -1,6 +1,6 @@
 import type { Client } from 'pg'
 import { describe, expect, it } from 'vitest'
-import { comoUsuario, emTransacao, liberar, novoCliente, novoProjeto } from './apoio'
+import { comoUsuario, conexao, emTransacao, liberar, novoCliente, novoProjeto } from './apoio'
 
 // Erro esperado dentro da transação do teste: o savepoint deixa a transação seguir depois dele.
 async function erroSalvo(c: Client, p: () => Promise<unknown>): Promise<string | null> {
@@ -374,5 +374,24 @@ describe('seleção: funções', () => {
       expect((await c.query('select count(*)::int as n from participacoes where id = $1', [part])).rows[0].n).toBe(0)
       const h = await c.query("select acao from historico where vaga_id is null and acao like 'Excluiu um candidato%' order by em desc limit 1")
       expect(h.rows[0].acao).not.toContain('Nome Secreto')
+    }))
+})
+
+describe('seleção: análises ao mesmo tempo', () => {
+  // A fila analisa 3 currículos por vez: o mesmo candidato em duas análises simultâneas não pode
+  // virar dois cadastros. registrar_analise segura uma trava pelo CPF (ou e-mail) até o fim da transação.
+  it('registrar_analise trava o CPF do candidato até o fim da transação', () =>
+    emTransacao(async (c) => {
+      const { sel } = await cenario(c)
+      const part = await novoCurriculo(c, sel)
+      await registrarAnalise(c, part, { cpf: '77788899900' })
+      const outra = conexao()
+      await outra.connect()
+      try {
+        const { rows } = await outra.query("select pg_try_advisory_xact_lock(hashtext('candidato:77788899900')) as livre")
+        expect(rows[0].livre).toBe(false)
+      } finally {
+        await outra.end()
+      }
     }))
 })
