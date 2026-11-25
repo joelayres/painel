@@ -71,3 +71,9 @@ test('a linha mostra a indicação', () => {
   render(<ListaParticipacoes participacoes={[indicado]} vagas={[]} indicadores={[]} />)
   expect(screen.getByText(/Indicado por Ivan Braskem/)).toBeInTheDocument()
 })
+
+test('seleção encerrada não oferece reanalisar', () => {
+  render(<ListaParticipacoes participacoes={lista} vagas={[]} indicadores={[]} encerrada />)
+  expect(screen.queryByRole('button', { name: 'Reanalisar selecionados' })).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Confirmar sugestão da IA' })).toBeInTheDocument()
+})
