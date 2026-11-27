@@ -18,8 +18,6 @@ function cliente(tipo: 'sessao' | 'admin') {
 }
 
 vi.mock('server-only', () => ({}))
-vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
-vi.mock('@/lib/auth/perfil', () => ({ exigirEquipe: async () => ({ nome: 'Ana RH', perfil: 'analista' }) }))
 vi.mock('@/lib/supabase/servidor', () => ({ criarClienteServidor: async () => cliente('sessao') }))
 vi.mock('@/lib/supabase/admin', () => ({ criarClienteAdmin: () => cliente('admin') }))
 vi.mock('@/lib/curriculos/ia', () => {
@@ -39,7 +37,7 @@ vi.mock('@/lib/curriculos/ia', () => {
 })
 
 import { ErroAnalise } from '@/lib/curriculos/ia'
-import { analisarParticipacao } from '../acoesSelecao'
+import { analisarParticipacao } from '../analisar'
 
 beforeEach(() => {
   chamadas.length = 0
@@ -48,7 +46,7 @@ beforeEach(() => {
 })
 
 test('analisa e grava pelo servidor, com o nome de quem pediu', async () => {
-  expect(await analisarParticipacao('p1')).toEqual({ ok: true, situacao: 'analisada' })
+  expect(await analisarParticipacao('Ana RH', 'p1')).toEqual({ ok: true, situacao: 'analisada' })
   expect(chamadas.map((c) => `${c.cliente}:${c.nome}`)).toEqual(['sessao:iniciar_analise', 'admin:registrar_analise'])
   const p = chamadas[1].args.p as Record<string, unknown>
   expect(p).toMatchObject({ nome_usuario: 'Ana RH', versao_prompt: 'selecao-v1', nota: 80, classificacao: 'aderente', modelo: 'claude-sonnet-5-5' })
@@ -56,13 +54,13 @@ test('analisa e grava pelo servidor, com o nome de quem pediu', async () => {
 
 test('análise em andamento não chama a IA nem grava', async () => {
   erroIniciar = { message: 'análise em andamento' }
-  const r = await analisarParticipacao('p1')
+  const r = await analisarParticipacao('Ana RH', 'p1')
   expect(r).toEqual({ ok: false, erro: 'Este currículo já está sendo analisado.' })
   expect(chamadas.map((c) => c.nome)).toEqual(['iniciar_analise'])
 })
 
 test('erro da IA marca a falha pelo servidor e devolve a mensagem', async () => {
   falhaIA = new ErroAnalise('IA ocupada, tente de novo em instantes.')
-  expect(await analisarParticipacao('p1')).toEqual({ ok: false, erro: 'IA ocupada, tente de novo em instantes.' })
+  expect(await analisarParticipacao('Ana RH', 'p1')).toEqual({ ok: false, erro: 'IA ocupada, tente de novo em instantes.' })
   expect(chamadas.map((c) => `${c.cliente}:${c.nome}`)).toEqual(['sessao:iniciar_analise', 'admin:falhar_analise'])
 })

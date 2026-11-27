@@ -1,26 +1,38 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useId, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { Botao } from '@/components/ui/Botao'
 import { criarClienteNavegador } from '@/lib/supabase/cliente'
-import { analisarParticipacao, registrarCurriculo } from '../acoesSelecao'
+import { registrarCurriculo } from '../acoesSelecao'
 import type { Pendente } from './dados'
 import { processarFila } from './fila'
+import { pedirAnalise } from './pedirAnalise'
 
 const LIMITE = 10 * 1024 * 1024
 const SIMULTANEAS = 3
+// Enquanto outra aba (ou outra pessoa) analisa, a tela se atualiza sozinha nesse intervalo.
+const ATUALIZAR_MS = 10_000
 
 type Linha = { chave: string; nome: string; estado: 'recusado' | 'enviando' | 'analisando' | 'ok' | 'repetido' | 'erro'; texto?: string; participacaoId?: string }
 
 // Importa PDFs: o navegador envia cada arquivo ao Storage, registra o currículo e conduz a fila de
 // análise (3 por vez). Se a aba fechar, os que faltaram aparecem como pendentes para continuar.
-export function ImportarCurriculos({ selecaoId, pendentes, encerrada }: { selecaoId: string; pendentes: Pendente[]; encerrada: boolean }) {
+// emAndamento: quantas estão sendo analisadas agora fora desta tela (outra aba ou outra pessoa).
+export function ImportarCurriculos({ selecaoId, pendentes, emAndamento = 0, encerrada }: { selecaoId: string; pendentes: Pendente[]; emAndamento?: number; encerrada: boolean }) {
   const router = useRouter()
   const idArquivo = useId()
   const [linhas, setLinhas] = useState<Linha[]>([])
   const [ocupado, setOcupado] = useState(false)
   const [progresso, setProgresso] = useState<{ feitos: number; total: number } | null>(null)
+
+  // Análise rodando fora desta tela: atualiza a lista até a fila acabar.
+  const analisandoFora = emAndamento > 0 && !ocupado && !encerrada
+  useEffect(() => {
+    if (!analisandoFora) return
+    const t = setInterval(() => router.refresh(), ATUALIZAR_MS)
+    return () => clearInterval(t)
+  }, [analisandoFora, router])
 
   const atualizar = (chave: string, mudanca: Partial<Linha>) => setLinhas((ls) => ls.map((l) => (l.chave === chave ? { ...l, ...mudanca } : l)))
 
@@ -31,7 +43,7 @@ export function ImportarCurriculos({ selecaoId, pendentes, encerrada }: { seleca
     await processarFila(
       ids.map((i) => i.id),
       async (id) => {
-        const r = await analisarParticipacao(id)
+        const r = await pedirAnalise(id)
         const chave = chaveDe.get(id)
         if (chave) {
           if (r.ok) atualizar(chave, { estado: r.situacao === 'repetida' ? 'repetido' : 'ok', texto: r.situacao === 'repetida' ? 'já está nesta seleção' : undefined })
@@ -106,12 +118,12 @@ export function ImportarCurriculos({ selecaoId, pendentes, encerrada }: { seleca
   const anteriores = pendentes.filter((p) => !nestaTela.has(p.id))
   const listaPendentes = anteriores.length > 0 && (
     <div className="flex flex-col gap-1 text-sm">
-      <p className="font-medium">Aguardando análise ou com erro ({anteriores.length})</p>
+      <p className="font-medium">{analisandoFora ? 'Na fila ou com erro' : 'Aguardando análise ou com erro'} ({anteriores.length})</p>
       <ul className="flex flex-col gap-1">
         {anteriores.map((p) => (
           <li key={p.id} className="flex flex-wrap items-center gap-2">
-            <span className={p.erro ? 'text-[var(--st-reprovada-texto)]' : 'text-texto-suave'}>{p.arquivo}: {p.erro ?? 'aguardando análise'}</span>
-            {!encerrada && !ocupado && (
+            <span className={p.erro ? 'text-[var(--st-reprovada-texto)]' : 'text-texto-suave'}>{p.arquivo}: {p.erro ?? (analisandoFora ? 'na fila' : 'aguardando análise')}</span>
+            {!encerrada && !ocupado && (p.erro || !analisandoFora) && (
               <Botao variante="fantasma" className="min-h-8 px-2 text-sm" aria-label={`Tentar de novo ${p.arquivo}`} onClick={() => tentarPendente(p.id)}>Tentar de novo</Botao>
             )}
           </li>
@@ -131,13 +143,18 @@ export function ImportarCurriculos({ selecaoId, pendentes, encerrada }: { seleca
           Importar currículos (PDF)
         </label>
         <input id={idArquivo} type="file" accept="application/pdf" multiple className="sr-only" disabled={ocupado} onChange={(e) => { void aoEscolher(e.target.files); e.target.value = '' }} />
-        {pendentes.length > 0 && !ocupado && (
+        {pendentes.length > 0 && !ocupado && !analisandoFora && (
           <Botao variante="secundario" onClick={continuar}>Continuar análise ({pendentes.length})</Botao>
         )}
         {progresso && ocupado && (
           <p aria-live="polite" className="text-sm text-texto-suave">Analisando {progresso.feitos} de {progresso.total}</p>
         )}
       </div>
+      {analisandoFora && (
+        <p role="status" className="rounded-lg bg-primaria-suave px-3 py-2 text-sm">
+          Análise em andamento: {emAndamento === 1 ? '1 currículo sendo analisado' : `${emAndamento} currículos sendo analisados`} agora, em outra aba ou por outra pessoa. Esta lista se atualiza sozinha; deixe aberta a aba que está analisando.
+        </p>
+      )}
       {progresso && ocupado && (
         <div className="h-2 overflow-hidden rounded-full bg-primaria-suave" aria-hidden>
           <div className="h-full bg-primaria transition-all" style={{ width: `${(progresso.feitos / Math.max(progresso.total, 1)) * 100}%` }} />
