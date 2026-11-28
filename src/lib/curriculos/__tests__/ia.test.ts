@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import type Anthropic from '@anthropic-ai/sdk'
-import { analisarCurriculo, ErroAnalise } from '../ia'
+import Anthropic from '@anthropic-ai/sdk'
+import { analisarCurriculo, ErroAnalise, SEM_CREDITOS } from '../ia'
 
 vi.mock('server-only', () => ({}))
 
@@ -50,5 +50,19 @@ describe('analisarCurriculo', () => {
     const r = await analisarCurriculo(Buffer.from('%PDF'), 'NR-13', cliente)
     expect(r.analise.classificacao).toBe('aderente')
     expect(r.modelo).toBe('claude-haiku-5-5')
+  })
+
+  it('sem créditos na API avisa que os créditos acabaram, e não culpa o arquivo', async () => {
+    const corpo = { type: 'error', error: { type: 'invalid_request_error', message: 'Your credit balance is too low to access the Anthropic API.' } }
+    const create = vi.fn().mockRejectedValue(new Anthropic.BadRequestError(400, corpo, undefined, new Headers()))
+    const cliente = { beta: { messages: { create } } } as unknown as Anthropic
+    await expect(analisarCurriculo(Buffer.from('%PDF'), 'NR-13', cliente)).rejects.toThrow(new ErroAnalise(SEM_CREDITOS))
+  })
+
+  it('outro erro 400 continua dizendo que não leu o arquivo', async () => {
+    const corpo = { type: 'error', error: { type: 'invalid_request_error', message: 'The PDF specified was not valid.' } }
+    const create = vi.fn().mockRejectedValue(new Anthropic.BadRequestError(400, corpo, undefined, new Headers()))
+    const cliente = { beta: { messages: { create } } } as unknown as Anthropic
+    await expect(analisarCurriculo(Buffer.from('%PDF'), 'NR-13', cliente)).rejects.toThrow('A IA não conseguiu ler este arquivo.')
   })
 })
