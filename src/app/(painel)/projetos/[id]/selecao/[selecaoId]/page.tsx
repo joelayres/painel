@@ -4,15 +4,13 @@ import { exigirEquipe } from '@/lib/auth/perfil'
 import { criarClienteServidor } from '@/lib/supabase/servidor'
 import { ehUuid } from '@/lib/validacao/vaga'
 import { CabecalhoSelecao } from './CabecalhoSelecao'
-import { carregarSelecao, pendentesDaSelecao } from './dados'
+import { carregarSelecao, emAndamentoDaSelecao, pendentesDaSelecao } from './dados'
 import { ImportarCurriculos } from './ImportarCurriculos'
 import { ListaParticipacoes } from './ListaParticipacoes'
 import { dataBR } from '@/lib/formato/datas'
 import { rpcLivre } from '@/lib/curriculos/rpc'
 
 export const metadata = { title: 'Seleção · Painel de Mobilização' }
-// Cada análise de currículo (server action desta página) leva de 10 a 60 segundos.
-export const maxDuration = 60
 
 export default async function TelaSelecao({ params }: { params: Promise<{ id: string; selecaoId: string }> }) {
   const { id, selecaoId } = await params
@@ -35,7 +33,7 @@ export default async function TelaSelecao({ params }: { params: Promise<{ id: st
     <div className="flex flex-col gap-4">
       <Link href={`/projetos/${id}/selecao`} className="text-sm font-medium text-primaria hover:underline">← Seleções</Link>
       <CabecalhoSelecao selecao={selecao} funcoes={funcoes} />
-      <ImportarCurriculos selecaoId={selecao.id} pendentes={pendentesDaSelecao(participacoes)} encerrada={selecao.encerrada_em !== null} />
+      <ImportarCurriculos selecaoId={selecao.id} pendentes={pendentesDaSelecao(participacoes)} emAndamento={emAndamentoDaSelecao(participacoes)} encerrada={selecao.encerrada_em !== null} />
       <ListaParticipacoes encerrada={selecao.encerrada_em !== null} participacoes={participacoes} vagas={vagasLivres} indicadores={indicadores ?? []} />
     </div>
   )

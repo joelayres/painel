@@ -68,3 +68,8 @@ export function pendentesDaSelecao(ps: Pick<Participacao, 'id' | 'situacao' | 'a
     .filter((p) => p.situacao === 'pendente' || p.situacao === 'erro' || (p.situacao === 'analisando' && p.analisando_desde !== null && agora - Date.parse(p.analisando_desde) > 5 * 60 * 1000))
     .map((p) => ({ id: p.id, arquivo: p.curriculo.nome_arquivo, erro: p.situacao === 'erro' ? p.erro : null }))
 }
+
+// Quantas estão sendo analisadas agora (há menos de 5 minutos), por outra aba ou outra pessoa.
+export function emAndamentoDaSelecao(ps: Pick<Participacao, 'situacao' | 'analisando_desde'>[], agora = Date.now()): number {
+  return ps.filter((p) => p.situacao === 'analisando' && p.analisando_desde !== null && agora - Date.parse(p.analisando_desde) <= 5 * 60 * 1000).length
+}
