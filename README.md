@@ -22,7 +22,7 @@ cp .env.example .env.local   # preencha com as chaves do projeto Supabase "paine
 npm run dev
 ```
 
-Variáveis (`.env.local` e Vercel): `NEXT_PUBLIC_SUPABASE_URL` (sem `/rest/v1/` no fim), `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`. Só no `.env.local`: `SUPABASE_PROJECT_REF` e `SUPABASE_DB_PASSWORD`, para `npm run db:push` e `npm run db:tipos`. Integração com o Financeiro: `FINANCEIRO_SEGREDO` (o mesmo valor de `FINANCEIRO_SEGREDO_PAINEL` lá) e `FINANCEIRO_ENDERECO` (sem `/` no fim), de onde o Relatório lê o tipo e a tarifa de cada vaga. Seleção de Currículos: `ANTHROPIC_API_KEY` (chave da API da Anthropic) e, opcional, `ANTHROPIC_MODELO` (padrão `claude-sonnet-5-5`; troque para testar outro modelo sem mudar código). Os PDFs ficam no bucket privado `curriculos` do Supabase Storage, criado pela migração `20261125000001_selecao_de_curriculos.sql`.
+Variáveis (`.env.local` e Vercel): `NEXT_PUBLIC_SUPABASE_URL` (sem `/rest/v1/` no fim), `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`. Só no `.env.local`: `SUPABASE_PROJECT_REF` e `SUPABASE_DB_PASSWORD`, para `npm run db:push` e `npm run db:tipos`. Integração com o Financeiro: `FINANCEIRO_SEGREDO` (o mesmo valor de `FINANCEIRO_SEGREDO_PAINEL` lá) e `FINANCEIRO_ENDERECO` (sem `/` no fim), de onde o Relatório lê o tipo e a tarifa de cada vaga. Seleção de Currículos: `ANTHROPIC_API_KEY` (chave da API da Anthropic) e, opcional, `ANTHROPIC_MODELO` (padrão `claude-haiku-5-5`; troque para testar outro modelo sem mudar código). Os PDFs ficam no bucket privado `curriculos` do Supabase Storage, criado pela migração `20261125000001_selecao_de_curriculos.sql`.
 
 ## Banco
 

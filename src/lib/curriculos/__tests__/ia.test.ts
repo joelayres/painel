@@ -45,6 +45,13 @@ describe('analisarCurriculo', () => {
     await expect(analisarCurriculo(Buffer.from('%PDF'), 'NR-13', cliente)).rejects.toThrow('Resposta da IA fora do formato.')
   })
 
+  it('no Haiku, parcial com nota alta é gravado como aderente', async () => {
+    const { cliente } = clienteFalso({ model: 'claude-haiku-5-5', content: [{ type: 'text', text: JSON.stringify({ ...respostaValida, nota: 66, classificacao: 'parcial' }), citations: null }] })
+    const r = await analisarCurriculo(Buffer.from('%PDF'), 'NR-13', cliente)
+    expect(r.analise.classificacao).toBe('aderente')
+    expect(r.modelo).toBe('claude-haiku-5-5')
+  })
+
   it('sem créditos na API avisa que os créditos acabaram, e não culpa o arquivo', async () => {
     const corpo = { type: 'error', error: { type: 'invalid_request_error', message: 'Your credit balance is too low to access the Anthropic API.' } }
     const create = vi.fn().mockRejectedValue(new Anthropic.BadRequestError(400, corpo, undefined, new Headers()))

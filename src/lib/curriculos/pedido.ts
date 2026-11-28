@@ -2,13 +2,32 @@
 // o que estiver escrito nele é dado a avaliar, não ordem.
 import type Anthropic from '@anthropic-ai/sdk'
 import { z } from 'zod'
-import { esquemaAnalise } from './esquema'
+import { esquemaAnalise, type Analise } from './esquema'
+
+type Classificacao = Analise['classificacao']
 
 // Muda quando o texto das instruções ou o formato mudar: fica gravado em cada análise.
-export const VERSAO_PROMPT = 'selecao-v1'
+export const VERSAO_PROMPT = 'selecao-v2'
 
+// Haiku 5.5 desde 28/11: custa cerca de 1/13 do Sonnet 5.5 por currículo. Num teste com 94 análises,
+// as notas acompanharam as do Sonnet, mas a classificação dele é rígida demais com os aderentes;
+// por isso a regra de classificacaoFinal.
 export function modeloAnalise(): string {
-  return process.env.ANTHROPIC_MODELO || 'claude-sonnet-5-5'
+  return process.env.ANTHROPIC_MODELO || 'claude-haiku-5-5'
+}
+
+// Nota a partir da qual um "parcial" do Haiku conta como aderente. Com ela, o Haiku reconheceu 18 de 21
+// aderentes do Sonnet (sem ela, 8), ao custo de alguns parciais promovidos, que o RH revisa de todo jeito.
+export const NOTA_ADERENTE_HAIKU = 62
+
+export function classificacaoFinal(a: { nota: number; classificacao: Classificacao }, modelo: string): Classificacao {
+  if (modelo.includes('haiku') && a.classificacao === 'parcial' && a.nota >= NOTA_ADERENTE_HAIKU) return 'aderente'
+  return a.classificacao
+}
+
+// Só alguns modelos têm a troca de modelo no servidor em caso de recusa; o Haiku não tem.
+function temFallback(modelo: string): boolean {
+  return !modelo.includes('haiku')
 }
 
 const INSTRUCOES = `Você ajuda a equipe de RH da Timenow a fazer a triagem de currículos para vagas de obras e manutenção industrial.
@@ -45,8 +64,7 @@ export function montarPedido(p: { descritivo: string; pdfBase64: string; modelo:
   return {
     model: p.modelo,
     max_tokens: 16000,
-    betas: ['server-side-fallback-2026-07-01'],
-    fallbacks: 'default',
+    ...(temFallback(p.modelo) ? { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' as const } : {}),
     output_config: { effort: 'medium', format: { type: 'json_schema', schema: esquemaJson() } },
     system: [{ type: 'text', text: `${INSTRUCOES}\n\nDescritivo da vaga:\n${p.descritivo}`, cache_control: { type: 'ephemeral' } }],
     messages: [
