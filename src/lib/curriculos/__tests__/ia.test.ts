@@ -44,4 +44,11 @@ describe('analisarCurriculo', () => {
     const { cliente } = clienteFalso({ content: [{ type: 'text', text: 'oi', citations: null }] })
     await expect(analisarCurriculo(Buffer.from('%PDF'), 'NR-13', cliente)).rejects.toThrow('Resposta da IA fora do formato.')
   })
+
+  it('no Haiku, parcial com nota alta é gravado como aderente', async () => {
+    const { cliente } = clienteFalso({ model: 'claude-haiku-5-5', content: [{ type: 'text', text: JSON.stringify({ ...respostaValida, nota: 66, classificacao: 'parcial' }), citations: null }] })
+    const r = await analisarCurriculo(Buffer.from('%PDF'), 'NR-13', cliente)
+    expect(r.analise.classificacao).toBe('aderente')
+    expect(r.modelo).toBe('claude-haiku-5-5')
+  })
 })

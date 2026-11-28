@@ -49,7 +49,7 @@ test('analisa e grava pelo servidor, com o nome de quem pediu', async () => {
   expect(await analisarParticipacao('Ana RH', 'p1')).toEqual({ ok: true, situacao: 'analisada' })
   expect(chamadas.map((c) => `${c.cliente}:${c.nome}`)).toEqual(['sessao:iniciar_analise', 'admin:registrar_analise'])
   const p = chamadas[1].args.p as Record<string, unknown>
-  expect(p).toMatchObject({ nome_usuario: 'Ana RH', versao_prompt: 'selecao-v1', nota: 80, classificacao: 'aderente', modelo: 'claude-sonnet-5-5' })
+  expect(p).toMatchObject({ nome_usuario: 'Ana RH', versao_prompt: 'selecao-v2', nota: 80, classificacao: 'aderente', modelo: 'claude-sonnet-5-5' })
 })
 
 test('análise em andamento não chama a IA nem grava', async () => {

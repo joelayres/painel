@@ -1,7 +1,7 @@
 import 'server-only'
 import Anthropic from '@anthropic-ai/sdk'
 import { esquemaAnalise, normalizarCpf, normalizarEmail, type Analise } from './esquema'
-import { modeloAnalise, montarPedido } from './pedido'
+import { classificacaoFinal, modeloAnalise, montarPedido } from './pedido'
 
 // Erro com mensagem pronta para a tela (vai para a linha do currículo na seleção).
 export class ErroAnalise extends Error {}
@@ -31,6 +31,6 @@ export async function analisarCurriculo(pdf: Buffer, descritivo: string, cliente
   const r = esquemaAnalise.safeParse(json)
   if (!r.success) throw new ErroAnalise('Resposta da IA fora do formato.')
 
-  const analise = { ...r.data, candidato: { ...r.data.candidato, cpf: normalizarCpf(r.data.candidato.cpf), email: normalizarEmail(r.data.candidato.email) } }
+  const analise = { ...r.data, classificacao: classificacaoFinal(r.data, resposta.model), candidato: { ...r.data.candidato, cpf: normalizarCpf(r.data.candidato.cpf), email: normalizarEmail(r.data.candidato.email) } }
   return { analise, modelo: resposta.model, tokensEntrada: resposta.usage.input_tokens, tokensSaida: resposta.usage.output_tokens }
 }

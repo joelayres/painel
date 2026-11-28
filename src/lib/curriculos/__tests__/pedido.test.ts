@@ -1,19 +1,19 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { modeloAnalise, montarPedido } from '../pedido'
+import { classificacaoFinal, modeloAnalise, montarPedido } from '../pedido'
 
 afterEach(() => vi.unstubAllEnvs())
 
 const pedido = () => montarPedido({ descritivo: 'Caldeireiro com NR-13', pdfBase64: 'QkFTRTY0UERG', modelo: 'claude-sonnet-5-5' })
 
 describe('modeloAnalise', () => {
-  it('usa o Sonnet 5.5 sem configuração', () => {
+  it('usa o Haiku 5.5 sem configuração', () => {
     vi.stubEnv('ANTHROPIC_MODELO', '')
-    expect(modeloAnalise()).toBe('claude-sonnet-5-5')
+    expect(modeloAnalise()).toBe('claude-haiku-5-5')
   })
 
   it('usa o modelo da configuração quando definido', () => {
-    vi.stubEnv('ANTHROPIC_MODELO', 'claude-haiku-5-5')
-    expect(modeloAnalise()).toBe('claude-haiku-5-5')
+    vi.stubEnv('ANTHROPIC_MODELO', 'claude-sonnet-5-5')
+    expect(modeloAnalise()).toBe('claude-sonnet-5-5')
   })
 })
 
@@ -41,5 +41,28 @@ describe('montarPedido', () => {
     expect(p.output_config?.effort).toBe('medium')
     expect(p.output_config?.format?.type).toBe('json_schema')
     expect(JSON.stringify(p.output_config?.format?.schema)).toContain('requisitos')
+  })
+})
+
+describe('montarPedido com o Haiku', () => {
+  it('não pede fallback no servidor, que o Haiku não tem', () => {
+    const p = montarPedido({ descritivo: 'NR-13', pdfBase64: 'QkFTRTY0UERG', modelo: 'claude-haiku-5-5' })
+    expect(p.model).toBe('claude-haiku-5-5')
+    expect(p).not.toHaveProperty('fallbacks')
+    expect(p).not.toHaveProperty('betas')
+    expect(p.output_config?.format?.type).toBe('json_schema')
+  })
+})
+
+describe('classificacaoFinal', () => {
+  it('no Haiku, parcial com nota 62 ou mais vira aderente', () => {
+    expect(classificacaoFinal({ nota: 62, classificacao: 'parcial' }, 'claude-haiku-5-5')).toBe('aderente')
+    expect(classificacaoFinal({ nota: 61, classificacao: 'parcial' }, 'claude-haiku-5-5')).toBe('parcial')
+  })
+
+  it('não mexe nas outras classificações nem nos outros modelos', () => {
+    expect(classificacaoFinal({ nota: 70, classificacao: 'nao_aderente' }, 'claude-haiku-5-5')).toBe('nao_aderente')
+    expect(classificacaoFinal({ nota: 40, classificacao: 'aderente' }, 'claude-haiku-5-5')).toBe('aderente')
+    expect(classificacaoFinal({ nota: 72, classificacao: 'parcial' }, 'claude-sonnet-5-5')).toBe('parcial')
   })
 })
